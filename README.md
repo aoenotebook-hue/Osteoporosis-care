@@ -1,29 +1,54 @@
-# ดูแลกระดูก — Bone Health Companion
+# ดูแลกระดูกพรุน — Osteoporosis Care
 
-Osteoporosis self-care PWA for CNMI Ramathibodi Orthopaedic Surgery
-patients — the 4th app in the CNMI suite. Lifelong, risk-tier driven
-(no end date): onboarding risk profile → daily/weekly habits → monthly
-check-in, built around a **risk-tier + balance-level resolver** engine,
-matching the pattern used by the ACL and frozen-shoulder apps.
+A bilingual (Thai/English) osteoporosis self-care PWA. Lifelong and
+risk-tier driven rather than calendar driven: registration → risk
+assessment → daily/weekly habits → monthly check-in → yearly nutrition
+review, all built around a **risk-tier + balance-level resolver**.
 
 ## Structure
 
-- `index.html` — the app shell: UI, tabs, forms, state (`localStorage`
-  under `OSTEO_STATE`), rendered from `app-core.js` data/logic. Single
-  page, no build step.
+- `index.html` — the app shell: seven tabs, forms, charts, and state in
+  `localStorage` under `OSTEO_STATE`. No build step.
 - `app-core.js` — pure, dependency-free logic and content shared by the
-  browser (`<script src="app-core.js">`) and the Node test suite
-  (`require('./app-core.js')`): the `CONTENT` TH/EN dictionary, the
-  tier/balance-level resolvers, medication schedule math, calcium
-  table, exercise/safety/tracking data, and sync helpers.
-- `tests/t*.js` — one regression suite per build step (see below), run
-  with `node tests/run_all.js`.
-- `apps-script/Code.gs` — Google Apps Script backend (`doPost`) for the
-  Registrations / CheckIns / Falls / Adherence / Exercise sheets.
+  browser and the Node test suite: the `CONTENT` TH/EN dictionary, the
+  tier and balance-level resolvers, medication schedules and care
+  information, the nutrition estimators, exercise/safety data, tracking
+  helpers and sync queueing.
+- `tests/t*.js` — regression suites, run with `node tests/run_all.js`.
+- `apps-script/Code.gs` — Google Apps Script backend (`doPost`) writing
+  to the Registrations / CheckIns / Falls / Adherence / Nutrition sheets.
 - `manifest.webmanifest`, `sw.js`, `icon.svg` — installability (Add to
   Home Screen) and offline app-shell caching.
-- `media/osteo-video-clip-list.md` — filming checklist for the Move-tab
-  exercise clips.
+- `media/osteo-video-clip-list.md` — filming checklist, and how to add a
+  clip to the Move tab's media manifest.
+
+## The seven tabs
+
+| Tab | What it holds |
+|---|---|
+| หน้าหลัก / Home | Care level, balance level, today's medication status, safety tip, due prompts |
+| ยา / Medicine | The patient's own drug: next dose, what it does, how to take it, missed doses, side effects, dental note, do-not-stop warning, dose history |
+| อาหาร / Food | Yearly nutrition review + its calcium, vitamin D and protein recommendations, plus what to cut down |
+| ออกกำลัง / Move | Exercises scoped to the balance level, each with written how-to steps; information only, no logging |
+| กันล้ม / Safety | 20-item home safety check with per-item icons; done items turn blue, outstanding ones stay highlighted |
+| ติดตาม / Track | Progression graphs for height, chair-stand, TUG, falls and adherence, plus the self-test timers and DXA date |
+| ฉุกเฉิน / Urgent | Red flags as severity cards, each with the action to take, and one-tap clinic/1669 calling |
+
+## The engine
+
+- **Risk tier** — A (bone health), B (high fracture risk), C
+  (post-fracture). Conflicting inputs always resolve to the most
+  conservative tier.
+- **Balance level** — 1 (always supported) → 3 (independent). It drops
+  automatically after any fall. It only rises when *all* of: both
+  self-tests pass the age/sex norm and the TUG threshold, the results
+  are less than 90 days old, no fall in 4 weeks, and at least 4 weeks at
+  the current level. (Daily exercise logging was removed, so the gate
+  rests on the self-tests rather than session counts.)
+- **Nutrition** — a yearly food-frequency review estimates daily
+  calcium, vitamin D and protein, and turns the shortfall into a
+  suggested supplement amount for that individual. Every result is
+  labelled as an estimate to confirm with the doctor.
 
 ## Running the tests
 
@@ -31,90 +56,67 @@ matching the pattern used by the ACL and frozen-shoulder apps.
 node tests/run_all.js
 ```
 
-Each `tests/tN_*.js` corresponds to a build-plan step's test gate
-(i18n parity, webhook payload shape, tier engine, medication schedule
-math, calcium table, exercise scoping, safety score, tracking, resource
-rendering, sync dedup).
-
 ## Running the app locally
 
-Any static file server works, e.g.:
-
-```
-python3 -m http.server 8080
-```
-
-then open `http://localhost:8080/index.html`. Service workers and
-`beforeinstallprompt` require a real HTTP(S) origin (not `file://`).
+Any static server, e.g. `python3 -m http.server 8080`, then open
+`http://localhost:8080/index.html`. Service workers and the install
+prompt need a real HTTP(S) origin, not `file://`.
 
 ## Deploying the backend
 
 1. Create a Google Sheet, open **Extensions → Apps Script**, paste in
    `apps-script/Code.gs`.
 2. **Deploy → New deployment → Web app** (Execute as: Me, Access:
-   Anyone), copy the Web App URL.
+   Anyone) and copy the Web App URL.
 3. `WEBHOOK_URL` in `index.html` is already wired to the deployed URL,
-   and `SHARED_TOKEN` in both `index.html` and `apps-script/Code.gs` is
-   already set to a generated secret — the two files must always carry
-   the *same* token. **Whichever one you edit first, copy the same
-   value into the other before deploying/redeploying.**
-4. Apps Script web app deployments are pinned to a code snapshot: after
-   editing `Code.gs` (e.g. to rotate `SHARED_TOKEN` or extend the
-   sheets), use **Deploy → Manage deployments → Edit → New version** —
-   saving the script alone does not update the live `/exec` URL.
-5. Sheets (`Registrations`, `CheckIns`, `Falls`, `Adherence`,
-   `Exercise`) are created automatically on first write.
-6. This sandbox's network policy blocks `script.google.com`, so the
-   live webhook could not be smoke-tested from here — verify it
-   yourself: complete Registration in the app once and confirm a row
-   appears in the `Registrations` sheet.
-
-If `WEBHOOK_URL` is ever cleared, the app runs fully offline and queues
-registration/records in `syncQueue` for later flushing.
+   and `SHARED_TOKEN` is set to the same generated secret in both
+   `index.html` and `Code.gs`. **The two must always match** — if you
+   rotate the token, change it in both places.
+4. Apps Script deployments are pinned to a code snapshot: after editing
+   `Code.gs`, use **Deploy → Manage deployments → Edit → New version**.
+   Saving alone does not update the live `/exec` URL.
+5. Sheets are created automatically on first write. Same-day check-in
+   measurements merge into one row; a second fall on the same day is
+   kept as a separate event; resent identical records are skipped.
+6. This sandbox's network policy blocks `script.google.com`, so the live
+   webhook could not be tested from here — verify by registering once
+   and checking that a row appears in `Registrations`.
 
 ## Deploying the app
 
-Static hosting (e.g. GitHub Pages) — the app is `index.html` +
-`app-core.js` + `manifest.webmanifest` + `sw.js` + `icon.svg`, no build
-step required.
+Static hosting (e.g. GitHub Pages): `index.html`, `app-core.js`,
+`manifest.webmanifest`, `sw.js`, `icon.svg` and `media/`.
 
 ## Before a real pilot (do not skip)
 
-These were flagged as open decisions in the build plan and were
-resolved with the most conservative / simplest default for v1 — they
-still need the clinical owner's sign-off:
+1. **Every Thai clinical string** — medication instructions, red flags,
+   the do-not-stop and dental warnings, and the supplement figures —
+   needs your clinical read-through. The content is a complete, careful
+   v1 draft, not clinically validated copy.
+2. **Supplement recommendations** are computed from a food-frequency
+   estimate (with a background-diet baseline) and rounded to common
+   tablet sizes. Confirm the baselines, targets and rounding steps match
+   what you would actually prescribe.
+3. **Medication list** covers the classes in the build plan. Trim or
+   extend it to what is actually prescribed.
+4. **Tier C is not split** into hip vs. spine in v1; any prior fragility
+   fracture maps to Tier C.
+5. **Self-tests** are offered to all tiers with an on-screen "have
+   someone with you" warning, not gated to supervised-only.
+6. **Icons are PNG-free** — the app ships an SVG icon. Add real
+   192×192 and 512×512 PNGs before a production deploy for the best
+   home-screen result on older iOS.
+7. **Exercise media** — no clips ship yet, so no media areas render.
+   See `media/osteo-video-clip-list.md`.
 
-1. **Tiers**: Tier C is not split hip vs. spine in v1 (deferred to
-   "later phases" per the plan); any prior fragility fracture site
-   maps to Tier C.
-2. **Calcium wording**: shown as both an mg total and a progress bar
-   (not a 3-tick scale) — confirm this is the preferred presentation.
-3. **Medication list**: limited to the classes named in the plan
-   (weekly/daily bisphosphonate, denosumab, zoledronate, teriparatide,
-   romosozumab, calcium+vitamin D) — trim/extend to what CNMI actually
-   prescribes.
-4. **Owner's surname spelling**: `ธรรมยงค์กิจ` is used as given in the
-   plan header — confirm before reuse across the other three apps.
-5. **Self-tests**: the 30-second chair-stand and TUG timers are shown
-   to all tiers with an on-screen "someone nearby" safety warning, not
-   gated to supervised-only — confirm this is acceptable for Tier C.
-6. **Every Thai clinical string** (medication instructions, red flags,
-   safety copy) needs a native-speaker clinical read-through before
-   real patient use — content here is a structurally complete v1
-   draft, not clinically validated copy.
-7. **Branding**: the header currently has a placeholder box where the
-   real CNMI wordmark/logo image should go — no logo asset was
-   fabricated. Also add real 192×192 / 512×512 PNG icons (currently a
-   generic SVG placeholder) before a production deploy.
+## Accessibility
 
-## Accessibility notes (Step 12 pass)
-
-- Base body font is 19px (Thai/English), buttons and tap targets are
-  ≥48px per the plan's older-user accessibility bar.
-- Verified with a headless Chromium smoke test (registration →
-  onboarding → all six tabs → key interactions) with zero console
-  errors; a manual pass on real iPhone Safari / Android Chrome
-  hardware (A2HS flow, font legibility, timer accuracy) is still
-  needed before pilot, per the plan's Step 12 device-testing checklist.
-- A high-contrast theme toggle was not implemented in v1 — colours use
-  WCAG-conscious contrast but there is no separate high-contrast mode.
+- 19px base text, ≥48px tap targets, high-contrast blue palette.
+- Chart colours were validated for colour-vision deficiency and contrast
+  against the app surface; every chart also has a "view as table" twin
+  so no value is available only as colour or hover.
+- Verified end-to-end in headless Chromium (registration → assessment →
+  all seven tabs → nutrition review → self-tests → fall logging →
+  monthly check-in) with zero console errors. A pass on real iPhone
+  Safari and Android Chrome hardware is still needed before a pilot.
+- No separate high-contrast mode in v1.

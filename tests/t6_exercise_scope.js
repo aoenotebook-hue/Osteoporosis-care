@@ -10,70 +10,90 @@ function run() {
     fn: function () {
       [1, 2, 3].forEach(function (level) {
         var list = core.getExercisesForPatient(level, []);
-        helpers.assert(list.length > 0, 'level ' + level + ' should have at least one exercise');
+        helpers.assert(list.length > 0, 'level ' + level + ' should have exercises');
         list.forEach(function (ex) {
-          helpers.assert(ex.levels.indexOf(level) !== -1, ex.id + ' should not appear for level ' + level);
+          helpers.assert(ex.levels.indexOf(level) !== -1, ex.id + ' should not appear at level ' + level);
         });
       });
     }
   });
 
   cases.push({
-    name: 'level 1 never includes level-3-only exercises like tandem walk or backward walk',
+    name: 'level 1 never shows unsupported level-3 exercises',
     fn: function () {
-      var list = core.getExercisesForPatient(1, []);
-      var ids = list.map(function (ex) { return ex.id; });
+      var ids = core.getExercisesForPatient(1, []).map(function (ex) { return ex.id; });
       helpers.assert(ids.indexOf('tandem_walk') === -1, 'tandem_walk should not appear at level 1');
       helpers.assert(ids.indexOf('backward_walk') === -1, 'backward_walk should not appear at level 1');
     }
   });
 
   cases.push({
-    name: 'a patient flagged with a vertebral fracture never sees avoidIf-flagged exercises, at any level',
+    name: 'a vertebral fracture hides avoidIf-flagged exercises at every level',
     fn: function () {
       [1, 2, 3].forEach(function (level) {
-        var list = core.getExercisesForPatient(level, ['vertebralFracture']);
-        var flagged = list.filter(function (ex) { return ex.avoidIf.indexOf('vertebralFracture') !== -1; });
-        helpers.assertEqual(flagged.length, 0, 'level ' + level + ' should hide vertebralFracture-flagged exercises');
+        var flagged = core.getExercisesForPatient(level, ['vertebralFracture']).filter(function (ex) {
+          return ex.avoidIf.indexOf('vertebralFracture') !== -1;
+        });
+        helpers.assertEqual(flagged.length, 0, 'level ' + level + ' should hide flagged exercises');
       });
     }
   });
 
   cases.push({
-    name: 'without the avoid tag, flagged exercises are still shown to eligible levels',
+    name: 'without the avoid tag, flagged exercises still show for eligible levels',
     fn: function () {
-      var list = core.getExercisesForPatient(2, []);
-      var ids = list.map(function (ex) { return ex.id; });
-      helpers.assert(ids.indexOf('seated_row_band') !== -1, 'seated_row_band should be visible at level 2 with no avoid tags');
+      var ids = core.getExercisesForPatient(2, []).map(function (ex) { return ex.id; });
+      helpers.assert(ids.indexOf('seated_row_band') !== -1, 'seated_row_band should show at level 2 with no avoid tags');
     }
   });
 
   cases.push({
-    name: 'every exercise declares a valid group and non-empty levels array',
-    fn: function () {
-      var validGroups = ['balance', 'strength', 'posture'];
-      core.EXERCISE_LIST.forEach(function (ex) {
-        helpers.assert(validGroups.indexOf(ex.group) !== -1, ex.id + ' has invalid group "' + ex.group + '"');
-        helpers.assert(Array.isArray(ex.levels) && ex.levels.length > 0, ex.id + ' must declare at least one level');
-      });
-    }
-  });
-
-  cases.push({
-    name: 'media manifest gating leaves no blank tiles: every exercise has a name to fall back on when video is missing',
+    name: 'every exercise carries a written how-to so a patient can follow it alone',
     fn: function () {
       core.EXERCISE_LIST.forEach(function (ex) {
-        helpers.assert(ex.name && ex.name.th && ex.name.en, ex.id + ' must have a text fallback if video is unavailable');
+        helpers.assert(ex.howTo && ex.howTo.th && ex.howTo.en, ex.id + ' is missing a TH/EN how-to explanation');
+        helpers.assert(ex.howTo.th.length > 40, ex.id + ' Thai how-to looks too short to follow');
+        helpers.assert(ex.howTo.en.length > 40, ex.id + ' English how-to looks too short to follow');
+        helpers.assert(ex.amount && ex.amount.th && ex.amount.en, ex.id + ' is missing a TH/EN amount');
       });
     }
   });
 
   cases.push({
-    name: 'weekly targets match the plan (balance 3x, strength 2x, walking 30min most days)',
+    name: 'every exercise declares a valid group and at least one level',
     fn: function () {
-      helpers.assertEqual(core.WEEKLY_TARGETS.balanceSessionsPerWeek, 3);
-      helpers.assertEqual(core.WEEKLY_TARGETS.strengthSessionsPerWeek, 2);
-      helpers.assertEqual(core.WEEKLY_TARGETS.walkingMinutesMostDays, 30);
+      var groups = ['balance', 'strength', 'posture'];
+      core.EXERCISE_LIST.forEach(function (ex) {
+        helpers.assert(groups.indexOf(ex.group) !== -1, ex.id + ' has an invalid group');
+        helpers.assert(Array.isArray(ex.levels) && ex.levels.length > 0, ex.id + ' must declare a level');
+      });
+    }
+  });
+
+  cases.push({
+    name: 'media is only reported for exercises whose file is actually in the manifest',
+    fn: function () {
+      core.EXERCISE_LIST.forEach(function (ex) {
+        var declared = core.MEDIA_MANIFEST[ex.id];
+        if (!declared || !declared.src) {
+          helpers.assertEqual(core.hasExerciseMedia(ex.id), false, ex.id + ' has no media file, so no media area should render');
+          helpers.assertEqual(core.getExerciseMedia(ex.id), null);
+        } else {
+          helpers.assertEqual(core.hasExerciseMedia(ex.id), true, ex.id + ' declares media and should render it');
+        }
+      });
+    }
+  });
+
+  cases.push({
+    name: 'a manifest entry without a usable src is treated as no media',
+    fn: function () {
+      core.MEDIA_MANIFEST.__test_placeholder = { type: 'video', src: '' };
+      helpers.assertEqual(core.hasExerciseMedia('__test_placeholder'), false);
+      core.MEDIA_MANIFEST.__test_real = { type: 'image', src: 'media/exercises/test.jpg' };
+      helpers.assertEqual(core.hasExerciseMedia('__test_real'), true);
+      delete core.MEDIA_MANIFEST.__test_placeholder;
+      delete core.MEDIA_MANIFEST.__test_real;
     }
   });
 

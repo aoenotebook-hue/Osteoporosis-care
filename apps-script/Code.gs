@@ -1,20 +1,21 @@
 /**
- * Backend for the "ดูแลกระดูก" (Bone Health Companion) PWA.
+ * Backend for the "ดูแลกระดูกพรุน" (Osteoporosis Care) PWA.
  * Deploy as a Web App (Execute as: Me, Access: Anyone) bound to a
- * Google Sheet with the tabs created by ensureSheet() below.
+ * Google Sheet. Tabs are created automatically on first write.
  *
- * After deploying, copy the Web App URL into WEBHOOK_URL and the
- * SHARED_TOKEN value below into SHARED_TOKEN in index.html.
+ * SHARED_TOKEN must match the value in index.html. After editing this
+ * file, use Deploy > Manage deployments > Edit > New version, or the
+ * live /exec URL keeps running the old code.
  */
 
 var SHARED_TOKEN = 'mQ6tfi1HQa0fBNbhzt2AoVk_YKMfmX5v';
 
 var SHEET_COLUMNS = {
-  Registrations: ['patientId', 'hn', 'hnUnknown', 'name', 'phone', 'yearOfBirth', 'sex', 'consent', 'receivedAt'],
-  CheckIns: ['patientId', 'date', 'heightCm', 'chairStandReps', 'tugSeconds', 'receivedAt'],
+  Registrations: ['patientId', 'hn', 'hnUnknown', 'yearOfBirth', 'age', 'sex', 'consent', 'receivedAt'],
+  CheckIns: ['patientId', 'date', 'heightCm', 'chairStandReps', 'tugSeconds', 'safetyScore', 'falls', 'missedDoses', 'balanceLevel', 'receivedAt'],
   Falls: ['patientId', 'date', 'injured', 'cause', 'receivedAt'],
   Adherence: ['patientId', 'date', 'receivedAt'],
-  Exercise: ['patientId', 'date', 'group', 'receivedAt']
+  Nutrition: ['patientId', 'date', 'calciumIntakeMg', 'calciumSupplementMg', 'vitaminDSupplementIu', 'proteinIntakeG', 'receivedAt']
 };
 
 function doPost(e) {
@@ -23,7 +24,7 @@ function doPost(e) {
     var payload = JSON.parse(e.postData.contents);
     if (payload.token !== SHARED_TOKEN) {
       output = { ok: false, error: 'invalid token' };
-    } else if (payload.type === undefined && payload.name !== undefined) {
+    } else if (payload.type === undefined) {
       output = { ok: true, result: upsertRegistration(payload) };
     } else {
       output = { ok: true, result: appendDedupedRecord(payload) };
@@ -40,8 +41,16 @@ function ensureSheet(name) {
   if (!sheet) {
     sheet = ss.insertSheet(name);
     sheet.appendRow(SHEET_COLUMNS[name]);
+    sheet.setFrozenRows(1);
   }
   return sheet;
+}
+
+function rowFor(columns, payload) {
+  return columns.map(function (col) {
+    if (col === 'receivedAt') return new Date();
+    return payload[col] === undefined ? '' : payload[col];
+  });
 }
 
 function upsertRegistration(payload) {
@@ -52,45 +61,68 @@ function upsertRegistration(payload) {
 
   for (var r = 1; r < data.length; r++) {
     if (data[r][patientIdCol] === payload.patientId) {
-      var rowValues = columns.map(function (col) {
-        return col === 'receivedAt' ? new Date() : payload[col];
-      });
-      sheet.getRange(r + 1, 1, 1, columns.length).setValues([rowValues]);
+      sheet.getRange(r + 1, 1, 1, columns.length).setValues([rowFor(columns, payload)]);
       return { action: 'updated', row: r + 1 };
     }
   }
 
-  var newRow = columns.map(function (col) {
-    return col === 'receivedAt' ? new Date() : payload[col];
-  });
-  sheet.appendRow(newRow);
+  sheet.appendRow(rowFor(columns, payload));
   return { action: 'inserted', row: sheet.getLastRow() };
 }
 
-function typeToSheetName(type) {
-  var map = { checkin: 'CheckIns', falls: 'Falls', adherence: 'Adherence', exercise: 'Exercise' };
-  return map[type];
+/**
+ * A day can carry several different check-in measurements (height, then a
+ * self-test, then a safety score), so those merge into one row per day
+ * instead of the later ones being dropped as duplicates. A second fall on
+ * the same day is a real event, so falls dedupe on their full content -
+ * only a resent identical record is skipped.
+ */
+var SHEET_ROUTING = {
+  checkin: { sheet: 'CheckIns', dedupe: 'merge' },
+  nutrition: { sheet: 'Nutrition', dedupe: 'merge' },
+  adherence: { sheet: 'Adherence', dedupe: 'date' },
+  falls: { sheet: 'Falls', dedupe: 'content' }
+};
+
+function cellToString(value) {
+  if (value instanceof Date) return Utilities.formatDate(value, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+  return String(value === undefined || value === null ? '' : value);
 }
 
 function appendDedupedRecord(payload) {
-  var sheetName = typeToSheetName(payload.type);
-  if (!sheetName) throw new Error('unknown record type: ' + payload.type);
+  var routing = SHEET_ROUTING[payload.type];
+  if (!routing) throw new Error('unknown record type: ' + payload.type);
 
-  var sheet = ensureSheet(sheetName);
-  var columns = SHEET_COLUMNS[sheetName];
+  var sheet = ensureSheet(routing.sheet);
+  var columns = SHEET_COLUMNS[routing.sheet];
   var data = sheet.getDataRange().getValues();
   var patientIdCol = columns.indexOf('patientId');
   var dateCol = columns.indexOf('date');
 
   for (var r = 1; r < data.length; r++) {
-    if (data[r][patientIdCol] === payload.patientId && data[r][dateCol] === payload.date) {
+    var sameDay = data[r][patientIdCol] === payload.patientId && cellToString(data[r][dateCol]) === payload.date;
+    if (!sameDay) continue;
+
+    if (routing.dedupe === 'date') {
       return { action: 'duplicate_skipped', row: r + 1 };
     }
+    if (routing.dedupe === 'content') {
+      var identical = columns.every(function (col, i) {
+        if (col === 'receivedAt' || payload[col] === undefined) return true;
+        return cellToString(data[r][i]) === cellToString(payload[col]);
+      });
+      if (identical) return { action: 'duplicate_skipped', row: r + 1 };
+      continue;
+    }
+
+    var merged = columns.map(function (col, i) {
+      if (col === 'receivedAt') return new Date();
+      return payload[col] === undefined || payload[col] === '' ? data[r][i] : payload[col];
+    });
+    sheet.getRange(r + 1, 1, 1, columns.length).setValues([merged]);
+    return { action: 'merged', row: r + 1 };
   }
 
-  var newRow = columns.map(function (col) {
-    return col === 'receivedAt' ? new Date() : payload[col];
-  });
-  sheet.appendRow(newRow);
+  sheet.appendRow(rowFor(columns, payload));
   return { action: 'inserted', row: sheet.getLastRow() };
 }
