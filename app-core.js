@@ -14,10 +14,6 @@
 
   var CONTENT = {
     appName: t('ดูแลกระดูกพรุน', 'Osteoporosis Care'),
-    appNameShort: t('ดูแลกระดูกพรุน', 'Osteoporosis Care'),
-
-    langToggleTh: t('ไทย', 'Thai'),
-    langToggleEn: t('อังกฤษ', 'English'),
 
     navHome: t('หน้าหลัก', 'Home'),
     navDrug: t('ยา', 'Medicine'),
@@ -51,15 +47,12 @@
     registerSexMale: t('ชาย', 'Male'),
     registerSexFemale: t('หญิง', 'Female'),
     registerSubmit: t('เริ่มใช้งาน', 'Start'),
-    registerAgeComputed: t('อายุของท่าน', 'Your age'),
     registerYearInvalid: t('กรุณากรอกปีเกิดให้ถูกต้อง', 'Please enter a valid year of birth'),
     registerHNRequired: t('กรุณากรอกเลข HN หรือเลือก "ไม่ทราบเลข HN"', 'Please enter your HN or tick "I don\'t know my HN"'),
     registerSexRequired: t('กรุณาเลือกเพศ', 'Please choose your sex'),
     registerConsentRequired: t('กรุณายอมรับความยินยอมก่อนเริ่มใช้งาน', 'Please accept the consent before starting'),
-    yearsOld: t('ปี', 'years'),
 
     onboardingTitle: t('ประเมินความเสี่ยงกระดูกหัก', 'Fracture Risk Assessment'),
-    onboardingIntro: t('ตอบคำถามสั้น ๆ เพื่อให้แอปแนะนำการดูแลที่เหมาะกับท่าน', 'A few short questions so the app can tailor your care'),
     onboardingNext: t('ถัดไป', 'Next'),
     onboardingBack: t('ย้อนกลับ', 'Back'),
     onboardingFinish: t('เริ่มใช้งาน', 'Continue'),
@@ -80,7 +73,6 @@
     qFearFalling: t('ท่านกลัวการล้มจนต้องเลี่ยงกิจกรรมบางอย่างหรือไม่', 'Does fear of falling make you avoid some activities?'),
     yes: t('ใช่', 'Yes'),
     no: t('ไม่ใช่', 'No'),
-    notSure: t('ไม่ทราบ', 'Not sure'),
     none: t('ไม่ได้ใช้ยา', 'Not taking any'),
 
     tierResultTitle: t('ผลการประเมินของท่าน', 'Your assessment'),
@@ -90,7 +82,6 @@
     tierB_desc: t('ท่านมีความเสี่ยงกระดูกหักสูง จากผลตรวจ DXA การใช้ยาสเตียรอยด์ ประวัติล้ม หรืออายุ เป้าหมายคือใช้ยาสม่ำเสมอและป้องกันการล้มอย่างจริงจัง', 'You are at high risk of fracture because of your DXA result, steroid use, a fall, or your age. The goal is consistent medication and serious fall prevention.'),
     tierC_name: t('เคยกระดูกหักแล้ว', 'Post-Fracture'),
     tierC_desc: t('ท่านเคยกระดูกหักจากอุบัติเหตุเล็กน้อยมาก่อน ซึ่งเพิ่มโอกาสหักซ้ำ เป้าหมายคือเคลื่อนไหวอย่างปลอดภัยและป้องกันการหักครั้งต่อไป', 'You have already had a fracture from a minor injury, which raises the chance of another. The goal is safe movement and preventing the next fracture.'),
-    tierLabel: t('ระดับการดูแล', 'Care level'),
 
     balanceLevel1: t('ระดับ 1 — จับที่ยึดตลอด', 'Level 1 — Always supported'),
     balanceLevel2: t('ระดับ 2 — แตะที่ยึดเบา ๆ', 'Level 2 — Light support'),
@@ -109,9 +100,6 @@
     homeCheckinDue: t('ถึงเวลาเช็คอินประจำเดือน', 'Your monthly check-in is due'),
     homeCheckinStart: t('เริ่มเช็คอิน', 'Start check-in'),
     homeNutritionDue: t('ถึงเวลาประเมินอาหารประจำปี', 'Your yearly nutrition review is due'),
-    homeLearnMore: t('ความรู้เพิ่มเติม', 'Learn more'),
-    homeMarkDone: t('บันทึกแล้ว', 'Done'),
-    homeQuickLinks: t('ทางลัด', 'Quick links'),
 
     boneWhatIsTitle: t('โรคกระดูกพรุนคืออะไร', 'What is osteoporosis?'),
     boneWhatIsBody: t(
@@ -149,8 +137,6 @@
     calciumMgUnit: t('มก.', 'mg'),
     iuUnit: t('IU', 'IU'),
     gramUnit: t('กรัม', 'g'),
-    minutesUnit: t('นาที', 'minutes'),
-    kgUnit: t('กก.', 'kg'),
 
     avoidTitle: t('สิ่งที่ควรลด', 'Things to cut down'),
     avoidBody: t('ลดอาหารเค็มจัด ลดกาแฟเหลือไม่เกินวันละ 2 แก้ว จำกัดแอลกอฮอล์ และงดสูบบุหรี่ เพราะทั้งหมดนี้เร่งการสูญเสียมวลกระดูก', 'Cut down on very salty food, keep coffee to no more than 2 cups a day, limit alcohol and stop smoking — all of these speed up bone loss.'),
@@ -187,14 +173,11 @@
     moveHowTo: t('วิธีทำ', 'How to do it'),
     moveNeverDo: t('ท่าที่ต้องหลีกเลี่ยง', 'Movements to avoid'),
     moveNeverDoBody: t('หลีกเลี่ยงท่าซิทอัพ ท่าก้มแตะปลายเท้าโดยขาตรง การบิดตัวแรง ๆ และการยกของหนักโดยก้มหลัง เพราะเพิ่มแรงกดที่กระดูกสันหลัง', 'Avoid sit-ups, straight-leg toe touches, forceful twisting and lifting heavy things with a bent back — these load the spine.'),
-    exerciseRequires: t('สิ่งที่ต้องเตรียม', 'You will need'),
     exerciseAmount: t('จำนวน', 'Amount'),
     reqChair: t('เก้าอี้มั่นคง', 'A sturdy chair'),
     reqWall: t('กำแพงหรือราวจับ', 'A wall or rail'),
     reqBand: t('ยางยืด', 'Resistance band'),
     reqNone: t('ไม่ต้องใช้อุปกรณ์', 'No equipment'),
-
-    safetyAuditTitle: t('ตรวจความปลอดภัยในบ้าน', 'Home Safety Check'),
     safetyIntro: t('แตะรายการที่บ้านของท่านทำได้แล้ว รายการที่ยังไม่ได้ทำจะถูกเน้นไว้ให้แก้ไข', 'Tap what your home already has. Anything still missing stays highlighted for you to fix.'),
     safetyScoreLabel: t('คะแนนความปลอดภัย', 'Safety score'),
     safetyDone: t('ทำแล้ว', 'Done'),
@@ -220,7 +203,6 @@
 
     trackTitle: t('ติดตามผล', 'Your Progress'),
     trackNoData: t('ยังไม่มีข้อมูลพอที่จะแสดงกราฟ บันทึกอย่างน้อย 2 ครั้งเพื่อดูแนวโน้ม', 'Not enough data for a graph yet — record at least twice to see a trend'),
-    trackLatest: t('ล่าสุด', 'Latest'),
     fallsLogTitle: t('บันทึกการล้ม', 'Falls'),
     fallsChartTitle: t('จำนวนครั้งที่ล้มในแต่ละเดือน', 'Falls per month'),
     fallsLogAdd: t('บันทึกการล้ม', 'Record a fall'),
@@ -232,12 +214,10 @@
     fallsNotInjured: t('ไม่บาดเจ็บ', 'Not injured'),
     heightTitle: t('ส่วนสูง', 'Height'),
     heightChartTitle: t('ส่วนสูงที่เปลี่ยนไป', 'Height over time'),
-    heightBaseline: t('ส่วนสูงเริ่มต้น', 'Starting height'),
     heightCurrent: t('วัดส่วนสูงวันนี้ (ซม.)', "Today's height (cm)"),
     heightEvery6Months: t('วัดทุก 6 เดือน', 'Measure every 6 months'),
     heightLossWarning: t('ส่วนสูงลดลงตั้งแต่ 2 ซม. ขึ้นไป ควรแจ้งแพทย์เพราะอาจมีกระดูกสันหลังยุบ', 'Your height has dropped 2 cm or more — tell your doctor, as this can mean a spinal fracture'),
     heightLossOk: t('ส่วนสูงยังคงที่ดี', 'Your height is holding steady'),
-    selfTestTitle: t('ทดสอบความแข็งแรงด้วยตนเอง', 'Self-Tests'),
     selfTestSafety: t('ความปลอดภัยก่อนทดสอบ: ต้องมีคนอยู่ด้วยเสมอ วางเก้าอี้ชิดกำแพง และหยุดทันทีหากเวียนศีรษะหรือเจ็บ', 'Safety first: always have someone with you, place the chair against a wall, and stop at once if you feel dizzy or sore.'),
     chairStandTitle: t('ลุก-นั่งเก้าอี้ 30 วินาที', '30-Second Chair Stand'),
     chairStandChartTitle: t('จำนวนครั้งที่ลุกได้ใน 30 วินาที', 'Chair stands in 30 seconds'),
@@ -265,13 +245,11 @@
     dxaNote: t('โดยทั่วไปตรวจซ้ำทุก 1-2 ปี ตามที่แพทย์กำหนด', 'Usually repeated every 1-2 years, as your doctor advises'),
 
     monthlyCheckinTitle: t('เช็คอินประจำเดือน', 'Monthly Check-in'),
-    checkinIntro: t('ใช้เวลาประมาณ 1 นาที เพื่อบันทึกสิ่งสำคัญของเดือนนี้', 'About one minute to record what matters this month'),
     checkinStepFalls: t('เดือนนี้ท่านล้มหรือไม่', 'Have you fallen this month?'),
     checkinStepFallsHelp: t('นับรวมทุกครั้งที่เสียหลักจนล้มลงกับพื้น แม้ไม่บาดเจ็บ', 'Count every time you ended up on the ground, even without injury'),
     checkinStepMed: t('เดือนนี้ท่านใช้ยาได้ครบตามกำหนดหรือไม่', 'Did you take your medication as scheduled this month?'),
     checkinStepMedMissed: t('มีบางครั้งที่ลืม', 'I missed some doses'),
     checkinStepMedOk: t('ครบตามกำหนด', 'Yes, all of them'),
-    checkinStepMedNone: t('ยังไม่ได้ใช้ยา', 'I am not on medication'),
     checkinStepHeight: t('ถึงกำหนดวัดส่วนสูงแล้ว', 'It is time to measure your height'),
     checkinStepHeightSkip: t('ยังไม่ได้วัด ขอข้ามไปก่อน', 'Skip for now'),
     checkinStepSelfTest: t('ถึงกำหนดทดสอบความแข็งแรงแล้ว', 'It is time for your self-tests'),
@@ -287,8 +265,6 @@
 
     alertTitle: t('เมื่อไรต้องรีบพบแพทย์', 'When to get help urgently'),
     alertIntro: t('หากมีอาการเหล่านี้ อย่ารอ ให้ติดต่อตามคำแนะนำในแต่ละข้อทันที', 'If you have any of these, do not wait — follow the action shown for that item straight away.'),
-    alertCallNow: t('โทรฉุกเฉินทันที', 'Call emergency now'),
-    alertCallClinicToday: t('ติดต่อโรงพยาบาลวันนี้', 'Contact the hospital today'),
     alertSeverityCritical: t('ฉุกเฉิน', 'Emergency'),
     alertSeveritySerious: t('ด่วน', 'Urgent'),
     alertBackPain: t('ปวดหลังรุนแรงทันทีทันใด โดยเฉพาะหลังล้ม ไอแรง ๆ หรือยกของ', 'Sudden severe back pain, especially after a fall, a hard cough, or lifting'),
@@ -302,8 +278,6 @@
     alertCallClinic: t('โทรโรงพยาบาล', 'Call the hospital'),
     alertCallEms: t('โทร 1669 (ฉุกเฉิน)', 'Call 1669 (emergency)'),
     alertAfterFall: t('ท่านเพิ่งบันทึกว่าล้มและบาดเจ็บ กรุณาอ่านรายการด้านล่างและติดต่อตามคำแนะนำ', 'You have just recorded a fall with injury. Please read the list below and follow the action shown.'),
-
-    resourcesTitle: t('ความรู้เรื่องกระดูกพรุน', 'Learn About Osteoporosis'),
     learnWhatIsTitle: t('โรคกระดูกพรุนคืออะไร', 'What is osteoporosis?'),
     learnTScoreTitle: t('ค่า T-score หมายถึงอะไร', 'What does the T-score mean?'),
     learnTScoreBody: t('T-score เปรียบเทียบความหนาแน่นกระดูกของท่านกับคนหนุ่มสาวที่กระดูกปกติ ค่าตั้งแต่ -1 ขึ้นไปถือว่าปกติ ระหว่าง -1 ถึง -2.5 คือกระดูกบาง และ -2.5 หรือต่ำกว่าคือกระดูกพรุน', 'The T-score compares your bone density with that of a healthy young adult. Above -1 is normal, between -1 and -2.5 is thinning bone, and -2.5 or lower is osteoporosis.'),
@@ -382,9 +356,7 @@
 
     save: t('บันทึก', 'Save'),
     cancel: t('ยกเลิก', 'Cancel'),
-    close: t('ปิด', 'Close'),
     back: t('ย้อนกลับ', 'Back'),
-    edit: t('แก้ไข', 'Edit'),
     offlineNotice: t('ขณะนี้ไม่มีอินเทอร์เน็ต ข้อมูลจะถูกส่งให้อัตโนมัติเมื่อกลับมาออนไลน์', 'You are offline — your data will be sent automatically when you reconnect')
   };
 

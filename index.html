@@ -931,7 +931,8 @@
     var nutritionDue = C.isNutritionReviewDue(state.nutrition.lastAssessedDate, todayStr());
     var tip = SAFETY_TIP_KEYS[new Date().getDate() % SAFETY_TIP_KEYS.length];
 
-    var html = '<p class="muted">' + esc(tr('homeGreeting')) + '</p>';
+    var html = '<h1>' + esc(tr('homeTodayTitle')) + '</h1>';
+    html += '<p class="muted">' + esc(tr('homeGreeting')) + '</p>';
     html += '<div class="card accent"><div class="badge-row">' +
       '<span class="badge tier-' + state.tier.toLowerCase() + '">' + esc(tr(p + '_name')) + '</span>' +
       '<span class="badge level">' + esc(tr('balanceLevel' + state.balance.currentLevel)) + '</span>' +
@@ -979,7 +980,7 @@
     var bigNumber, unitText, detail;
     if (reminder.overdue) {
       bigNumber = Math.abs(reminder.daysUntil);
-      unitText = tr('homeCountdownDays');
+      unitText = tr('homeCountdownOverdue');
       detail = '<p class="status-line bad">⚠ ' + esc(tr('homeMedOverdue')) + '</p>';
     } else if (reminder.dueToday) {
       bigNumber = '0';
@@ -1014,7 +1015,9 @@
       '<span class="value">' + (pending ? pending + ' ' + esc(tr('syncItems')) : '✓ ' + esc(tr('syncAllSent'))) + '</span></div>';
     html += '<div class="sync-row"><span class="label">' + esc(tr('syncLastOk')) + '</span>' +
       '<span class="value">' + (sync.lastOkAt ? esc(formatDateTime(sync.lastOkAt)) : esc(tr('syncNever'))) + '</span></div>';
-    if (sync.lastError) {
+    if (sync.lastError === 'offline') {
+      html += '<p class="muted" style="margin-top:8px;">' + esc(tr('offlineNotice')) + '</p>';
+    } else if (sync.lastError) {
       html += '<div class="sync-row"><span class="label">' + esc(tr('syncLastError')) + '</span>' +
         '<span class="value" style="color:var(--critical);">' + esc(sync.lastError) + '</span></div>';
     }
@@ -1333,7 +1336,7 @@
           : '<span class="tag">' + esc(tr('reqNone')) + '</span>';
         return '<div class="exercise">' + mediaHtml +
           '<h3>' + esc(loc(ex.name)) + '</h3>' +
-          '<p>' + esc(loc(ex.howTo)) + '</p>' +
+          '<p><strong>' + esc(tr('moveHowTo')) + ':</strong> ' + esc(loc(ex.howTo)) + '</p>' +
           '<p><span class="tag">' + esc(tr('exerciseAmount')) + ': ' + esc(loc(ex.amount)) + '</span>' + reqs + '</p>' +
           '</div>';
       }).join('');
@@ -1616,7 +1619,7 @@
 
     html += '<div class="call-bar">' +
       '<a class="btn danger" href="tel:' + C.ALERT_CONTACTS.emsPhone + '">📞 ' + esc(tr('alertCallEms')) + '</a>' +
-      '<a class="btn secondary" href="tel:' + C.ALERT_CONTACTS.clinicPhone.replace(/\s/g, '') + '">🏥 ' + esc(tr('alertCallClinic')) + ' ' + esc(C.ALERT_CONTACTS.clinicPhone) + '</a>' +
+      '<a class="btn secondary" href="tel:' + C.ALERT_CONTACTS.hospitalPhone.replace(/\s/g, '') + '">🏥 ' + esc(tr('alertCallClinic')) + ' ' + esc(C.ALERT_CONTACTS.hospitalPhone) + '</a>' +
       '</div>';
     return html;
   }
