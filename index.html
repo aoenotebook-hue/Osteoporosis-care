@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2f6f4f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="ดูแลกระดูก">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<title>ดูแลกระดูก — Bone Health Companion</title>
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #f7f5f0;
+    --surface: #ffffff;
+    --text: #1f2a24;
+    --muted: #5c6b62;
+    --border: #ddd6c9;
+    --primary: #2f6f4f;
+    --primary-dark: #204d38;
+    --tier-a: #2f6f4f;
+    --tier-b: #a9720d;
+    --tier-c: #4a5a99;
+    --danger: #b3261e;
+    --danger-bg: #fbe9e7;
+    --radius: 14px;
+    --tap: 48px;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font-family: 'Noto Sans Thai UI', 'Noto Sans Thai', 'Sarabun', -apple-system, 'Segoe UI', system-ui, sans-serif;
+    font-size: 19px; line-height: 1.5; -webkit-tap-highlight-color: transparent;
+  }
+  body { padding-bottom: 84px; }
+  h1, h2, h3 { line-height: 1.3; margin: 0 0 8px; }
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.25rem; }
+  h3 { font-size: 1.1rem; }
+  p { margin: 0 0 10px; }
+  button { font: inherit; }
+  a { color: var(--primary-dark); }
+
+  header.app-header {
+    background: var(--primary); color: #fff; padding: 14px 16px;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  }
+  .header-titles { display: flex; flex-direction: column; }
+  .header-titles .org { font-size: 0.75rem; opacity: 0.85; }
+  .header-titles .app-name { font-size: 1.1rem; font-weight: 700; }
+  .logo-placeholder {
+    width: 40px; height: 40px; border-radius: 10px; background: rgba(255,255,255,0.18);
+    display: flex; align-items: center; justify-content: center; font-size: 0.6rem; text-align: center; flex-shrink: 0;
+  }
+  .lang-toggle {
+    background: rgba(255,255,255,0.18); border: none; color: #fff; padding: 10px 14px;
+    border-radius: 999px; min-height: var(--tap); font-weight: 600; cursor: pointer;
+  }
+
+  main.screen { padding: 16px; max-width: 640px; margin: 0 auto; }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px; margin-bottom: 14px;
+  }
+  .card.warn { background: var(--danger-bg); border-color: #e3aca7; }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    min-height: var(--tap); padding: 10px 18px; border-radius: 999px; border: 2px solid var(--primary);
+    background: var(--primary); color: #fff; font-weight: 700; cursor: pointer; width: 100%;
+  }
+  .btn.secondary { background: #fff; color: var(--primary); }
+  .btn.ghost { background: transparent; color: var(--primary-dark); border-color: transparent; text-decoration: underline; }
+  .btn.danger { background: var(--danger); border-color: var(--danger); }
+  .btn-row { display: flex; gap: 10px; }
+  .btn-row .btn { flex: 1; }
+
+  label { display: block; font-weight: 600; margin: 12px 0 6px; }
+  input[type="text"], input[type="tel"], input[type="number"], input[type="date"], select, textarea {
+    width: 100%; min-height: var(--tap); border: 2px solid var(--border); border-radius: 10px;
+    padding: 8px 12px; font-size: 1rem; background: #fff; color: var(--text);
+  }
+  .checkbox-row { display: flex; align-items: flex-start; gap: 10px; margin: 10px 0; }
+  .checkbox-row input { width: 26px; height: 26px; flex-shrink: 0; margin-top: 2px; }
+
+  .choice-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+  .choice-btn {
+    min-height: var(--tap); padding: 10px 18px; border-radius: 12px; border: 2px solid var(--border);
+    background: #fff; cursor: pointer; font-weight: 600; flex: 1 1 auto;
+  }
+  .choice-btn.selected { border-color: var(--primary); background: #e9f3ee; color: var(--primary-dark); }
+
+  nav.tab-bar {
+    position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid var(--border);
+    display: flex; padding: 4px 2px calc(4px + env(safe-area-inset-bottom));
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.05); z-index: 20;
+  }
+  nav.tab-bar button {
+    flex: 1; background: none; border: none; padding: 8px 2px; min-height: var(--tap);
+    display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--muted);
+    font-size: 0.78rem; cursor: pointer; border-radius: 10px;
+  }
+  nav.tab-bar button.active { color: var(--primary-dark); font-weight: 700; background: #e9f3ee; }
+  nav.tab-bar .tab-icon { font-size: 1.25rem; }
+
+  .badge { display: inline-block; padding: 6px 14px; border-radius: 999px; color: #fff; font-weight: 700; font-size: 0.9rem; }
+  .badge.tier-a { background: var(--tier-a); }
+  .badge.tier-b { background: var(--tier-b); }
+  .badge.tier-c { background: var(--tier-c); }
+
+  .progress-bar { background: var(--border); border-radius: 999px; height: 14px; overflow: hidden; margin: 6px 0; }
+  .progress-bar > div { background: var(--primary); height: 100%; }
+
+  ul.plain { list-style: none; margin: 0; padding: 0; }
+  ul.plain li { padding: 8px 0; border-bottom: 1px solid var(--border); }
+  ul.plain li:last-child { border-bottom: none; }
+
+  .tag {
+    display: inline-block; font-size: 0.75rem; padding: 3px 10px; border-radius: 999px;
+    background: #eef0e8; color: var(--muted); margin-right: 6px;
+  }
+
+  .a2hs-banner {
+    position: fixed; left: 12px; right: 12px; bottom: 76px; background: var(--primary-dark); color: #fff;
+    padding: 12px 14px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; z-index: 25; box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+  }
+  .a2hs-banner p { margin: 0; font-size: 0.9rem; }
+  .a2hs-actions { display: flex; gap: 8px; flex-shrink: 0; }
+  .a2hs-actions button { min-height: 40px; padding: 6px 12px; border-radius: 999px; border: none; font-weight: 700; cursor: pointer; }
+  .a2hs-actions .install { background: #fff; color: var(--primary-dark); }
+  .a2hs-actions .dismiss { background: transparent; color: #fff; text-decoration: underline; }
+
+  .exercise-video-fallback {
+    background: #eef0e8; border-radius: 10px; padding: 24px 12px; text-align: center; color: var(--muted);
+    margin-bottom: 8px; font-size: 0.85rem;
+  }
+
+  .timer-display { font-size: 2.4rem; font-weight: 800; text-align: center; margin: 10px 0; color: var(--primary-dark); }
+
+  .link-list a { display: block; padding: 10px 0; border-bottom: 1px solid var(--border); text-decoration: none; color: var(--text); }
+  .link-list a .title { color: var(--primary-dark); font-weight: 700; display: block; }
+  .link-list a .desc { color: var(--muted); font-size: 0.9rem; }
+
+  .error-text { color: var(--danger); font-size: 0.85rem; margin-top: -8px; margin-bottom: 8px; }
+  .offline-notice { background: #fff3cd; border: 1px solid #ffe08a; color: #6b5900; border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; font-size: 0.9rem; }
+
+  .home-greeting { font-size: 1rem; color: var(--muted); margin-bottom: 4px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="app-header">
+    <div class="logo-placeholder" aria-hidden="true">CNMI<br>logo</div>
+    <div class="header-titles">
+      <span class="org" id="orgLine"></span>
+      <span class="app-name" id="appNameHeader"></span>
+    </div>
+    <button class="lang-toggle" id="langToggleBtn" type="button"></button>
+  </header>
+  <main class="screen" id="screen"></main>
+  <nav class="tab-bar" id="tabBar" hidden></nav>
+  <div class="a2hs-banner" id="a2hsBanner" hidden></div>
+</div>
+
+<script src="app-core.js"></script>
+<script>
+(function () {
+  var C = window.OsteoCore;
+  var CONTENT = C.CONTENT;
+  var STORAGE_KEY = 'OSTEO_STATE';
+  var WEBHOOK_URL = '';
+  var SHARED_TOKEN = 'REPLACE_WITH_SHARED_TOKEN';
+
+  var TABS = ['home', 'bone', 'move', 'safety', 'track', 'alert'];
+  var TAB_ICON = { home: '🏠', bone: '🦴', move: '🚶', safety: '🛡️', track: '📈', alert: '⚠️' };
+  var TAB_LABEL_KEY = { home: 'navHome', bone: 'navBone', move: 'navMove', safety: 'navSafety', track: 'navTrack', alert: 'navAlert' };
+
+  var onboardingIndex = 0;
+  var showingTierResult = false;
+  var deferredInstallPrompt = null;
+  var checkinFlowOpen = false;
+  var chairStandTimer = { running: false, remaining: 30, intervalId: null };
+  var tugTimer = { running: false, elapsed: 0, intervalId: null };
+
+  function defaultState() {
+    return {
+      schemaVersion: C.SCHEMA_VERSION,
+      lang: 'th',
+      activeTab: 'home',
+      registered: false,
+      patient: null,
+      profile: {},
+      tier: null,
+      balance: { currentLevel: null, fallsLast4Weeks: 0 },
+      medication: { classId: null, startDate: null, lastTakenDate: null, adherenceLog: [] },
+      calcium: { logs: {} },
+      exercise: { sessionLog: [] },
+      safety: { checkedIds: [], lastAuditDate: null },
+      tracking: {
+        falls: [], heightBaseline: null, heightLogs: [],
+        dxaLastDate: null, dxaIntervalMonths: 24,
+        chairStandTests: [], tugTests: []
+      },
+      monthlyCheckin: { lastDate: null },
+      syncQueue: [],
+      a2hsDismissed: false
+    };
+  }
+
+  var state = loadState();
+
+  function loadState() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return defaultState();
+      var parsed = JSON.parse(raw);
+      if (!parsed || parsed.schemaVersion !== C.SCHEMA_VERSION) {
+        var fresh = defaultState();
+        return Object.assign(fresh, parsed, { schemaVersion: C.SCHEMA_VERSION });
+      }
+      return Object.assign(defaultState(), parsed);
+    } catch (e) {
+      return defaultState();
+    }
+  }
+
+  function saveState() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  function tr(key) {
+    var entry = CONTENT[key];
+    if (!entry) return key;
+    return entry[state.lang] || entry.th;
+  }
+
+  function esc(s) {
+    return String(s === undefined || s === null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function todayStr() { return C.formatYMD(new Date()); }
+
+  function $(sel, root) { return (root || document).querySelector(sel); }
+  function $all(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
+
+  function computeAvoidTags() {
+    return state.profile.fractureSite === 'spine' ? ['vertebralFracture'] : [];
+  }
+
+  function computeFallsLast4Weeks() {
+    var cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 28);
+    return state.tracking.falls.filter(function (f) { return C.parseYMD(f.date) >= cutoff; }).length;
+  }
+
+  function computeWeeklyBalanceSessionCounts() {
+    var counts = [];
+    var today = new Date();
+    for (var w = 3; w >= 0; w--) {
+      var end = new Date(today); end.setDate(end.getDate() - w * 7);
+      var start = new Date(end); start.setDate(start.getDate() - 6);
+      var count = state.exercise.sessionLog.filter(function (s) {
+        if (s.group !== 'balance') return false;
+        var d = C.parseYMD(s.date);
+        return d >= start && d <= end;
+      }).length;
+      counts.push(count);
+    }
+    return counts;
+  }
+
+  function latestChairStandReps() {
+    var list = state.tracking.chairStandTests;
+    return list.length ? list[list.length - 1].reps : undefined;
+  }
+  function latestTugSeconds() {
+    var list = state.tracking.tugTests;
+    return list.length ? list[list.length - 1].seconds : undefined;
+  }
+
+  function recomputeBalanceLevel() {
+    var history = {
+      currentLevel: state.balance.currentLevel,
+      fallsLast4Weeks: computeFallsLast4Weeks(),
+      weeklySessionCounts: computeWeeklyBalanceSessionCounts(),
+      age: state.profile.age,
+      sex: state.profile.sex,
+      chairStandReps: latestChairStandReps(),
+      tugSeconds: latestTugSeconds()
+    };
+    state.balance.currentLevel = C.resolveBalanceLevel(state.profile, history);
+    state.balance.fallsLast4Weeks = history.fallsLast4Weeks;
+  }
+
+  function enqueueSyncRecord(type, data) {
+    var record = Object.assign({ patientId: state.patient ? state.patient.patientId : 'unknown', date: todayStr(), type: type }, data);
+    state.syncQueue.push({ kind: 'record', payload: record });
+    saveState();
+    flushSyncQueue();
+  }
+
+  function flushSyncQueue() {
+    if (!WEBHOOK_URL || !state.syncQueue.length || !navigator.onLine) return;
+    var item = state.syncQueue[0];
+    var body = item.kind === 'registration'
+      ? item.payload
+      : Object.assign({ token: SHARED_TOKEN, schemaVersion: C.SCHEMA_VERSION }, item.payload);
+    fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      .then(function (res) {
+        if (res.ok) {
+          state.syncQueue.shift();
+          saveState();
+          flushSyncQueue();
+        }
+      })
+      .catch(function () {});
+  }
+
+  window.addEventListener('online', flushSyncQueue);
+
+  function render() {
+    var screen = $('#screen');
+    $('#orgLine').textContent = tr('orgLine');
+    $('#appNameHeader').textContent = tr('appNameShort');
+    $('#langToggleBtn').textContent = state.lang === 'th' ? tr('langToggleEn') : tr('langToggleTh');
+
+    if (!state.registered) {
+      $('#tabBar').hidden = true;
+      screen.innerHTML = renderRegistration();
+    } else if (!state.tier) {
+      $('#tabBar').hidden = true;
+      screen.innerHTML = renderOnboarding();
+    } else {
+      $('#tabBar').hidden = false;
+      renderTabBar();
+      screen.innerHTML = renderActiveScreen();
+    }
+    renderA2hs();
+    wireDynamicWidgets();
+  }
+
+  function renderTabBar() {
+    var bar = $('#tabBar');
+    bar.innerHTML = TABS.map(function (tabId) {
+      var active = state.activeTab === tabId ? ' active' : '';
+      return '<button type="button" class="tab-btn' + active + '" data-action="go-tab" data-tab="' + tabId + '">' +
+        '<span class="tab-icon">' + TAB_ICON[tabId] + '</span><span>' + esc(tr(TAB_LABEL_KEY[tabId])) + '</span></button>';
+    }).join('');
+  }
+
+  function renderActiveScreen() {
+    if (state.activeTab === 'resources') return renderResources();
+    switch (state.activeTab) {
+      case 'home': return renderHome();
+      case 'bone': return renderBone();
+      case 'move': return renderMove();
+      case 'safety': return renderSafety();
+      case 'track': return renderTrack();
+      case 'alert': return renderAlert();
+      default: return renderHome();
+    }
+  }
+
+  /* ---------- Registration ---------- */
+
+  function renderRegistration() {
+    return '' +
+      '<h1>' + esc(tr('registerTitle')) + '</h1>' +
+      '<form id="registerForm" class="card">' +
+        '<label>' + esc(tr('registerName')) + '</label>' +
+        '<input type="text" name="name" required>' +
+        '<label>' + esc(tr('registerPhone')) + '</label>' +
+        '<input type="tel" name="phone" required>' +
+        '<label>' + esc(tr('registerHN')) + '</label>' +
+        '<input type="text" name="hn" id="hnInput">' +
+        '<div class="checkbox-row"><input type="checkbox" id="hnUnknown" name="hnUnknown"><label for="hnUnknown" style="margin:0;">' + esc(tr('registerHNUnknown')) + '</label></div>' +
+        '<label>' + esc(tr('registerYearOfBirth')) + '</label>' +
+        '<input type="number" name="yearOfBirth" inputmode="numeric" required>' +
+        '<label>' + esc(tr('registerSex')) + '</label>' +
+        '<select name="sex" required>' +
+          '<option value="male">' + esc(tr('registerSexMale')) + '</option>' +
+          '<option value="female">' + esc(tr('registerSexFemale')) + '</option>' +
+        '</select>' +
+      '</form>' +
+      '<div class="card">' +
+        '<h2>' + esc(tr('pdpaTitle')) + '</h2>' +
+        '<p>' + esc(tr('pdpaBody')) + '</p>' +
+        '<div class="checkbox-row"><input type="checkbox" id="pdpaConsent" form="registerForm" name="consent"><label for="pdpaConsent" style="margin:0;">' + esc(tr('pdpaCheckbox')) + '</label></div>' +
+      '</div>' +
+      '<div id="registerError" class="error-text" hidden></div>' +
+      '<button type="submit" form="registerForm" class="btn">' + esc(tr('registerSubmit')) + '</button>';
+  }
+
+  function handleRegisterSubmit(form) {
+    var fd = new FormData(form);
+    var fields = {
+      name: (fd.get('name') || '').trim(),
+      phone: (fd.get('phone') || '').trim(),
+      hn: (fd.get('hn') || '').trim(),
+      hnUnknown: !!fd.get('hnUnknown'),
+      yearOfBirth: parseInt(fd.get('yearOfBirth'), 10) || null,
+      sex: fd.get('sex'),
+      consent: !!fd.get('consent'),
+      deviceUuid: C.generateDeviceUuid()
+    };
+    var payload = C.buildRegistrationPayload(fields, SHARED_TOKEN);
+    var validation = C.validateRegistrationPayload(payload);
+    var errorBox = $('#registerError');
+    if (!validation.valid) {
+      errorBox.hidden = false;
+      errorBox.textContent = validation.errors.join(', ');
+      return;
+    }
+    errorBox.hidden = true;
+    state.patient = payload;
+    state.registered = true;
+    state.syncQueue.push({ kind: 'registration', payload: payload });
+    saveState();
+    flushSyncQueue();
+    render();
+  }
+
+  /* ---------- Onboarding ---------- */
+
+  function onboardingQuestionApplies(q) {
+    if (!q.dependsOn) return true;
+    return state.profile[q.dependsOn.field] === q.dependsOn.value;
+  }
+
+  function currentOnboardingIndex() {
+    var idx = onboardingIndex;
+    var qs = C.ONBOARDING_QUESTIONS;
+    while (idx < qs.length && !onboardingQuestionApplies(qs[idx])) idx++;
+    return idx;
+  }
+
+  function renderOnboarding() {
+    var qs = C.ONBOARDING_QUESTIONS;
+    var idx = currentOnboardingIndex();
+
+    if (idx >= qs.length && !showingTierResult) {
+      finishOnboarding();
+      showingTierResult = true;
+    }
+
+    if (showingTierResult) return renderTierResult();
+
+    var q = qs[idx];
+    var progressPct = Math.round((idx / qs.length) * 100);
+    var value = state.profile[q.field];
+
+    var inputHtml = '';
+    if (q.type === 'boolean') {
+      inputHtml = '<div class="choice-grid">' +
+        '<button type="button" class="choice-btn' + (value === true ? ' selected' : '') + '" data-action="answer" data-field="' + q.field + '" data-value="true" data-type="boolean">' + esc(tr('yes')) + '</button>' +
+        '<button type="button" class="choice-btn' + (value === false ? ' selected' : '') + '" data-action="answer" data-field="' + q.field + '" data-value="false" data-type="boolean">' + esc(tr('no')) + '</button>' +
+      '</div>';
+    } else if (q.type === 'choice') {
+      inputHtml = '<div class="choice-grid">' + q.options.map(function (opt) {
+        var label = opt.labelKey ? tr(opt.labelKey) : (opt.label ? opt.label[state.lang] || opt.label.th : opt.value);
+        var sel = value === opt.value ? ' selected' : '';
+        return '<button type="button" class="choice-btn' + sel + '" data-action="answer" data-field="' + q.field + '" data-value="' + esc(opt.value) + '" data-type="choice">' + esc(label) + '</button>';
+      }).join('') + '</div>';
+    } else if (q.type === 'number') {
+      inputHtml = '<input type="number" inputmode="numeric" id="onboardingNumberInput" value="' + (value !== undefined ? esc(value) : '') + '">';
+    }
+
+    var canGoNext = value !== undefined && value !== null && value !== '';
+    var canGoBack = idx > 0;
+
+    return '' +
+      '<div class="progress-bar"><div style="width:' + progressPct + '%"></div></div>' +
+      '<h1>' + esc(tr('onboardingTitle')) + '</h1>' +
+      '<div class="card">' +
+        '<h2>' + esc(tr(q.labelKey)) + '</h2>' +
+        inputHtml +
+      '</div>' +
+      '<div class="btn-row">' +
+        (canGoBack ? '<button type="button" class="btn secondary" data-action="onboarding-back">' + esc(tr('onboardingBack')) + '</button>' : '') +
+        '<button type="button" class="btn" id="onboardingNextBtn" data-action="onboarding-next"' + (canGoNext ? '' : ' disabled') + '>' + esc(tr('onboardingNext')) + '</button>' +
+      '</div>';
+  }
+
+  function finishOnboarding() {
+    var tier = C.resolveTier(state.profile);
+    state.tier = tier;
+    state.balance.currentLevel = C.defaultBalanceLevelForProfile(state.profile, tier);
+    saveState();
+  }
+
+  function renderTierResult() {
+    var tierKeyMap = { A: 'tierA', B: 'tierB', C: 'tierC' };
+    var prefix = tierKeyMap[state.tier];
+    return '' +
+      '<h1>' + esc(tr('tierResultTitle')) + '</h1>' +
+      '<div class="card">' +
+        '<span class="badge tier-' + state.tier.toLowerCase() + '">' + esc(tr(prefix + '_name')) + '</span>' +
+        '<p style="margin-top:12px;">' + esc(tr(prefix + '_desc')) + '</p>' +
+      '</div>' +
+      '<button type="button" class="btn" data-action="finish-onboarding-review">' + esc(tr('onboardingFinish')) + '</button>';
+  }
+
+  /* ---------- Home ---------- */
+
+  var SAFETY_TIP_KEYS = ['footwearBody', 'visionBody', 'gettingUpBody', 'fallRiskMedsBody'];
+
+  function isMonthlyCheckinDue() {
+    var last = state.monthlyCheckin.lastDate;
+    return !last || C.daysBetween(last, todayStr()) >= 28;
+  }
+
+  function renderHome() {
+    var tierKeyMap = { A: 'tierA', B: 'tierB', C: 'tierC' };
+    var prefix = tierKeyMap[state.tier];
+    var medInfo = getMedInfo();
+    var medTakenToday = medInfo && medInfo.lastTakenDate === todayStr();
+    var exerciseToday = state.exercise.sessionLog.some(function (s) { return s.date === todayStr(); });
+    var tipKey = SAFETY_TIP_KEYS[new Date().getDate() % SAFETY_TIP_KEYS.length];
+    var checkinDue = isMonthlyCheckinDue();
+
+    var html = '';
+    html += '<p class="home-greeting">' + esc(tr('homeGreeting')) + (state.patient && state.patient.name ? ', ' + esc(state.patient.name) : '') + '</p>';
+    html += '<div class="card"><span class="badge tier-' + state.tier.toLowerCase() + '">' + esc(tr(prefix + '_name')) + '</span></div>';
+
+    if (checkinDue) {
+      html += '<div class="card warn">' +
+        '<h3>' + esc(tr('homeCheckinDue')) + '</h3>' +
+        '<button type="button" class="btn" data-action="open-checkin">' + esc(tr('monthlyCheckinTitle')) + '</button>' +
+      '</div>';
+    }
+
+    if (checkinFlowOpen) html += renderCheckinFlow();
+
+    html += '<div class="card">' +
+      '<h3>' + esc(tr('homeMedDue')) + '</h3>' +
+      (medInfo ? '<p>' + esc(medInfo.med.name[state.lang] || medInfo.med.name.th) + ' — ' + esc(tr('medNextDue')) + ': ' + esc(medInfo.nextDue || '-') + '</p>' : '<p>' + esc(tr('boneMedSectionTitle')) + '</p>') +
+      (medInfo && !medTakenToday ? '<button type="button" class="btn secondary" data-action="mark-med-taken">' + esc(tr('homeMarkDone')) + '</button>' : '') +
+      (medTakenToday ? '<p>✅ ' + esc(tr('homeMarkDone')) + '</p>' : '') +
+    '</div>';
+
+    html += '<div class="card">' +
+      '<h3>' + esc(tr('homeExerciseDone')) + '</h3>' +
+      (exerciseToday ? '<p>✅ ' + esc(tr('homeMarkDone')) + '</p>' : '<button type="button" class="btn secondary" data-action="go-tab" data-tab="move">' + esc(tr('navMove')) + '</button>') +
+    '</div>';
+
+    html += '<div class="card"><h3>' + esc(tr('homeSafetyTip')) + '</h3><p>' + esc(tr(tipKey)) + '</p></div>';
+
+    html += '<button type="button" class="btn ghost" data-action="go-tab" data-tab="resources">' + esc(tr('homeLearnMore')) + '</button>';
+    return html;
+  }
+
+  function renderCheckinFlow() {
+    var heightDue = !state.tracking.heightLogs.length || C.daysBetween(state.tracking.heightLogs[state.tracking.heightLogs.length - 1].date, todayStr()) >= 182;
+    return '<div class="card">' +
+      '<h3>' + esc(tr('monthlyCheckinTitle')) + '</h3>' +
+      '<p>' + esc(tr('monthlyCheckinFalls')) + '</p>' +
+      '<div class="btn-row">' +
+        '<button type="button" class="btn secondary" data-action="go-tab" data-tab="track">' + esc(tr('yes')) + '</button>' +
+        '<button type="button" class="btn secondary" data-action="noop">' + esc(tr('no')) + '</button>' +
+      '</div>' +
+      (heightDue ? '<p style="margin-top:10px;">' + esc(tr('heightTitle')) + ' — ' + esc(tr('homeCheckinDue')) + '</p><button type="button" class="btn secondary" data-action="go-tab" data-tab="track">' + esc(tr('heightTitle')) + '</button>' : '') +
+      '<button type="button" class="btn" style="margin-top:14px;" data-action="finish-checkin">' + esc(tr('onboardingFinish')) + '</button>' +
+    '</div>';
+  }
+
+  /* ---------- Bone ---------- */
+
+  function getMedInfo() {
+    var m = state.medication;
+    if (!m.classId) return null;
+    var med = C.getMedClass(m.classId);
+    var base = m.lastTakenDate || m.startDate;
+    var nextDue = base ? C.computeNextDue(m.classId, base) : null;
+    return { med: med, nextDue: nextDue, startDate: m.startDate, lastTakenDate: m.lastTakenDate };
+  }
+
+  function renderBone() {
+    var html = '<h1>' + esc(tr('navBone')) + '</h1>';
+    html += '<div class="card"><h2>' + esc(tr('boneWhatIsTitle')) + '</h2><p>' + esc(tr('boneWhatIsBody')) + '</p></div>';
+    html += '<div class="card">' + renderMedicationModule() + '</div>';
+    html += '<div class="card">' + renderCalciumModule() + '</div>';
+    html += '<div class="card"><h3>' + esc(tr('vitaminDTitle')) + '</h3><p>' + esc(tr('vitaminDBody')) + '</p></div>';
+    html += '<div class="card"><h3>' + esc(tr('proteinTitle')) + '</h3><p>' + esc(tr('proteinBody')) + '</p></div>';
+    html += '<div class="card"><h3>' + esc(tr('avoidTitle')) + '</h3><p>' + esc(tr('avoidBody')) + '</p></div>';
+    return html;
+  }
+
+  function renderMedicationModule() {
+    var m = state.medication;
+    var html = '<h2>' + esc(tr('boneMedSectionTitle')) + '</h2>';
+    if (!m.classId) {
+      html += '<label>' + esc(tr('medPickClass')) + '</label>' +
+        '<select id="medClassSelect">' +
+        '<option value="">--</option>' +
+        C.MED_CLASSES.map(function (med) {
+          return '<option value="' + med.id + '">' + esc(med.name[state.lang] || med.name.th) + '</option>';
+        }).join('') + '</select>' +
+        '<label>' + esc(tr('medStartDate')) + '</label>' +
+        '<input type="date" id="medStartDate" value="' + todayStr() + '">' +
+        '<button type="button" class="btn" style="margin-top:10px;" data-action="save-med-class">' + esc(tr('save')) + '</button>';
+      return html;
+    }
+
+    var info = getMedInfo();
+    var med = info.med;
+    html += '<p><strong>' + esc(med.name[state.lang] || med.name.th) + '</strong></p>';
+    html += '<p>' + esc(med.instructions[state.lang] || med.instructions.th) + '</p>';
+    if (med.doNotDelay) html += '<div class="card warn"><p>' + esc(tr('medDoNotDelay')) + '</p></div>';
+    html += '<p>' + esc(tr('medNextDue')) + ': <strong>' + esc(info.nextDue) + '</strong></p>';
+    html += '<div class="btn-row">' +
+      '<button type="button" class="btn secondary" data-action="mark-med-taken">' + esc(tr('medMarkTaken')) + '</button>' +
+      '<a class="btn secondary" href="' + buildIcsDataUri(med, info.nextDue) + '" download="med-reminder.ics">' + esc(tr('medAddCalendar')) + '</a>' +
+    '</div>';
+
+    if (m.adherenceLog.length) {
+      html += '<h3 style="margin-top:14px;">' + esc(tr('medAdherenceLog')) + '</h3><ul class="plain">' +
+        m.adherenceLog.slice(-5).reverse().map(function (a) { return '<li>' + esc(a.date) + '</li>'; }).join('') + '</ul>';
+    }
+    return html;
+  }
+
+  function buildIcsDataUri(med, dueDateStr) {
+    var dt = dueDateStr.replace(/-/g, '');
+    var ics = 'BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nDTSTART;VALUE=DATE:' + dt +
+      '\nSUMMARY:' + (med.name[state.lang] || med.name.th).replace(/\n/g, ' ') +
+      '\nDESCRIPTION:' + (med.instructions[state.lang] || med.instructions.th).replace(/\n/g, ' ') +
+      '\nEND:VEVENT\nEND:VCALENDAR';
+    return 'data:text/calendar;charset=utf-8,' + encodeURIComponent(ics);
+  }
+
+  function renderCalciumModule() {
+    var today = todayStr();
+    var selected = state.calcium.logs[today] || [];
+    var total = C.computeCalciumTotal(selected);
+    var target = C.calciumTargetMg(state.profile.age || 60, state.profile.sex || 'female');
+    var remaining = Math.max(0, target - total);
+    var suggestion = C.FOOD_TABLE
+      .filter(function (f) { return selected.indexOf(f.id) === -1; })
+      .sort(function (a, b) { return Math.abs(a.mgPerServing - remaining) - Math.abs(b.mgPerServing - remaining); })[0];
+
+    var html = '<h2>' + esc(tr('calciumTitle')) + '</h2>';
+    html += '<p>' + esc(tr('calciumTargetLabel')) + ': ' + target + ' ' + esc(tr('calciumMgUnit')) + ' | ' +
+      esc(tr('calciumTotalLabel')) + ': <strong>' + total + ' ' + esc(tr('calciumMgUnit')) + '</strong></p>';
+    html += '<div class="progress-bar"><div style="width:' + Math.min(100, Math.round((total / target) * 100)) + '%"></div></div>';
+    if (remaining > 0 && suggestion) {
+      html += '<p>' + esc(tr('calciumSuggestion')) + ': ' + esc(suggestion.name[state.lang] || suggestion.name.th) +
+        ' (' + suggestion.mgPerServing + ' ' + esc(tr('calciumMgUnit')) + ')</p>';
+    }
+    html += C.FOOD_TABLE.map(function (f) {
+      var checked = selected.indexOf(f.id) !== -1 ? ' checked' : '';
+      return '<div class="checkbox-row"><input type="checkbox" id="food_' + f.id + '" data-action="toggle-food" data-food-id="' + f.id + '"' + checked + '>' +
+        '<label for="food_' + f.id + '" style="margin:0;">' + esc(f.name[state.lang] || f.name.th) + ' (' + esc(f.serving[state.lang] || f.serving.th) + ', ' + f.mgPerServing + ' ' + esc(tr('calciumMgUnit')) + ')</label></div>';
+    }).join('');
+    return html;
+  }
+
+  /* ---------- Move ---------- */
+
+  function renderMove() {
+    var level = state.balance.currentLevel;
+    var levelKey = { 1: 'balanceLevel1', 2: 'balanceLevel2', 3: 'balanceLevel3' }[level];
+    var avoidTags = computeAvoidTags();
+    var exercises = C.getExercisesForPatient(level, avoidTags);
+    var groups = ['balance', 'strength', 'posture'];
+    var groupLabelKey = { balance: 'moveGroupBalance', strength: 'moveGroupStrength', posture: 'moveGroupPosture' };
+    var reqLabelKey = { chair: 'reqChair', wall: 'reqWall' };
+
+    var html = '<h1>' + esc(tr('navMove')) + '</h1>';
+    html += '<div class="card"><span class="badge" style="background:var(--tier-c);">' + esc(tr(levelKey)) + '</span><p style="margin-top:8px;">' + esc(tr('moveIntro')) + '</p></div>';
+
+    groups.forEach(function (group) {
+      var groupExercises = exercises.filter(function (ex) { return ex.group === group; });
+      var loggedThisWeek = state.exercise.sessionLog.filter(function (s) {
+        if (s.group !== group) return false;
+        return C.daysBetween(s.date, todayStr()) < 7;
+      }).length;
+      var target = group === 'balance' ? C.WEEKLY_TARGETS.balanceSessionsPerWeek : (group === 'strength' ? C.WEEKLY_TARGETS.strengthSessionsPerWeek : null);
+
+      html += '<div class="card"><h2>' + esc(tr(groupLabelKey[group])) + '</h2>';
+      if (target) html += '<p>' + esc(tr('moveWeeklyTarget')) + ': ' + loggedThisWeek + ' / ' + target + '</p>';
+      html += groupExercises.map(function (ex) {
+        var reqs = ex.requires.length ? ex.requires.map(function (r) { return esc(tr(reqLabelKey[r] || 'reqNone')); }).join(', ') : esc(tr('reqNone'));
+        return '<div style="margin-bottom:14px; padding-bottom:14px; border-bottom:1px solid var(--border);">' +
+          '<div class="exercise-video-fallback">🎥 ' + esc(tr('videoUnavailable')) + '</div>' +
+          '<h3>' + esc(ex.name[state.lang] || ex.name.th) + '</h3>' +
+          '<p><span class="tag">' + esc(tr('exerciseReps')) + ': ' + esc(ex.reps[state.lang] || ex.reps.th) + '</span>' +
+          '<span class="tag">' + esc(tr('exerciseRequires')) + ': ' + reqs + '</span></p>' +
+        '</div>';
+      }).join('');
+      html += '<button type="button" class="btn secondary" data-action="log-session" data-group="' + group + '">' + esc(tr('sessionLogSave')) + '</button>';
+      html += '</div>';
+    });
+
+    html += '<div class="card warn"><h3>' + esc(tr('moveNeverDo')) + '</h3><p>' + esc(tr('moveNeverDoBody')) + '</p></div>';
+    return html;
+  }
+
+  /* ---------- Safety ---------- */
+
+  function renderSafety() {
+    var checked = state.safety.checkedIds;
+    var result = C.computeSafetyScore(checked);
+    var rooms = ['bedroom', 'bathroom', 'stairs', 'kitchen', 'outdoors'];
+    var roomLabelKey = { bedroom: 'safetyRoomBedroom', bathroom: 'safetyRoomBathroom', stairs: 'safetyRoomStairs', kitchen: 'safetyRoomKitchen', outdoors: 'safetyRoomOutdoors' };
+    var reauditDue = !state.safety.lastAuditDate || C.daysBetween(state.safety.lastAuditDate, todayStr()) >= 182;
+
+    var html = '<h1>' + esc(tr('safetyAuditTitle')) + '</h1>';
+    html += '<div class="card"><h2>' + esc(tr('safetyScoreLabel')) + ': ' + result.score + ' / ' + result.max + '</h2>' +
+      '<div class="progress-bar"><div style="width:' + Math.round((result.score / result.max) * 100) + '%"></div></div>';
+    if (result.priorityFixes.length) {
+      html += '<h3>' + esc(tr('safetyPriorityTitle')) + '</h3><ul class="plain">' +
+        result.priorityFixes.map(function (item) { return '<li>' + esc(item.name[state.lang] || item.name.th) + '</li>'; }).join('') + '</ul>';
+    }
+    if (reauditDue) html += '<p>' + esc(tr('reauditReminder')) + '</p>';
+    html += '</div>';
+
+    rooms.forEach(function (room) {
+      html += '<div class="card"><h3>' + esc(tr(roomLabelKey[room])) + '</h3>';
+      html += C.SAFETY_ITEMS.filter(function (i) { return i.room === room; }).map(function (item) {
+        var isChecked = checked.indexOf(item.id) !== -1 ? ' checked' : '';
+        return '<div class="checkbox-row"><input type="checkbox" id="safety_' + item.id + '" data-action="toggle-safety" data-item-id="' + item.id + '"' + isChecked + '>' +
+          '<label for="safety_' + item.id + '" style="margin:0;">' + esc(item.name[state.lang] || item.name.th) + '</label></div>';
+      }).join('');
+      html += '</div>';
+    });
+
+    html += '<button type="button" class="btn" data-action="save-safety-audit">' + esc(tr('save')) + '</button>';
+    html += '<div class="card" style="margin-top:14px;"><h3>' + esc(tr('footwearTitle')) + '</h3><p>' + esc(tr('footwearBody')) + '</p></div>';
+    html += '<div class="card"><h3>' + esc(tr('visionTitle')) + '</h3><p>' + esc(tr('visionBody')) + '</p></div>';
+    html += '<div class="card"><h3>' + esc(tr('fallRiskMedsTitle')) + '</h3><p>' + esc(tr('fallRiskMedsBody')) + '</p></div>';
+    html += '<div class="card"><h3>' + esc(tr('gettingUpTitle')) + '</h3><p>' + esc(tr('gettingUpBody')) + '</p></div>';
+    return html;
+  }
+
+  /* ---------- Track ---------- */
+
+  function renderTrack() {
+    var html = '<h1>' + esc(tr('navTrack')) + '</h1>';
+    html += renderFallsLog();
+    html += renderHeightModule();
+    html += renderSelfTests();
+    html += renderAdherenceAndDxa();
+    return html;
+  }
+
+  function renderFallsLog() {
+    var falls = state.tracking.falls;
+    var html = '<div class="card"><h2>' + esc(tr('fallsLogTitle')) + '</h2>';
+    if (falls.length) {
+      html += '<ul class="plain">' + falls.slice(-5).reverse().map(function (f) {
+        return '<li>' + esc(f.date) + ' — ' + esc(tr(f.injured ? 'yes' : 'no')) + (f.cause ? ' — ' + esc(f.cause) : '') + '</li>';
+      }).join('') + '</ul>';
+    }
+    html += '<form id="fallForm">' +
+      '<label>' + esc(tr('fallsLogDate')) + '</label><input type="date" name="date" value="' + todayStr() + '">' +
+      '<label>' + esc(tr('fallsLogInjured')) + '</label>' +
+      '<div class="choice-grid">' +
+        '<button type="button" class="choice-btn" data-action="set-fall-injured" data-value="true">' + esc(tr('yes')) + '</button>' +
+        '<button type="button" class="choice-btn selected" data-action="set-fall-injured" data-value="false">' + esc(tr('no')) + '</button>' +
+      '</div>' +
+      '<input type="hidden" name="injured" id="fallInjuredField" value="false">' +
+      '<label>' + esc(tr('fallsLogCause')) + '</label><input type="text" name="cause">' +
+      '<button type="button" class="btn" style="margin-top:10px;" data-action="save-fall">' + esc(tr('fallsLogAdd')) + '</button>' +
+    '</form></div>';
+    return html;
+  }
+
+  function renderHeightModule() {
+    var logs = state.tracking.heightLogs;
+    var baseline = state.tracking.heightBaseline;
+    var latest = logs.length ? logs[logs.length - 1].cm : null;
+    var flagged = latest !== null && C.checkHeightLoss(baseline, latest);
+    var html = '<div class="card"><h2>' + esc(tr('heightTitle')) + '</h2>';
+    if (baseline) html += '<p>' + esc(tr('heightBaseline')) + ': ' + baseline + ' cm</p>';
+    if (flagged) html += '<div class="card warn"><p>' + esc(tr('heightLossWarning')) + '</p></div>';
+    html += '<label>' + esc(tr('heightCurrent')) + '</label>' +
+      '<input type="number" step="0.1" id="heightInput" placeholder="cm">' +
+      '<button type="button" class="btn secondary" style="margin-top:10px;" data-action="save-height">' + esc(tr('save')) + '</button>';
+    html += '</div>';
+    return html;
+  }
+
+  function renderSelfTests() {
+    var html = '<div class="card"><h2>' + esc(tr('selfTestTitle')) + '</h2>';
+
+    html += '<h3>' + esc(tr('chairStandTitle')) + '</h3><p>' + esc(tr('chairStandInstructions')) + '</p>';
+    html += '<div class="timer-display" id="chairStandDisplay">' + chairStandTimer.remaining + ' ' + esc(tr('seconds')) + '</div>';
+    if (!chairStandTimer.running) {
+      html += '<button type="button" class="btn secondary" data-action="start-chairstand">' + esc(tr('startTimer')) + '</button>';
+    } else {
+      html += '<button type="button" class="btn danger" data-action="stop-chairstand">' + esc(tr('stopTimer')) + '</button>';
+    }
+    html += '<div id="chairStandRepsInput" style="margin-top:10px;' + (chairStandTimer.awaitingReps ? '' : 'display:none;') + '">' +
+      '<label>' + esc(tr('reps')) + '</label><input type="number" id="chairStandRepsField">' +
+      '<button type="button" class="btn" style="margin-top:8px;" data-action="save-chairstand">' + esc(tr('save')) + '</button></div>';
+
+    html += '<h3 style="margin-top:18px;">' + esc(tr('tugTitle')) + '</h3><p>' + esc(tr('tugInstructions')) + '</p>';
+    html += '<div class="timer-display" id="tugDisplay">' + tugTimer.elapsed.toFixed(1) + ' ' + esc(tr('seconds')) + '</div>';
+    if (!tugTimer.running) {
+      html += '<button type="button" class="btn secondary" data-action="start-tug">' + esc(tr('startTimer')) + '</button>';
+    } else {
+      html += '<button type="button" class="btn danger" data-action="stop-tug">' + esc(tr('stopTimer')) + '</button>';
+    }
+    html += '</div>';
+    return html;
+  }
+
+  function renderAdherenceAndDxa() {
+    var streak = C.computeAdherenceStreak(state.medication.adherenceLog.map(function (a) { return a.date; }), todayStr());
+    var dxa = state.tracking;
+    var nextDxa = dxa.dxaLastDate ? C.addMonthsSafe(dxa.dxaLastDate, dxa.dxaIntervalMonths) : null;
+    var html = '<div class="card"><h3>' + esc(tr('adherenceStreak')) + ': ' + streak + ' ' + esc(tr('days')) + '</h3></div>';
+    html += '<div class="card"><h3>' + esc(tr('dxaTitle')) + '</h3>' +
+      '<label>' + esc(tr('dxaLastDate')) + '</label><input type="date" id="dxaDateInput" value="' + (dxa.dxaLastDate || '') + '">' +
+      '<button type="button" class="btn secondary" style="margin-top:10px;" data-action="save-dxa">' + esc(tr('save')) + '</button>' +
+      (nextDxa ? '<p style="margin-top:10px;">' + esc(tr('dxaNextDue')) + ': ' + nextDxa + '</p>' : '') +
+    '</div>';
+    return html;
+  }
+
+  /* ---------- Alert ---------- */
+
+  function renderAlert() {
+    var html = '<h1 style="color:var(--danger);">' + esc(tr('alertTitle')) + '</h1>';
+    html += '<ul class="plain card">' + C.RED_FLAGS.map(function (f) { return '<li>' + esc(tr(f.key)) + '</li>'; }).join('') + '</ul>';
+    html += '<a class="btn danger" href="tel:' + C.ALERT_CONTACTS.clinicPhone.replace(/\s/g, '') + '" style="margin-bottom:10px;">' + esc(tr('alertCallClinic')) + '</a>';
+    html += '<a class="btn danger" href="tel:' + C.ALERT_CONTACTS.emsPhone + '">' + esc(tr('alertCallEms')) + '</a>';
+    return html;
+  }
+
+  /* ---------- Resources ---------- */
+
+  function renderResources() {
+    var html = '<button type="button" class="btn ghost" data-action="go-tab" data-tab="home">&larr; ' + esc(tr('close')) + '</button>';
+    html += '<h1>' + esc(tr('resourcesTitle')) + '</h1>';
+    [['learnWhatIsTitle', 'boneWhatIsBody'], ['learnMedMattersTitle', 'learnMedMattersBody'], ['learnTScoreTitle', 'learnTScoreBody'], ['learnExpectTitle', 'learnExpectBody']].forEach(function (pair) {
+      html += '<div class="card"><h3>' + esc(tr(pair[0])) + '</h3><p>' + esc(tr(pair[1])) + '</p></div>';
+    });
+    html += '<div class="card link-list">' + C.RESOURCE_LINKS.map(function (link) {
+      var card = C.renderResourceCard(link, state.lang);
+      return '<a href="' + esc(link.url) + '" target="_blank" rel="noopener"><span class="title">' + esc(card.title) + '</span><span class="desc">' + esc(card.description) + '</span></a>';
+    }).join('') + '</div>';
+    return html;
+  }
+
+  /* ---------- A2HS ---------- */
+
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    renderA2hs();
+  });
+
+  function renderA2hs() {
+    var banner = $('#a2hsBanner');
+    var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    if (isStandalone || state.a2hsDismissed || !deferredInstallPrompt) {
+      banner.hidden = true;
+      return;
+    }
+    banner.hidden = false;
+    banner.innerHTML = '<p>' + esc(tr('a2hsPrompt')) + '</p>' +
+      '<div class="a2hs-actions">' +
+        '<button type="button" class="install" data-action="install-a2hs">' + esc(tr('a2hsInstall')) + '</button>' +
+        '<button type="button" class="dismiss" data-action="dismiss-a2hs">' + esc(tr('a2hsDismiss')) + '</button>' +
+      '</div>';
+  }
+
+  /* ---------- Timers ---------- */
+
+  function startChairStandTimer() {
+    chairStandTimer.running = true;
+    chairStandTimer.remaining = 30;
+    chairStandTimer.awaitingReps = false;
+    chairStandTimer.intervalId = setInterval(function () {
+      chairStandTimer.remaining -= 1;
+      if (chairStandTimer.remaining <= 0) {
+        clearInterval(chairStandTimer.intervalId);
+        chairStandTimer.running = false;
+        chairStandTimer.awaitingReps = true;
+        render();
+        return;
+      }
+      updateTimerDisplays();
+    }, 1000);
+    render();
+  }
+
+  function stopChairStandTimer() {
+    clearInterval(chairStandTimer.intervalId);
+    chairStandTimer.running = false;
+    chairStandTimer.awaitingReps = true;
+    updateTimerDisplays();
+  }
+
+  function startTugTimer() {
+    tugTimer.running = true;
+    tugTimer.elapsed = 0;
+    var startTime = Date.now();
+    tugTimer.intervalId = setInterval(function () {
+      tugTimer.elapsed = (Date.now() - startTime) / 1000;
+      updateTimerDisplays();
+    }, 100);
+    render();
+  }
+
+  function stopTugTimer() {
+    clearInterval(tugTimer.intervalId);
+    tugTimer.running = false;
+    state.tracking.tugTests.push({ date: todayStr(), seconds: Math.round(tugTimer.elapsed * 10) / 10 });
+    recomputeBalanceLevel();
+    saveState();
+    render();
+  }
+
+  function updateTimerDisplays() {
+    var chairEl = $('#chairStandDisplay');
+    if (chairEl) chairEl.textContent = chairStandTimer.remaining + ' ' + tr('seconds');
+    var tugEl = $('#tugDisplay');
+    if (tugEl) tugEl.textContent = tugTimer.elapsed.toFixed(1) + ' ' + tr('seconds');
+  }
+
+  /* ---------- Event delegation ---------- */
+
+  function wireDynamicWidgets() {
+    var registerForm = $('#registerForm');
+    if (registerForm) {
+      registerForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        handleRegisterSubmit(registerForm);
+      });
+    }
+    var hnUnknownBox = $('#hnUnknown');
+    if (hnUnknownBox) {
+      hnUnknownBox.addEventListener('change', function () {
+        $('#hnInput').disabled = hnUnknownBox.checked;
+        if (hnUnknownBox.checked) $('#hnInput').value = '';
+      });
+    }
+    var numberInput = $('#onboardingNumberInput');
+    if (numberInput) {
+      numberInput.addEventListener('input', function () {
+        var qs = C.ONBOARDING_QUESTIONS;
+        var q = qs[currentOnboardingIndex()];
+        state.profile[q.field] = numberInput.value === '' ? undefined : parseFloat(numberInput.value);
+        $('#onboardingNextBtn').disabled = numberInput.value === '';
+      });
+    }
+  }
+
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest('[data-action]');
+    if (!el) return;
+    var action = el.getAttribute('data-action');
+
+    if (action === 'go-tab') {
+      state.activeTab = el.getAttribute('data-tab');
+      checkinFlowOpen = false;
+      saveState(); render();
+    } else if (action === 'noop') {
+      // no state change
+    } else if (action === 'toggle-lang') {
+      // handled by dedicated listener below
+    } else if (action === 'answer') {
+      var field = el.getAttribute('data-field');
+      var rawValue = el.getAttribute('data-value');
+      var type = el.getAttribute('data-type');
+      var value = type === 'boolean' ? rawValue === 'true' : rawValue;
+      state.profile[field] = value;
+      if (field === 'priorFragilityFracture' && value === false) delete state.profile.fractureSite;
+      if (field === 'tScoreKnown' && value === false) delete state.profile.tScore;
+      saveState(); render();
+    } else if (action === 'onboarding-next') {
+      onboardingIndex = currentOnboardingIndex() + 1;
+      render();
+    } else if (action === 'onboarding-back') {
+      var idx = currentOnboardingIndex() - 1;
+      while (idx >= 0 && !onboardingQuestionApplies(C.ONBOARDING_QUESTIONS[idx])) idx--;
+      onboardingIndex = Math.max(0, idx);
+      render();
+    } else if (action === 'finish-onboarding-review') {
+      showingTierResult = false;
+      state.activeTab = 'home';
+      saveState(); render();
+    } else if (action === 'open-checkin') {
+      checkinFlowOpen = true; render();
+    } else if (action === 'finish-checkin') {
+      state.monthlyCheckin.lastDate = todayStr();
+      checkinFlowOpen = false;
+      saveState(); render();
+    } else if (action === 'mark-med-taken') {
+      state.medication.lastTakenDate = todayStr();
+      state.medication.adherenceLog.push({ date: todayStr() });
+      saveState();
+      enqueueSyncRecord('adherence', {});
+      render();
+    } else if (action === 'save-med-class') {
+      var classId = $('#medClassSelect').value;
+      var startDate = $('#medStartDate').value;
+      if (classId && startDate) {
+        state.medication.classId = classId;
+        state.medication.startDate = startDate;
+        saveState(); render();
+      }
+    } else if (action === 'toggle-food') {
+      var foodId = el.getAttribute('data-food-id');
+      var today = todayStr();
+      var list = state.calcium.logs[today] || [];
+      var idx2 = list.indexOf(foodId);
+      if (idx2 === -1) list.push(foodId); else list.splice(idx2, 1);
+      state.calcium.logs[today] = list;
+      saveState(); render();
+    } else if (action === 'log-session') {
+      var group = el.getAttribute('data-group');
+      state.exercise.sessionLog.push({ date: todayStr(), group: group });
+      recomputeBalanceLevel();
+      saveState();
+      enqueueSyncRecord('exercise', { group: group });
+      render();
+    } else if (action === 'toggle-safety') {
+      var itemId = el.getAttribute('data-item-id');
+      var idx3 = state.safety.checkedIds.indexOf(itemId);
+      if (idx3 === -1) state.safety.checkedIds.push(itemId); else state.safety.checkedIds.splice(idx3, 1);
+      saveState(); render();
+    } else if (action === 'save-safety-audit') {
+      state.safety.lastAuditDate = todayStr();
+      saveState(); render();
+    } else if (action === 'set-fall-injured') {
+      $all('[data-action="set-fall-injured"]').forEach(function (b) { b.classList.remove('selected'); });
+      el.classList.add('selected');
+      $('#fallInjuredField').value = el.getAttribute('data-value');
+    } else if (action === 'save-fall') {
+      var form = $('#fallForm');
+      var fd = new FormData(form);
+      var injured = fd.get('injured') === 'true';
+      state.tracking.falls.push({ date: fd.get('date') || todayStr(), injured: injured, cause: fd.get('cause') || '' });
+      recomputeBalanceLevel();
+      saveState();
+      enqueueSyncRecord('falls', { injured: injured });
+      if (injured) { state.activeTab = 'alert'; saveState(); }
+      render();
+    } else if (action === 'save-height') {
+      var cm = parseFloat($('#heightInput').value);
+      if (!isNaN(cm)) {
+        if (!state.tracking.heightBaseline) state.tracking.heightBaseline = cm;
+        state.tracking.heightLogs.push({ date: todayStr(), cm: cm });
+        saveState();
+        enqueueSyncRecord('checkin', { heightCm: cm });
+        render();
+      }
+    } else if (action === 'start-chairstand') {
+      startChairStandTimer();
+    } else if (action === 'stop-chairstand') {
+      stopChairStandTimer();
+      render();
+    } else if (action === 'save-chairstand') {
+      var reps = parseInt($('#chairStandRepsField').value, 10);
+      if (!isNaN(reps)) {
+        state.tracking.chairStandTests.push({ date: todayStr(), reps: reps });
+        chairStandTimer.awaitingReps = false;
+        chairStandTimer.remaining = 30;
+        recomputeBalanceLevel();
+        saveState();
+        enqueueSyncRecord('checkin', { chairStandReps: reps });
+        render();
+      }
+    } else if (action === 'start-tug') {
+      startTugTimer();
+    } else if (action === 'stop-tug') {
+      stopTugTimer();
+      enqueueSyncRecord('checkin', { tugSeconds: state.tracking.tugTests[state.tracking.tugTests.length - 1].seconds });
+    } else if (action === 'save-dxa') {
+      var dxaDate = $('#dxaDateInput').value;
+      if (dxaDate) { state.tracking.dxaLastDate = dxaDate; saveState(); render(); }
+    } else if (action === 'install-a2hs') {
+      if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+        deferredInstallPrompt.userChoice.then(function () { deferredInstallPrompt = null; renderA2hs(); });
+      }
+    } else if (action === 'dismiss-a2hs') {
+      state.a2hsDismissed = true;
+      saveState(); renderA2hs();
+    }
+  });
+
+  $('#langToggleBtn').addEventListener('click', function () {
+    state.lang = state.lang === 'th' ? 'en' : 'th';
+    document.documentElement.lang = state.lang;
+    saveState(); render();
+  });
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('sw.js').catch(function () {});
+    });
+  }
+
+  document.documentElement.lang = state.lang;
+  render();
+  flushSyncQueue();
+})();
+</script>
+</body>
+</html>
