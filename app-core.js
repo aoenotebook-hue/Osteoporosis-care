@@ -36,8 +36,8 @@
 
     pdpaTitle: t('ความยินยอมให้ใช้ข้อมูลส่วนบุคคล (PDPA)', 'Personal Data Consent (PDPA)'),
     pdpaBody: t(
-      'ข้อมูลของท่านจะถูกเก็บและใช้เพื่อการดูแลรักษาและติดตามผลในโครงการดูแลกระดูกพรุนเท่านั้น ท่านสามารถขอถอนความยินยอมได้ทุกเมื่อโดยแจ้งที่คลินิก',
-      'Your data is stored and used only for care and follow-up in this osteoporosis programme. You may withdraw your consent at any time by telling the clinic.'
+      'ข้อมูลของท่านจะถูกเก็บและใช้เพื่อการดูแลรักษาและติดตามผลในโครงการดูแลกระดูกพรุนเท่านั้น ท่านสามารถขอถอนความยินยอมได้ทุกเมื่อโดยแจ้งที่โรงพยาบาล',
+      'Your data is stored and used only for care and follow-up in this osteoporosis programme. You may withdraw your consent at any time by telling the hospital.'
     ),
     pdpaCheckbox: t('ข้าพเจ้ายินยอมให้เก็บและใช้ข้อมูลตามรายละเอียดข้างต้น', 'I consent to my data being collected and used as described above'),
 
@@ -288,18 +288,18 @@
     alertTitle: t('เมื่อไรต้องรีบพบแพทย์', 'When to get help urgently'),
     alertIntro: t('หากมีอาการเหล่านี้ อย่ารอ ให้ติดต่อตามคำแนะนำในแต่ละข้อทันที', 'If you have any of these, do not wait — follow the action shown for that item straight away.'),
     alertCallNow: t('โทรฉุกเฉินทันที', 'Call emergency now'),
-    alertCallClinicToday: t('ติดต่อคลินิกวันนี้', 'Contact the clinic today'),
+    alertCallClinicToday: t('ติดต่อโรงพยาบาลวันนี้', 'Contact the hospital today'),
     alertSeverityCritical: t('ฉุกเฉิน', 'Emergency'),
     alertSeveritySerious: t('ด่วน', 'Urgent'),
     alertBackPain: t('ปวดหลังรุนแรงทันทีทันใด โดยเฉพาะหลังล้ม ไอแรง ๆ หรือยกของ', 'Sudden severe back pain, especially after a fall, a hard cough, or lifting'),
-    alertBackPainAction: t('อาจเป็นกระดูกสันหลังยุบ ให้นอนพักและติดต่อคลินิกภายในวันนี้', 'This can be a spinal fracture — rest and contact the clinic today'),
+    alertBackPainAction: t('อาจเป็นกระดูกสันหลังยุบ ให้นอนพักและติดต่อโรงพยาบาลภายในวันนี้', 'This can be a spinal fracture — rest and contact the hospital today'),
     alertHipPain: t('ปวดสะโพกหรือขาหนีบ ยืนหรือลงน้ำหนักไม่ได้หลังล้ม', 'Hip or groin pain and you cannot stand or bear weight after a fall'),
     alertHipPainAction: t('อาจเป็นกระดูกสะโพกหัก อย่าฝืนลุกเดิน โทร 1669 ทันที', 'This can be a hip fracture — do not try to walk, call 1669 now'),
     alertHeadInjury: t('ศีรษะกระแทก หรือล้มขณะใช้ยาละลายลิ่มเลือด/ยาต้านเกล็ดเลือด', 'A knock to the head, or a fall while on blood thinners'),
     alertHeadInjuryAction: t('เสี่ยงเลือดออกในสมอง โทร 1669 หรือไปห้องฉุกเฉินทันที', 'Risk of bleeding in the brain — call 1669 or go to the emergency room now'),
     alertNeuro: t('ขาชาหรืออ่อนแรง เดินเซผิดปกติ หรือกลั้นปัสสาวะ/อุจจาระไม่ได้', 'Numb or weak legs, unsteady walking, or loss of bladder or bowel control'),
     alertNeuroAction: t('อาจมีการกดทับเส้นประสาทไขสันหลัง โทร 1669 ทันที', 'The spinal nerves may be compressed — call 1669 now'),
-    alertCallClinic: t('โทรคลินิก', 'Call the clinic'),
+    alertCallClinic: t('โทรโรงพยาบาล', 'Call the hospital'),
     alertCallEms: t('โทร 1669 (ฉุกเฉิน)', 'Call 1669 (emergency)'),
     alertAfterFall: t('ท่านเพิ่งบันทึกว่าล้มและบาดเจ็บ กรุณาอ่านรายการด้านล่างและติดต่อตามคำแนะนำ', 'You have just recorded a fall with injury. Please read the list below and follow the action shown.'),
 
@@ -320,6 +320,65 @@
     resSteadiDesc: t('เครื่องมือประเมินและลดความเสี่ยงการล้มจาก CDC', 'Tools from the CDC for checking and reducing fall risk'),
     resWhoTitle: t('องค์การอนามัยโลก', 'World Health Organization'),
     resWhoDesc: t('ข้อมูลสุขภาพกระดูกและการป้องกันการล้มระดับสากล', 'International guidance on bone health and preventing falls'),
+
+    navKnowledge: t('ความรู้', 'Learn'),
+    tabTitleKnowledge: t('ความรู้เรื่องกระดูกพรุน', 'Learn About Osteoporosis'),
+
+    reminderTitle: t('ใกล้ถึงกำหนดยาแล้ว', 'Your next dose is coming up'),
+    reminderDaysLeft: t('อีก {n} วันถึงกำหนด', '{n} days to go'),
+    reminderDueToday: t('ถึงกำหนดวันนี้', 'Due today'),
+    reminderOverdue: t('เลยกำหนดมาแล้ว {n} วัน', 'Overdue by {n} days'),
+    reminderBody: t('เตรียมนัดหมายหรือเตรียมยาให้พร้อม หากเป็นยาฉีดที่โรงพยาบาล ควรโทรยืนยันนัดล่วงหน้า', 'Get your appointment or your medicine ready. If it is an injection at the hospital, phone ahead to confirm your appointment.'),
+    reminderEnableNotifications: t('เปิดแจ้งเตือนบนโทรศัพท์', 'Turn on phone reminders'),
+    reminderNotificationsOn: t('เปิดแจ้งเตือนบนโทรศัพท์แล้ว', 'Phone reminders are on'),
+    reminderNotificationsBlocked: t('โทรศัพท์ปิดการแจ้งเตือนไว้ ให้ใช้วิธีเพิ่มลงปฏิทินแทน', 'Notifications are blocked on this phone — use the calendar reminder instead'),
+    reminderAddCalendar: t('ตั้งเตือนในปฏิทินโทรศัพท์', 'Set a calendar reminder'),
+    reminderCalendarNote: t('ปฏิทินจะเตือนล่วงหน้า 7 วัน และเตือนซ้ำในวันนัด', 'Your calendar will remind you 7 days ahead, and again on the day'),
+    reminderDismiss: t('รับทราบแล้ว', 'Got it'),
+    reminderNotificationBody: t('ถึงกำหนดยารักษากระดูกพรุนของท่านในอีก 1 สัปดาห์', 'Your osteoporosis medication is due in one week'),
+
+    homeCountdownTitle: t('นับถอยหลังถึงยาครั้งถัดไป', 'Countdown to your next dose'),
+    homeCountdownDays: t('วัน', 'days'),
+    homeCountdownToday: t('วันนี้', 'Today'),
+    homeCountdownOverdue: t('เลยกำหนด', 'Overdue'),
+
+    bmdTitle: t('ค่าความหนาแน่นกระดูก (BMD)', 'Bone Density (BMD)'),
+    bmdIntro: t('บันทึกค่าจากใบผลตรวจ DXA ทุกครั้งที่ไปตรวจ เพื่อดูแนวโน้มว่ากระดูกดีขึ้นหรือแย่ลง', 'Copy the values from your DXA report at each scan, to see whether your bone is improving or declining.'),
+    bmdSpine: t('กระดูกสันหลัง', 'Spine'),
+    bmdHip: t('สะโพก', 'Hip'),
+    bmdValueLabel: t('ค่า BMD (g/cm²)', 'BMD (g/cm²)'),
+    bmdTScoreLabel: t('ค่า T-score', 'T-score'),
+    bmdScanDate: t('วันที่ตรวจ', 'Scan date'),
+    bmdAdd: t('บันทึกผลตรวจ', 'Save this scan'),
+    bmdChartTitle: t('แนวโน้มค่าความหนาแน่นกระดูก', 'Bone density over time'),
+    bmdNoData: t('ยังไม่มีผลตรวจที่บันทึกไว้', 'No scan results recorded yet'),
+    bmdHigherBetter: t('ค่ายิ่งสูงยิ่งดี', 'Higher is better'),
+    bmdLatestScan: t('ผลตรวจล่าสุด', 'Latest scan'),
+
+    chartChangeSince: t('เปลี่ยนแปลงจากครั้งแรก', 'Change since the first record'),
+    chartTrendUp: t('เพิ่มขึ้น', 'increased'),
+    chartTrendDown: t('ลดลง', 'decreased'),
+    chartTrendFlat: t('เท่าเดิม', 'unchanged'),
+
+    syncTitle: t('การส่งข้อมูลให้โรงพยาบาล', 'Sending data to the hospital'),
+    syncPending: t('ข้อมูลที่รอส่ง', 'Waiting to send'),
+    syncItems: t('รายการ', 'records'),
+    syncAllSent: t('ส่งข้อมูลครบแล้ว', 'Everything has been sent'),
+    syncLastOk: t('ส่งสำเร็จล่าสุด', 'Last sent successfully'),
+    syncLastError: t('ปัญหาล่าสุด', 'Last problem'),
+    syncNever: t('ยังไม่เคยส่งสำเร็จ', 'Nothing has been sent yet'),
+    syncSendNow: t('ลองส่งเดี๋ยวนี้', 'Try sending now'),
+    syncSending: t('กำลังส่ง...', 'Sending...'),
+
+    resetTitle: t('เริ่มกรอกข้อมูลใหม่', 'Start over'),
+    resetBody: t('ลบข้อมูลทั้งหมดในเครื่องนี้ แล้วเริ่มลงทะเบียนใหม่ตั้งแต่ต้น ข้อมูลที่ส่งให้โรงพยาบาลแล้วจะยังคงอยู่', 'Erase everything stored on this phone and register again from the start. Data already sent to the hospital is not affected.'),
+    resetButton: t('ล้างข้อมูลและเริ่มใหม่', 'Erase and start over'),
+    resetConfirmQuestion: t('ยืนยันลบข้อมูลทั้งหมดในเครื่องนี้หรือไม่', 'Erase everything stored on this phone?'),
+    resetConfirmYes: t('ใช่ ลบและเริ่มใหม่', 'Yes, erase and start over'),
+    resetWarnUnsent: t('ยังมีข้อมูลที่ยังไม่ได้ส่งให้โรงพยาบาล หากลบตอนนี้ข้อมูลนั้นจะหายไป', 'Some records have not reached the hospital yet. Erasing now will lose them.'),
+
+    footerDoctorLabel: t('แพทย์ผู้ดูแล', 'Your doctor'),
+    footerHospitalPhone: t('โทรโรงพยาบาล', 'Hospital'),
 
     save: t('บันทึก', 'Save'),
     cancel: t('ยกเลิก', 'Cancel'),
@@ -463,6 +522,7 @@
   var MED_CLASSES = [
     {
       id: 'bisphosphonate_weekly',
+      icon: '💊', cadenceLabel: t('สัปดาห์ละครั้ง', 'Once a week'), route: t('ยาเม็ด รับประทานเอง', 'Tablet, taken at home'),
       name: t('ยาบิสฟอสโฟเนตชนิดรับประทาน (สัปดาห์ละครั้ง)', 'Oral bisphosphonate (once a week)'),
       cadenceType: 'days',
       intervalDays: 7,
@@ -475,6 +535,7 @@
     },
     {
       id: 'bisphosphonate_daily',
+      icon: '💊', cadenceLabel: t('ทุกวัน', 'Every day'), route: t('ยาเม็ด รับประทานเอง', 'Tablet, taken at home'),
       name: t('ยาบิสฟอสโฟเนตชนิดรับประทาน (ทุกวัน)', 'Oral bisphosphonate (daily)'),
       cadenceType: 'days',
       intervalDays: 1,
@@ -487,32 +548,35 @@
     },
     {
       id: 'denosumab',
+      icon: '💉', cadenceLabel: t('ทุก 6 เดือน', 'Every 6 months'), route: t('ยาฉีดใต้ผิวหนัง ที่โรงพยาบาล', 'Injection under the skin, at hospital'),
       name: t('ยาฉีดเดโนซูแมบ (ทุก 6 เดือน)', 'Denosumab injection (every 6 months)'),
       cadenceType: 'months',
       intervalMonths: 6,
       doNotDelay: true,
       dentalCare: true,
       whatItDoes: t('ยับยั้งเซลล์ที่สลายกระดูก ช่วยเพิ่มความหนาแน่นกระดูกและลดโอกาสกระดูกหัก', 'Blocks the cells that break down bone, increasing bone density and lowering fracture risk.'),
-      instructions: t('พยาบาลหรือแพทย์จะฉีดเข้าใต้ผิวหนังที่คลินิกทุก 6 เดือน ควรนัดครั้งถัดไปทุกครั้งก่อนกลับบ้าน และควรได้รับแคลเซียมกับวิตามินดีเพียงพอร่วมด้วย', 'A nurse or doctor injects it under the skin at the clinic every 6 months. Book your next appointment before you leave, and make sure you also get enough calcium and vitamin D.'),
-      missedDose: t('หากไม่สามารถมาตามนัดได้ ต้องโทรแจ้งคลินิกทันทีเพื่อนัดใหม่โดยเร็วที่สุด ไม่ควรทิ้งช่วงเกินกำหนด', 'If you cannot make your appointment, phone the clinic straight away to rebook as soon as possible. The gap should not be allowed to stretch out.'),
+      instructions: t('พยาบาลหรือแพทย์จะฉีดเข้าใต้ผิวหนังที่โรงพยาบาลทุก 6 เดือน ควรนัดครั้งถัดไปทุกครั้งก่อนกลับบ้าน และควรได้รับแคลเซียมกับวิตามินดีเพียงพอร่วมด้วย', 'A nurse or doctor injects it under the skin at the hospital every 6 months. Book your next appointment before you leave, and make sure you also get enough calcium and vitamin D.'),
+      missedDose: t('หากไม่สามารถมาตามนัดได้ ต้องโทรแจ้งโรงพยาบาลทันทีเพื่อนัดใหม่โดยเร็วที่สุด ไม่ควรทิ้งช่วงเกินกำหนด', 'If you cannot make your appointment, phone the hospital straight away to rebook as soon as possible. The gap should not be allowed to stretch out.'),
       sideEffects: t('อาจปวดเมื่อยกล้ามเนื้อหรือข้อ และเสี่ยงแคลเซียมในเลือดต่ำ หากมีอาการชารอบปาก ปลายมือปลายเท้า หรือกล้ามเนื้อเกร็งกระตุก ให้แจ้งแพทย์ทันที', 'You may have muscle or joint aches, and blood calcium can drop. Tell your doctor at once if you get numbness around the mouth, tingling hands or feet, or muscle cramps and twitching.'),
       tellDoctor: t('กำลังจะถอนฟันหรือผ่าตัดช่องปาก มีปัญหาโรคไต หรือมีการติดเชื้อที่ผิวหนัง', 'You are due to have a tooth out or oral surgery, you have kidney problems, or you develop a skin infection.'),
       doNotStop: t('ห้ามหยุดยานี้เองโดยเด็ดขาด การหยุดยาเดโนซูแมบโดยไม่มียาอื่นทดแทน อาจทำให้กระดูกสันหลังยุบหลายระดับพร้อมกันภายใน 1-2 ปี หากต้องการหยุดยาต้องวางแผนกับแพทย์เสมอ', 'Never stop this medicine on your own. Stopping denosumab without another medicine to follow it can cause several spinal fractures at once within a year or two. Any plan to stop must be made with your doctor.')
     },
     {
       id: 'zoledronate',
+      icon: '🏥', cadenceLabel: t('ปีละครั้ง', 'Once a year'), route: t('ยาฉีดเข้าหลอดเลือดดำ ที่โรงพยาบาล', 'Drip into a vein, at hospital'),
       name: t('ยาฉีดเข้าหลอดเลือดดำ โซเลโดรเนต (ปีละครั้ง)', 'Zoledronate infusion (once a year)'),
       cadenceType: 'months',
       intervalMonths: 12,
       dentalCare: true,
       whatItDoes: t('ยาในกลุ่มบิสฟอสโฟเนตชนิดฉีด ออกฤทธิ์นานทั้งปี ช่วยลดการสลายกระดูกและลดโอกาสกระดูกหัก', 'A bisphosphonate given by drip that works for a whole year, reducing bone breakdown and fracture risk.'),
       instructions: t('ให้ยาทางหลอดเลือดดำที่โรงพยาบาล ใช้เวลาประมาณ 15-30 นาที ปีละครั้ง ควรดื่มน้ำให้มากทั้งก่อนและหลังได้รับยา', 'Given through a drip at the hospital, taking about 15-30 minutes, once a year. Drink plenty of water before and after.'),
-      missedDose: t('หากเลยกำหนดนัดประจำปี ให้ติดต่อคลินิกเพื่อนัดใหม่ ไม่ต้องเพิ่มขนาดยาเพื่อชดเชย', 'If your yearly appointment has passed, contact the clinic to rebook. The dose is not increased to make up for it.'),
+      missedDose: t('หากเลยกำหนดนัดประจำปี ให้ติดต่อโรงพยาบาลเพื่อนัดใหม่ ไม่ต้องเพิ่มขนาดยาเพื่อชดเชย', 'If your yearly appointment has passed, contact the hospital to rebook. The dose is not increased to make up for it.'),
       sideEffects: t('หลังได้รับยาครั้งแรก อาจมีไข้ ปวดเมื่อยตัวคล้ายเป็นไข้หวัด 1-3 วัน ให้ดื่มน้ำมาก ๆ และทานยาพาราเซตามอลได้ อาการมักไม่เกิดซ้ำในปีถัดไป', 'After the first infusion you may feel feverish and achy like a mild flu for 1-3 days. Drink plenty of water and paracetamol is fine. This usually does not happen again in later years.'),
       tellDoctor: t('มีปัญหาโรคไต ระดับแคลเซียมในเลือดต่ำ หรือกำลังจะทำฟัน/ผ่าตัดช่องปาก', 'You have kidney problems or low blood calcium, or you are about to have dental work or oral surgery.')
     },
     {
       id: 'teriparatide',
+      icon: '🖊️', cadenceLabel: t('ทุกวัน', 'Every day'), route: t('ปากกาฉีดยา ฉีดเองที่บ้าน', 'Injection pen, self-injected at home'),
       name: t('ยาฉีดเทอริพาราไทด์ (ฉีดเองทุกวัน)', 'Teriparatide (daily self-injection)'),
       cadenceType: 'days',
       intervalDays: 1,
@@ -524,12 +588,13 @@
     },
     {
       id: 'romosozumab',
+      icon: '💉', cadenceLabel: t('เดือนละครั้ง', 'Once a month'), route: t('ยาฉีดใต้ผิวหนัง ที่โรงพยาบาล', 'Injection under the skin, at hospital'),
       name: t('ยาฉีดโรโมโซซูแมบ (เดือนละครั้ง)', 'Romosozumab injection (once a month)'),
       cadenceType: 'months',
       intervalMonths: 1,
       whatItDoes: t('ช่วยทั้งสร้างกระดูกใหม่และลดการสลายกระดูกไปพร้อมกัน ใช้เป็นชุดการรักษานาน 12 เดือน', 'Both builds new bone and reduces bone breakdown at the same time. It is given as a 12-month course.'),
-      instructions: t('ฉีดใต้ผิวหนังที่คลินิกเดือนละครั้ง (ครั้งละ 2 เข็ม) ต่อเนื่อง 12 เดือน หลังครบกำหนดแพทย์จะเปลี่ยนเป็นยาชนิดอื่นเพื่อรักษาผลที่ได้ไว้', 'Given as an injection under the skin at the clinic once a month (two injections each time) for 12 months. After the course your doctor will move you to another medicine to keep the benefit.'),
-      missedDose: t('หากพลาดนัด ให้ติดต่อคลินิกเพื่อฉีดโดยเร็วที่สุด แล้วนับรอบเดือนถัดไปจากวันที่ฉีดจริง', 'If you miss an appointment, contact the clinic to have it as soon as possible, then count the next month from the date you actually received it.'),
+      instructions: t('ฉีดใต้ผิวหนังที่โรงพยาบาลเดือนละครั้ง (ครั้งละ 2 เข็ม) ต่อเนื่อง 12 เดือน หลังครบกำหนดแพทย์จะเปลี่ยนเป็นยาชนิดอื่นเพื่อรักษาผลที่ได้ไว้', 'Given as an injection under the skin at the hospital once a month (two injections each time) for 12 months. After the course your doctor will move you to another medicine to keep the benefit.'),
+      missedDose: t('หากพลาดนัด ให้ติดต่อโรงพยาบาลเพื่อฉีดโดยเร็วที่สุด แล้วนับรอบเดือนถัดไปจากวันที่ฉีดจริง', 'If you miss an appointment, contact the hospital to have it as soon as possible, then count the next month from the date you actually received it.'),
       sideEffects: t('อาจปวดข้อ ปวดศีรษะ หรือมีปฏิกิริยาบริเวณที่ฉีด', 'You may have joint pain, headache, or a reaction where you were injected.'),
       tellDoctor: t('เคยเป็นโรคหัวใจขาดเลือด กล้ามเนื้อหัวใจตาย หรือโรคหลอดเลือดสมอง ต้องแจ้งแพทย์ก่อนเริ่มยานี้เสมอ และหากมีอาการเจ็บแน่นหน้าอกหรืออ่อนแรงครึ่งซีกระหว่างใช้ยา ให้โทร 1669 ทันที', 'You have had a heart attack, angina or a stroke — always tell your doctor before starting. If you get chest pain or one-sided weakness while on it, call 1669 immediately.')
     }
@@ -548,6 +613,41 @@
     if (med.cadenceType === 'days') return addDaysSafe(fromDateStr, med.intervalDays);
     if (med.cadenceType === 'months') return addMonthsSafe(fromDateStr, med.intervalMonths);
     throw new Error('Unknown cadence type for ' + medClassId);
+  }
+
+  var DOSE_REMINDER_LEAD_DAYS = 7;
+
+  function doseReminderState(nextDueDate, todayStr) {
+    if (!nextDueDate) return null;
+    var days = daysBetween(todayStr || formatYMD(new Date()), nextDueDate);
+    return {
+      nextDue: nextDueDate,
+      daysUntil: days,
+      overdue: days < 0,
+      dueToday: days === 0,
+      dueSoon: days > 0 && days <= DOSE_REMINDER_LEAD_DAYS,
+      shouldRemind: days <= DOSE_REMINDER_LEAD_DAYS
+    };
+  }
+
+  function shouldShowDoseReminder(reminder, lastShownDate, todayStr) {
+    if (!reminder || !reminder.shouldRemind) return false;
+    if (!lastShownDate) return true;
+    return daysBetween(lastShownDate, todayStr || formatYMD(new Date())) >= 1;
+  }
+
+  /**
+   * Fraction of the interval already elapsed, for the countdown ring on Home.
+   * Clamped to 0-1 so an overdue dose shows a full ring rather than overflowing.
+   */
+  function doseCycleProgress(medClassId, fromDateStr, todayStr) {
+    var med = getMedClass(medClassId);
+    if (!med || !fromDateStr) return 0;
+    var nextDue = computeNextDue(medClassId, fromDateStr);
+    var total = daysBetween(fromDateStr, nextDue);
+    if (total <= 0) return 1;
+    var elapsed = daysBetween(fromDateStr, todayStr || formatYMD(new Date()));
+    return Math.max(0, Math.min(1, elapsed / total));
   }
 
   var NUTRITION_REVIEW_MONTHS = 12;
@@ -997,7 +1097,7 @@
     return result;
   }
 
-  var MERGEABLE_RECORD_TYPES = ['checkin', 'nutrition'];
+  var MERGEABLE_RECORD_TYPES = ['checkin', 'nutrition', 'bmd'];
 
   /**
    * A day can produce several check-in measurements (height, then a
@@ -1033,13 +1133,56 @@
     { id: 'hip_pain', severity: 'critical', icon: '🦴', key: 'alertHipPain', actionKey: 'alertHipPainAction', call: 'ems' },
     { id: 'head_injury', severity: 'critical', icon: '🩸', key: 'alertHeadInjury', actionKey: 'alertHeadInjuryAction', call: 'ems' },
     { id: 'neuro', severity: 'critical', icon: '⚡', key: 'alertNeuro', actionKey: 'alertNeuroAction', call: 'ems' },
-    { id: 'back_pain', severity: 'serious', icon: '🔥', key: 'alertBackPain', actionKey: 'alertBackPainAction', call: 'clinic' }
+    { id: 'back_pain', severity: 'serious', icon: '🔥', key: 'alertBackPain', actionKey: 'alertBackPainAction', call: 'hospital' }
   ];
 
   var ALERT_CONTACTS = {
-    clinicPhone: '02 839 6000',
+    hospitalPhone: '02 839 6000',
     emsPhone: '1669'
   };
+
+  var DOCTOR = {
+    name: 'นพ.สรวุฒิ ธรรมยงค์กิจ',
+    hospitalPhone: ALERT_CONTACTS.hospitalPhone
+  };
+
+  var BMD_SITES = [
+    { id: 'spine', labelKey: 'bmdSpine', color: 'var(--series-1)' },
+    { id: 'hip', labelKey: 'bmdHip', color: 'var(--series-2)' }
+  ];
+
+  function buildBmdSeries(bmdLogs, site) {
+    return (bmdLogs || []).map(function (entry) {
+      return { label: entry.date, value: entry[site + 'Bmd'] };
+    }).filter(function (point) {
+      return typeof point.value === 'number' && !isNaN(point.value);
+    });
+  }
+
+  function hasBmdData(bmdLogs) {
+    return buildBmdSeries(bmdLogs, 'spine').length > 0 || buildBmdSeries(bmdLogs, 'hip').length > 0;
+  }
+
+  /**
+   * Change between the first and last reading, so the chart can state the
+   * trend in words instead of leaving the patient to eyeball the slope.
+   */
+  function seriesChange(points, decimals) {
+    if (!points || points.length < 2) return null;
+    var first = points[0].value;
+    var last = points[points.length - 1].value;
+    var delta = last - first;
+    var places = typeof decimals === 'number' ? decimals : 1;
+    return {
+      first: first,
+      last: last,
+      delta: delta,
+      deltaText: (delta > 0 ? '+' : delta < 0 ? '−' : '') + Math.abs(delta).toFixed(places),
+      direction: delta > 0 ? 'up' : delta < 0 ? 'down' : 'flat',
+      fromLabel: points[0].label,
+      toLabel: points[points.length - 1].label
+    };
+  }
 
   var ONBOARDING_QUESTIONS = [
     { id: 'priorFragilityFracture', field: 'priorFragilityFracture', type: 'boolean', labelKey: 'qPriorFracture' },
@@ -1139,6 +1282,15 @@
     RESOURCE_LINKS: RESOURCE_LINKS,
     RED_FLAGS: RED_FLAGS,
     ALERT_CONTACTS: ALERT_CONTACTS,
+    DOCTOR: DOCTOR,
+    DOSE_REMINDER_LEAD_DAYS: DOSE_REMINDER_LEAD_DAYS,
+    doseReminderState: doseReminderState,
+    shouldShowDoseReminder: shouldShowDoseReminder,
+    doseCycleProgress: doseCycleProgress,
+    BMD_SITES: BMD_SITES,
+    buildBmdSeries: buildBmdSeries,
+    hasBmdData: hasBmdData,
+    seriesChange: seriesChange,
     ONBOARDING_QUESTIONS: ONBOARDING_QUESTIONS
   };
 });

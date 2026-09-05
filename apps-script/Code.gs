@@ -15,7 +15,8 @@ var SHEET_COLUMNS = {
   CheckIns: ['patientId', 'date', 'heightCm', 'chairStandReps', 'tugSeconds', 'safetyScore', 'falls', 'missedDoses', 'balanceLevel', 'receivedAt'],
   Falls: ['patientId', 'date', 'injured', 'cause', 'receivedAt'],
   Adherence: ['patientId', 'date', 'receivedAt'],
-  Nutrition: ['patientId', 'date', 'calciumIntakeMg', 'calciumSupplementMg', 'vitaminDSupplementIu', 'proteinIntakeG', 'receivedAt']
+  Nutrition: ['patientId', 'date', 'calciumIntakeMg', 'calciumSupplementMg', 'vitaminDSupplementIu', 'proteinIntakeG', 'receivedAt'],
+  Bmd: ['patientId', 'date', 'scanDate', 'spineBmd', 'spineT', 'hipBmd', 'hipT', 'receivedAt']
 };
 
 function doPost(e) {
@@ -81,7 +82,8 @@ var SHEET_ROUTING = {
   checkin: { sheet: 'CheckIns', dedupe: 'merge' },
   nutrition: { sheet: 'Nutrition', dedupe: 'merge' },
   adherence: { sheet: 'Adherence', dedupe: 'date' },
-  falls: { sheet: 'Falls', dedupe: 'content' }
+  falls: { sheet: 'Falls', dedupe: 'content' },
+  bmd: { sheet: 'Bmd', dedupe: 'merge' }
 };
 
 function cellToString(value) {
