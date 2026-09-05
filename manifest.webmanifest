@@ -1,13 +1,13 @@
 {
-  "name": "Bone Health Companion — ดูแลกระดูก",
-  "short_name": "ดูแลกระดูก",
-  "description": "Lifelong bone health, medication adherence and fall-prevention companion for osteoporosis patients.",
+  "name": "ดูแลกระดูกพรุน — Osteoporosis Care",
+  "short_name": "ดูแลกระดูกพรุน",
+  "description": "Lifelong bone health, medication and fall-prevention companion for people with osteoporosis.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#f7f5f0",
-  "theme_color": "#2f6f4f",
+  "background_color": "#f2f6fc",
+  "theme_color": "#1c5cab",
   "lang": "th",
   "icons": [
     { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },

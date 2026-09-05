@@ -58,6 +58,49 @@ function run() {
     }
   });
 
+  cases.push({
+    name: 'several check-in measurements on one day merge into a single queued record',
+    fn: function () {
+      var queue = [];
+      core.queueRecord(queue, { patientId: 'HN1', date: '2026-05-10', type: 'checkin', heightCm: 158 });
+      core.queueRecord(queue, { patientId: 'HN1', date: '2026-05-10', type: 'checkin', tugSeconds: 10.2 });
+      core.queueRecord(queue, { patientId: 'HN1', date: '2026-05-10', type: 'checkin', chairStandReps: 12 });
+      helpers.assertEqual(queue.length, 1, 'same-day check-ins should collapse to one record');
+      helpers.assertEqual(queue[0].payload.heightCm, 158, 'the earlier height must not be lost');
+      helpers.assertEqual(queue[0].payload.tugSeconds, 10.2);
+      helpers.assertEqual(queue[0].payload.chairStandReps, 12);
+    }
+  });
+
+  cases.push({
+    name: 'check-ins on different days stay separate records',
+    fn: function () {
+      var queue = [];
+      core.queueRecord(queue, { patientId: 'HN1', date: '2026-05-10', type: 'checkin', heightCm: 158 });
+      core.queueRecord(queue, { patientId: 'HN1', date: '2026-05-11', type: 'checkin', heightCm: 157 });
+      helpers.assertEqual(queue.length, 2);
+    }
+  });
+
+  cases.push({
+    name: 'two falls on the same day are kept as two events, not merged',
+    fn: function () {
+      var queue = [];
+      core.queueRecord(queue, { patientId: 'HN1', date: '2026-05-10', type: 'falls', injured: 0, cause: 'พรม' });
+      core.queueRecord(queue, { patientId: 'HN1', date: '2026-05-10', type: 'falls', injured: 1, cause: 'บันได' });
+      helpers.assertEqual(queue.length, 2, 'a second fall the same day is a real event');
+    }
+  });
+
+  cases.push({
+    name: 'a repeated adherence record on one day is not duplicated by the backend dedup key',
+    fn: function () {
+      var key1 = core.buildDedupKey('HN1', '2026-05-10', 'adherence');
+      var key2 = core.buildDedupKey('HN1', '2026-05-10', 'adherence');
+      helpers.assertEqual(key1, key2);
+    }
+  });
+
   return helpers.runSuite('t10_sync', cases);
 }
 
