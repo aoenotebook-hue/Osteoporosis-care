@@ -1,5 +1,10 @@
 # Move-tab Media Clip List
 
+> **Filenames and image-generation prompts:** see
+> [`media-asset-list.md`](media-asset-list.md), which covers all 31 assets
+> (17 exercises plus 14 self-care) and carries a ready-to-paste prompt for
+> each. This file stays the filming-specific checklist.
+
 Filming checklist for the Move tab. One short clip (or a single photo)
 per exercise `id` in `app-core.js` → `EXERCISE_LIST`.
 
