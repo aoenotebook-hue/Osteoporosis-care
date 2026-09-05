@@ -83,12 +83,12 @@ function run() {
     name: 'BMD series are built per site and skip missing values',
     fn: function () {
       var logs = [
-        { date: '2024-01-10', spineBmd: 0.72, spineT: -2.6, hipBmd: 0.68, hipT: -2.3 },
-        { date: '2026-01-10', spineBmd: 0.75, spineT: -2.4 }
+        { date: '2024-01-10', spineT: -2.6, hipT: -2.3 },
+        { date: '2026-01-10', spineT: -2.4 }
       ];
       helpers.assertEqual(core.buildBmdSeries(logs, 'spine').length, 2);
       helpers.assertEqual(core.buildBmdSeries(logs, 'hip').length, 1, 'a scan without a hip value is skipped for hip');
-      helpers.assertEqual(core.buildBmdSeries(logs, 'spine')[1].value, 0.75);
+      helpers.assertEqual(core.buildBmdSeries(logs, 'spine')[1].value, -2.4);
       helpers.assertEqual(core.hasBmdData(logs), true);
       helpers.assertEqual(core.hasBmdData([]), false);
       helpers.assertEqual(core.hasBmdData([{ date: '2026-01-10' }]), false);
@@ -118,11 +118,11 @@ function run() {
     fn: function () {
       helpers.assert(core.MERGEABLE_RECORD_TYPES.indexOf('bmd') !== -1, 'bmd should be mergeable');
       var queue = [];
-      core.queueRecord(queue, { patientId: 'HN1', date: '2026-06-01', type: 'bmd', spineBmd: 0.75 });
-      core.queueRecord(queue, { patientId: 'HN1', date: '2026-06-01', type: 'bmd', hipBmd: 0.68 });
+      core.queueRecord(queue, { patientId: 'HN1', date: '2026-06-01', type: 'bmd', spineT: -2.4 });
+      core.queueRecord(queue, { patientId: 'HN1', date: '2026-06-01', type: 'bmd', hipT: -2.1 });
       helpers.assertEqual(queue.length, 1);
-      helpers.assertEqual(queue[0].payload.spineBmd, 0.75);
-      helpers.assertEqual(queue[0].payload.hipBmd, 0.68);
+      helpers.assertEqual(queue[0].payload.spineT, -2.4);
+      helpers.assertEqual(queue[0].payload.hipT, -2.1);
     }
   });
 

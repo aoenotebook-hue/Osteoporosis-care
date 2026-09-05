@@ -27,48 +27,81 @@ review, all built around a **risk-tier + balance-level resolver**.
 
 | Tab | What it holds |
 |---|---|
-| หน้าหลัก / Home | Care level, balance level, a countdown ring to the next dose, due prompts, safety tip, and the data-sync panel |
-| ยา / Medicine | The patient's own drug, picked from icon cards: next dose, what it does, how to take it, missed doses, side effects, dental note, do-not-stop warning, dose history |
-| อาหาร / Food | Yearly nutrition review and its calcium, vitamin D and protein recommendations |
+| หน้าหลัก / Home | Bone condition and fall risk with what each means and what to do, the QFracture 10-year risk card, a countdown ring to the next dose, due prompts and a safety tip |
+| ยา / Medicine | The patient's own drug, picked from icon cards: next dose, how long they have been on it, doses received, course position for romosozumab, how to take it, missed doses, side effects, dental note, do-not-stop warning, and past medicines with their durations |
+| อาหาร / Food | Yearly nutrition review and its calcium, vitamin D and protein recommendations, plus bulleted guides to where calcium and vitamin D come from and what to cut down |
 | ออกกำลัง / Move | Exercises scoped to the balance level, each with written how-to steps; information only, no logging |
 | กันล้ม / Safety | 20-item home safety check with per-item icons; done items turn blue, outstanding ones stay highlighted |
-| ติดตาม / Track | Spine and hip BMD, height, chair-stand, TUG, falls and adherence — each with a progression chart, a change-since-first chip and a table view |
-| ความรู้ / Learn | The four explainer panels and the external reading list |
+| ติดตาม / Track | Spine and hip T-scores, height, chair-stand, TUG, falls and adherence — each with a progression chart, a change-since-first chip and a table view, with past scan results listed at the bottom |
+| ความรู้ / Learn | Explainer panels (what osteoporosis is, the T-score, who should be scanned, why medication matters, what to expect) and the reading list |
 | ฉุกเฉิน / Urgent | Red flags as severity cards, each with the action to take, and one-tap hospital/1669 calling |
 
-Every page ends with a footer naming the supervising doctor and the
-hospital phone number, plus an "erase and start over" link that clears
-this phone's data behind a confirmation (and warns first if anything is
-still waiting to be sent).
+The header carries the patient's HN. Every page ends with a footer
+naming the supervising doctor and an "erase and start over" link that
+clears this phone's data behind a confirmation. When records are stuck in
+the queue, a quiet line appears there with a retry button.
 
 ## The engine
 
-- **Risk tier** — A (bone health), B (high fracture risk), C
-  (post-fracture). Conflicting inputs always resolve to the most
-  conservative tier.
-- **Balance level** — 1 (always supported) → 3 (independent). It drops
-  automatically after any fall. It only rises when *all* of: both
-  self-tests pass the age/sex norm and the TUG threshold, the results
-  are less than 90 days old, no fall in 4 weeks, and at least 4 weeks at
-  the current level. (Daily exercise logging was removed, so the gate
-  rests on the self-tests rather than session counts.)
+Two separate judgements, because they are managed differently and mixing
+them misleads the patient:
+
+- **Bone condition** — a diagnosis, from bone density and fracture
+  history *only*: unknown → normal (T ≥ -1.0) → thinning bone (between
+  -1.0 and -2.5) → osteoporosis (T ≤ -2.5, or any fragility fracture) →
+  osteoporosis with a fracture. A hip or spine fragility fracture counts
+  as osteoporosis on clinical grounds whatever the scan says. Age,
+  steroids and falls raise *risk* but never by themselves create this
+  label. Recording a DXA result updates it, using the lowest T-score of
+  the sites measured.
+- **Chance of falling** — STEADI-style: high with two or more falls, any
+  fall that caused injury, or a TUG of 12 seconds or more; moderate with
+  one uninjured fall, unsteadiness, worry about falling, or a walking
+  aid; otherwise low. Each grade carries its own management advice on
+  the Home tab.
+- **Balance level** — 1 (always supported) → 3 (independent), starting
+  from the fall-risk grade. It drops automatically after any fall, and
+  only rises when *all* of: both self-tests pass the age/sex norm and the
+  TUG threshold, the results are less than 90 days old, no fall in 4
+  weeks, and at least 4 weeks at the current level.
 - **Nutrition** — a yearly food-frequency review estimates daily
-  calcium, vitamin D and protein, and turns the shortfall into a
-  suggested supplement amount for that individual. Every result is
-  labelled as an estimate to confirm with the doctor.
-- **Dose reminders** — from 7 days before the next dose the app shows a
-  pop-up (once a day, not on every open), sends a phone notification
-  where the browser allows it, and offers a calendar file carrying an
-  alarm a week ahead and another on the day.
+  calcium, vitamin D and protein and turns each shortfall into a
+  suggested supplement amount, labelled as an estimate to confirm with
+  the doctor.
+- **Dose reminders** — from 7 days before the next dose: a pop-up once a
+  day, a phone notification where the browser allows it, and a calendar
+  file with an alarm a week ahead and another on the day.
 
-### About the phone reminder
+### About the 10-year fracture risk (QFracture)
 
-Scheduled web push does not survive a closed tab on iOS, so it cannot be
-relied on for a dose that is a week away. The app therefore uses three
-layers: the in-app pop-up (always works when the app is opened), a
-Notifications-API message (where the browser permits it), and the
-**calendar file, which is the dependable one** — once added, the phone's
-own calendar fires the alarm whether or not the app is running.
+QFracture suits this app better than FRAX: it works from health history
+and **needs no bone density result**, so a patient who has never had a
+DXA still gets a number. The app collects everything the calculator asks
+for — age, sex, weight, height and BMI, previous fracture, falls in the
+past year, a parent with a broken hip or thin bones, care-home living,
+smoking, alcohol, diabetes, dementia, cancer, asthma or COPD, heart
+disease or stroke, liver disease, kidney disease, Parkinson's,
+rheumatoid arthritis or lupus, malabsorption, gland problems,
+anticonvulsants, antidepressants, steroid tablets, and HRT for women.
+Anything the assessment already asked is carried over and shown
+read-only rather than asked twice.
+
+**The app does not compute the score.** QFracture's algorithm is
+published, unlike FRAX's, so it *can* be implemented — but the
+coefficient tables are not bundled here and this build environment has
+no outbound network access to fetch them. Inventing coefficients would
+produce a plausible-looking percentage that is wrong, which is worse
+than no number at all in a patient-facing app.
+
+To turn on in-app calculation, put the published QFracture coefficient
+tables (the ClinRisk open-source release) in the repo and say so — the
+worksheet already assembles every input in the right shape, so it is a
+data drop plus one scoring function, and I will validate it against the
+published worked examples before it goes anywhere near a patient.
+
+Until then the flow is: fill in the details → open qfracture.org →
+enter them → record the two percentages back in the app, where they are
+stored, dated, and synced to the FractureRisk sheet.
 
 ## Running the tests
 
@@ -84,45 +117,47 @@ prompt need a real HTTP(S) origin, not `file://`.
 
 ## Deploying the backend
 
-1. Create a Google Sheet, open **Extensions → Apps Script**, paste in
-   `apps-script/Code.gs`.
-2. **Deploy → New deployment → Web app**, set **Execute as: Me** and
-   **Who has access: Anyone** (not "Anyone with a Google account" — that
-   redirects to a login page the app cannot follow), and copy the URL.
-3. `WEBHOOK_URL` in `index.html` is already wired to the deployed URL,
-   and `SHARED_TOKEN` is set to the same generated secret in both
-   `index.html` and `Code.gs`. **The two must always match.**
-4. Apps Script deployments are pinned to a code snapshot: after editing
-   `Code.gs`, use **Deploy → Manage deployments → Edit → New version**.
-   Saving alone does not update the live `/exec` URL.
-5. Sheets are created automatically on first write. Same-day check-in,
-   nutrition and BMD records merge into one row; a second fall on the
-   same day is kept as a separate event; resent identical records are
-   skipped.
+`apps-script/Code.gs` is self-contained — paste the whole file in,
+replacing anything already there.
 
-### If data is not arriving in the sheet
+1. Open your Google Sheet → **Extensions → Apps Script**.
+2. Select everything in the editor, delete it, paste in `Code.gs`, save.
+3. **Deploy → Manage deployments → pencil icon → Version: New version →
+   Deploy.** This step is the one that matters: saving alone does **not**
+   change what the live `/exec` URL runs, so an older copy of the script
+   keeps answering.
+4. Confirm it took: open the `/exec` URL in a browser. It answers
 
-The Home tab has a **"การส่งข้อมูลให้โรงพยาบาล"** panel showing how many
-records are waiting, when the last successful send happened, and the
-exact reason the last attempt failed, with a "try sending now" button.
-Read that first — it names the problem.
+   ```json
+   {"ok":true,"service":"osteoporosis-care","version":"2026-09-05","tokenConfigured":true,"sheets":[...]}
+   ```
 
-The most common cause is a **token mismatch**: the deployed `Code.gs`
-still has an older `SHARED_TOKEN` than `index.html`. Apps Script answers
-that with `{"ok":false,"error":"invalid token"}` over **HTTP 200**, so
-the panel will show `invalid token` while the records stay queued.
-Fix it by copying the current `SHARED_TOKEN` into the script and
-deploying a **new version** (step 4).
+   If `version` is not the one in the file you just pasted, step 3 did
+   not take effect.
 
-> This was also a real bug in the app until now: the old code treated any
-> HTTP 200 as success, so a rejected record was dropped from the queue and
-> lost. It now only clears a record once the backend confirms it stored it,
-> and anything else stays queued with the reason recorded.
+Access must be **Anyone**, not "Anyone with a Google account" — the
+latter answers with a login page the app cannot follow. `SHARED_TOKEN`
+must be identical in `Code.gs` and `index.html`.
 
-The sandbox this was built in blocks `script.google.com`, so the live
-endpoint could not be called from here. The sync path itself was verified
-against a stand-in backend covering both the rejection and the success
-case.
+Sheets are created on first write: Registrations, CheckIns, Falls,
+Adherence, Nutrition, Bmd, FractureRisk. Same-day check-in, nutrition, BMD and
+FRAX records merge into one row; a second fall on the same day is kept
+as a separate event; an exact repeat is skipped.
+
+### If data still does not arrive
+
+Records that are not accepted stay queued and a line appears in the page
+footer with a retry button — nothing is silently dropped. The likely
+causes, in order:
+
+1. **The script was never redeployed** (step 3). Check the version with
+   the `/exec` URL as above. This is the most common one.
+2. **Token mismatch** — the script answers `invalid token` with HTTP 200.
+3. **Access set to "Anyone with a Google account"**.
+
+This sandbox blocks `script.google.com`, so the live endpoint cannot be
+called from here. The client sync path is verified against a stand-in
+backend covering both the accepted and rejected cases.
 
 ## Deploying the app
 
@@ -141,8 +176,10 @@ Static hosting (e.g. GitHub Pages): `index.html`, `app-core.js`,
    what you would actually prescribe.
 3. **Medication list** covers the classes in the build plan. Trim or
    extend it to what is actually prescribed.
-4. **Tier C is not split** into hip vs. spine in v1; any prior fragility
-   fracture maps to Tier C.
+4. **The classification thresholds** — T ≥ -1.0 normal, -2.5 osteoporosis,
+   hip/spine fragility fracture as clinical osteoporosis, and the STEADI
+   fall-risk cut-offs — are the standard ones, but confirm they match
+   your practice.
 5. **Self-tests** are offered to all tiers with an on-screen "have
    someone with you" warning, not gated to supervised-only.
 6. **Icons are PNG-free** — the app ships an SVG icon. Add real
@@ -154,9 +191,27 @@ Static hosting (e.g. GitHub Pages): `index.html`, `app-core.js`,
    นพ.สรวุฒิ ธรรมยงค์กิจ / Dr. Sorawut Thamyongkit. The build plan listed
    the ธรรมยงค์กิจ vs. ธำรงค์กิจ spelling as an open decision — it is now
    confirmed as ธรรมยงค์กิจ, so reuse that across the other three apps.
-9. **BMD entry** takes g/cm² plus an optional T-score per site. Confirm
-   that copying these off the DXA report is what you want patients doing,
-   rather than the values being entered by staff.
+9. **BMD entry** takes the spine and hip T-scores off the DXA report, and
+   the lowest of them updates the bone status. Confirm you want patients
+   entering these themselves rather than staff.
+10. **The BMD screening criteria** in the Learn tab follow common
+   international guidance; confirm them against the Thai guideline you
+   use before the pilot.
+
+## Writing for patients
+
+The app is read by people in their seventies and eighties, often on a
+small screen, so the content follows a few rules the test suite enforces:
+
+- No patient-facing string runs past 260 characters. Anything longer
+  belongs in `LISTS` in `app-core.js`, rendered as bullets.
+- Everyday words over medical ones: "กระดูกบาง" rather than
+  "ภาวะมวลกระดูกต่ำ", "broken a bone in a small fall" rather than
+  "fragility fracture". Where a clinical term has to appear (T-score),
+  the sentence explains it.
+- Both languages are written for the patient, not translated word for
+  word from each other — `t1_i18n_parity` catches any string where the
+  two are identical, which usually means one was never really written.
 
 ## Accessibility
 

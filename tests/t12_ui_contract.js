@@ -9,10 +9,14 @@ var html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
  * Keys the UI builds at runtime rather than writing out literally
  * (tr(prefix + '_name'), tr('balanceLevel' + level), and so on).
  */
-var DYNAMIC_CONTENT_KEYS = [
-  'tierA_name', 'tierA_desc', 'tierB_name', 'tierB_desc', 'tierC_name', 'tierC_desc',
-  'balanceLevel1', 'balanceLevel2', 'balanceLevel3'
-];
+var DYNAMIC_CONTENT_KEYS = ['balanceLevel1', 'balanceLevel2', 'balanceLevel3'];
+
+['Unknown', 'Normal', 'Osteopenia', 'Osteoporosis', 'SevereOsteoporosis'].forEach(function (status) {
+  DYNAMIC_CONTENT_KEYS.push('boneStatus' + status + '_name', 'boneStatus' + status + '_desc');
+});
+['Low', 'Moderate', 'High'].forEach(function (risk) {
+  DYNAMIC_CONTENT_KEYS.push('fallRisk' + risk + '_name', 'fallRisk' + risk + '_desc', 'fallRisk' + risk + '_action');
+});
 
 function matchAll(source, regex, group) {
   var found = [];
@@ -95,6 +99,42 @@ function run() {
       tabs.forEach(function (tab) {
         helpers.assert(html.indexOf("case '" + tab + "':") !== -1, 'tab "' + tab + '" has no render branch');
         helpers.assert(html.indexOf(tab + ': \'nav') !== -1, 'tab "' + tab + '" has no label mapping');
+      });
+    }
+  });
+
+  cases.push({
+    name: 'patient-facing text stays short enough to read on a phone',
+    fn: function () {
+      // Anything longer than this is a wall of text on a small screen; break it
+      // into a LISTS entry rendered as bullets instead.
+      var LIMIT = 260;
+      var tooLong = [];
+      Object.keys(core.CONTENT).forEach(function (key) {
+        var entry = core.CONTENT[key];
+        if (entry.th.length > LIMIT) tooLong.push('CONTENT.' + key + ' (th ' + entry.th.length + ')');
+        if (entry.en.length > LIMIT) tooLong.push('CONTENT.' + key + ' (en ' + entry.en.length + ')');
+      });
+      Object.keys(core.LISTS).forEach(function (listKey) {
+        core.LISTS[listKey].forEach(function (item, i) {
+          if (item.th.length > LIMIT) tooLong.push('LISTS.' + listKey + '[' + i + '] (th)');
+          if (item.en.length > LIMIT) tooLong.push('LISTS.' + listKey + '[' + i + '] (en)');
+        });
+      });
+      helpers.assertEqual(tooLong.length, 0, 'too long to read comfortably: ' + tooLong.join(', '));
+    }
+  });
+
+  cases.push({
+    name: 'every bullet list is bilingual and actually rendered',
+    fn: function () {
+      Object.keys(core.LISTS).forEach(function (listKey) {
+        helpers.assert(core.LISTS[listKey].length > 0, listKey + ' is empty');
+        core.LISTS[listKey].forEach(function (item, i) {
+          helpers.assert(item.th && item.en, listKey + '[' + i + '] is missing a language');
+          helpers.assert(item.th !== item.en, listKey + '[' + i + '] looks untranslated');
+        });
+        helpers.assert(html.indexOf("'" + listKey + "'") !== -1, listKey + ' is never rendered');
       });
     }
   });
