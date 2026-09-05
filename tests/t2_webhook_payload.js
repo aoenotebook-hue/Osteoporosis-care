@@ -10,28 +10,24 @@ function run() {
     name: 'registration collects only HN, year of birth and sex',
     fn: function () {
       var payload = core.buildRegistrationPayload({
-        hn: 'HN12345', hnUnknown: false, yearOfBirth: 1955, sex: 'male', consent: true
+        hn: 'HN12345', yearOfBirth: 2498, sex: 'male', consent: true
       }, TOKEN);
       helpers.assert(!('name' in payload), 'payload should not carry a name field');
       helpers.assert(!('phone' in payload), 'payload should not carry a phone field');
-      helpers.assertEqual(payload.patientId, 'HN12345');
-      helpers.assertEqual(payload.hnUnknown, false);
+      helpers.assertEqual(payload.patientId, 'HN12345', 'the HN identifies the patient');
       helpers.assertEqual(payload.sex, 'male');
       helpers.assert(core.validateRegistrationPayload(payload).valid, 'expected a valid payload');
     }
   });
 
   cases.push({
-    name: 'unknown HN falls back to a device UUID as the patient id',
+    name: 'a registration without an HN is rejected rather than given a stand-in id',
     fn: function () {
-      var deviceUuid = core.generateDeviceUuid();
-      helpers.assert(core.isValidUuid(deviceUuid), 'generated id should be a UUIDv4');
-      var payload = core.buildRegistrationPayload({
-        hn: '', hnUnknown: true, deviceUuid: deviceUuid, yearOfBirth: 2495, sex: 'female', consent: true
-      }, TOKEN);
-      helpers.assertEqual(payload.patientId, deviceUuid);
-      helpers.assertEqual(payload.hn, null);
-      helpers.assert(core.validateRegistrationPayload(payload).valid, 'unknown-HN payload should still be valid');
+      var payload = core.buildRegistrationPayload({ yearOfBirth: 2495, sex: 'female', consent: true }, TOKEN);
+      helpers.assertEqual(payload.patientId, null);
+      var validation = core.validateRegistrationPayload(payload);
+      helpers.assert(!validation.valid, 'HN is required now');
+      helpers.assert(validation.errors.indexOf('missing HN') !== -1);
     }
   });
 
@@ -55,16 +51,16 @@ function run() {
   cases.push({
     name: 'missing consent, sex, year of birth or token are each rejected',
     fn: function () {
-      var noConsent = core.buildRegistrationPayload({ hn: 'HN1', yearOfBirth: 1950, sex: 'male', consent: false }, TOKEN);
+      var noConsent = core.buildRegistrationPayload({ hn: 'HN1', yearOfBirth: 2493, sex: 'male', consent: false }, TOKEN);
       helpers.assert(core.validateRegistrationPayload(noConsent).errors.indexOf('consent must be true') !== -1);
 
-      var noSex = core.buildRegistrationPayload({ hn: 'HN1', yearOfBirth: 1950, consent: true }, TOKEN);
+      var noSex = core.buildRegistrationPayload({ hn: 'HN1', yearOfBirth: 2493, consent: true }, TOKEN);
       helpers.assert(core.validateRegistrationPayload(noSex).errors.indexOf('missing sex') !== -1);
 
       var noYear = core.buildRegistrationPayload({ hn: 'HN1', sex: 'male', consent: true }, TOKEN);
       helpers.assert(core.validateRegistrationPayload(noYear).errors.indexOf('missing yearOfBirth') !== -1);
 
-      var noToken = core.buildRegistrationPayload({ hn: 'HN1', yearOfBirth: 1950, sex: 'male', consent: true }, '');
+      var noToken = core.buildRegistrationPayload({ hn: 'HN1', yearOfBirth: 2493, sex: 'male', consent: true }, '');
       helpers.assert(core.validateRegistrationPayload(noToken).errors.indexOf('missing token') !== -1);
     }
   });
@@ -81,7 +77,7 @@ function run() {
   cases.push({
     name: 'payload always carries the current schema version',
     fn: function () {
-      var payload = core.buildRegistrationPayload({ hn: 'HN1', yearOfBirth: 1950, sex: 'male', consent: true }, TOKEN);
+      var payload = core.buildRegistrationPayload({ hn: 'HN1', yearOfBirth: 2493, sex: 'male', consent: true }, TOKEN);
       helpers.assertEqual(payload.schemaVersion, core.SCHEMA_VERSION);
     }
   });

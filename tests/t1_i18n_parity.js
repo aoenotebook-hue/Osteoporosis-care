@@ -24,7 +24,8 @@ function run() {
     fn: function () {
       Object.keys(core.CONTENT).forEach(function (key) {
         var entry = core.CONTENT[key];
-        if (['iuUnit'].indexOf(key) !== -1) return;
+        // Abbreviations and units that are written the same way in both languages.
+        if (['iuUnit', 'headerHnLabel'].indexOf(key) !== -1) return;
         helpers.assert(entry.th !== entry.en, 'CONTENT.' + key + ' has identical TH and EN text — likely an untranslated string');
       });
     }

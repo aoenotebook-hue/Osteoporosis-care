@@ -26,9 +26,10 @@
     --series-1: #2a78d6;
     --series-2: #eb6834;
     --grid: #e1e6ec;
-    --tier-a: #0b7a3d;
-    --tier-b: #a35a08;
-    --tier-c: #3a4f8a;
+    --status-good: #0b7a3d;
+    --status-mid: #a35a08;
+    --status-high: #a3341f;
+    --status-unknown: #4f5b6b;
     --good: #0ca30c;
     --warning: #fab219;
     --warning-ink: #7a5200;
@@ -63,7 +64,9 @@
   }
   header .brand { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
   header .brand svg { width: 38px; height: 38px; flex-shrink: 0; border-radius: 9px; }
-  header .app-name { font-size: 1.12rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  header .header-text { display: flex; flex-direction: column; min-width: 0; }
+  header .app-name { font-size: 1.08rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  header .header-hn { font-size: 0.78rem; opacity: 0.9; white-space: nowrap; }
   .lang-toggle {
     background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 8px 16px;
     border-radius: 999px; min-height: 42px; font-weight: 700; cursor: pointer; flex-shrink: 0;
@@ -130,9 +133,16 @@
   nav.tab-bar .tab-icon { font-size: 1.2rem; }
 
   .badge { display: inline-block; padding: 6px 14px; border-radius: 999px; color: #fff; font-weight: 700; font-size: 0.88rem; }
-  .badge.tier-a { background: var(--tier-a); }
-  .badge.tier-b { background: var(--tier-b); }
-  .badge.tier-c { background: var(--tier-c); }
+  .badge.status-good { background: var(--status-good); }
+  .badge.status-mid { background: var(--status-mid); }
+  .badge.status-high { background: var(--status-high); }
+  .badge.status-unknown { background: var(--status-unknown); }
+  .status-block { border-top: 1px solid var(--border); padding-top: 12px; margin-top: 12px; }
+  .status-block:first-of-type { border-top: none; padding-top: 0; margin-top: 0; }
+  .status-block .basis { color: var(--muted); font-size: 0.82rem; margin: 6px 0 0; }
+  .status-block .meaning { margin: 8px 0 0; }
+  .status-block .action { background: var(--surface-alt); border-radius: 12px; padding: 10px 12px; margin-top: 10px; }
+  .status-block .action strong { display: block; margin-bottom: 4px; }
   .badge.level { background: var(--primary); }
   .badge.soft { background: var(--surface-alt); color: var(--primary-dark); }
   .badge-row { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -162,6 +172,7 @@
   }
   .modal.tall { margin: auto 0; }
   .modal-logo { display: block; width: 64px; height: 64px; margin: 0 auto 12px; border-radius: 14px; }
+  .modal-lang { display: flex; justify-content: flex-end; margin-bottom: 4px; }
 
   .a2hs-banner {
     position: fixed; left: 12px; right: 12px; bottom: 80px; background: var(--primary-dark); color: #fff;
@@ -266,10 +277,16 @@
     border-top: 1px solid var(--border); color: var(--muted); font-size: 0.85rem;
   }
   footer.app-footer .doctor { font-weight: 700; color: var(--text); font-size: 0.95rem; }
+  footer.app-footer .footer-sync { color: var(--warning-ink); background: var(--warning-bg); border-radius: 10px; padding: 8px 10px; margin-bottom: 10px; }
   footer.app-footer .reset-link {
     background: none; border: none; color: var(--muted); text-decoration: underline;
     cursor: pointer; min-height: 44px; font-size: 0.85rem; margin-top: 6px;
   }
+
+  .frax-results { display: flex; gap: 12px; flex-wrap: wrap; margin: 10px 0; }
+  .frax-figure { background: var(--surface-alt); border-radius: 12px; padding: 10px 14px; flex: 1 1 45%; }
+  .frax-figure .label { display: block; font-size: 0.82rem; color: var(--muted); }
+  .frax-figure .figure { font-size: 1.8rem; font-weight: 800; color: var(--primary-dark); }
 
   .supplement-figure {
     background: var(--surface-alt); border-radius: 12px; padding: 12px 14px; margin-top: 10px;
@@ -283,7 +300,7 @@
 <header class="app-header">
   <div class="brand">
     <svg viewBox="0 0 192 192" aria-hidden="true"><rect width="192" height="192" rx="38" fill="#ffffff"/><g fill="#1c5cab"><rect x="52" y="82" width="88" height="28" rx="14"/><circle cx="58" cy="76" r="21"/><circle cx="58" cy="116" r="21"/><circle cx="134" cy="76" r="21"/><circle cx="134" cy="116" r="21"/></g><g fill="#ffffff"><circle cx="74" cy="96" r="7.5"/><circle cx="95" cy="87" r="5.5"/><circle cx="96" cy="106" r="6.5"/><circle cx="116" cy="95" r="7"/></g></svg>
-    <span class="app-name" id="appNameHeader"></span>
+    <span class="header-text"><span class="app-name" id="appNameHeader"></span><span class="header-hn" id="headerHn" hidden></span></span>
   </div>
   <button class="lang-toggle" id="langToggleBtn" type="button"></button>
 </header>
@@ -319,6 +336,9 @@
   var pendingMedClassId = null;
   var reminderOpen = false;
   var resetConfirmOpen = false;
+  var fraxFormOpen = false;
+  var registrationSex = null;
+  var bmdJustSaved = false;
   var chairStandTimer = { running: false, remaining: 30, awaitingReps: false, intervalId: null };
   var tugTimer = { running: false, elapsed: 0, intervalId: null };
 
@@ -330,7 +350,10 @@
       registered: false,
       patient: null,
       profile: {},
-      tier: null,
+      boneStatus: null,
+      fallRisk: null,
+      frax: {},
+      medicationHistory: [],
       balance: { currentLevel: null, levelSetDate: null },
       medication: { classId: null, startDate: null, lastTakenDate: null, adherenceLog: [] },
       nutrition: { lastAssessedDate: null, answers: null, result: null },
@@ -424,7 +447,7 @@
     var tug = latestEntry(state.tracking.tugTests);
     var previous = state.balance.currentLevel;
     var next = C.resolveBalanceLevel(state.profile, {
-      tier: state.tier,
+      fallRisk: state.fallRisk,
       currentLevel: previous,
       levelSetDate: state.balance.levelSetDate,
       fallsLast4Weeks: computeFallsLast4Weeks(),
@@ -683,6 +706,13 @@
 
   function render() {
     $('#appNameHeader').textContent = tr('appName');
+    var hnEl = $('#headerHn');
+    if (state.patient && state.patient.hn) {
+      hnEl.hidden = false;
+      hnEl.textContent = tr('headerHnLabel') + ' ' + state.patient.hn;
+    } else {
+      hnEl.hidden = true;
+    }
     $('#langToggleBtn').textContent = state.lang === 'th' ? 'EN' : 'ไทย';
     document.documentElement.lang = state.lang;
 
@@ -694,7 +724,7 @@
       $('#tabBar').hidden = true;
       screen.innerHTML = '<div class="card"><h2>' + esc(tr('appName')) + '</h2><p class="muted">' + esc(tr('registerIntro')) + '</p></div>';
       overlay.innerHTML = '<div class="overlay"><div class="modal tall">' + renderRegistration() + '</div></div>';
-    } else if (!state.tier) {
+    } else if (!state.boneStatus) {
       $('#tabBar').hidden = true;
       screen.innerHTML = renderOnboarding();
     } else {
@@ -703,6 +733,7 @@
       screen.innerHTML = renderActiveScreen() + renderFooter();
       if (checkin.open) overlay.innerHTML = '<div class="overlay"><div class="modal">' + renderCheckin() + '</div></div>';
       else if (nutrition.open) overlay.innerHTML = '<div class="overlay"><div class="modal">' + renderNutritionWizard() + '</div></div>';
+      else if (fraxFormOpen) overlay.innerHTML = '<div class="overlay"><div class="modal">' + renderFraxForm() + '</div></div>';
       else if (resetConfirmOpen) overlay.innerHTML = '<div class="overlay"><div class="modal">' + renderResetConfirm() + '</div></div>';
       else if (reminderOpen) overlay.innerHTML = '<div class="overlay"><div class="modal">' + renderDoseReminder() + '</div></div>';
     }
@@ -711,13 +742,17 @@
   }
 
   function renderFooter() {
-    return '<footer class="app-footer">' +
-      '<div>' + esc(tr('footerDoctorLabel')) + '</div>' +
+    var pending = state.syncQueue.length;
+    var html = '<footer class="app-footer">';
+    if (pending) {
+      html += '<div class="footer-sync">' + esc(tr('syncFooterPending').replace('{n}', pending)) +
+        ' <button type="button" class="reset-link" data-action="sync-now">' + esc(tr('syncFooterRetry')) + '</button></div>';
+    }
+    html += '<div>' + esc(tr('footerDoctorLabel')) + '</div>' +
       '<div class="doctor">' + esc(loc(C.DOCTOR.name)) + '</div>' +
-      '<div>' + esc(tr('footerHospitalPhone')) + ' ' +
-        '<a href="tel:' + C.ALERT_CONTACTS.hospitalPhone.replace(/\s/g, '') + '">' + esc(C.ALERT_CONTACTS.hospitalPhone) + '</a></div>' +
       '<button type="button" class="reset-link" data-action="open-reset">' + esc(tr('resetButton')) + '</button>' +
       '</footer>';
+    return html;
   }
 
   function renderResetConfirm() {
@@ -758,22 +793,23 @@
 
   function renderRegistration() {
     return '' +
+      '<div class="modal-lang"><button type="button" class="btn small secondary" data-action="toggle-lang">' +
+        (state.lang === 'th' ? 'English' : 'ไทย') + '</button></div>' +
       '<svg class="modal-logo" viewBox="0 0 192 192" aria-hidden="true"><rect width="192" height="192" rx="38" fill="#1c5cab"/><g fill="#ffffff"><rect x="52" y="82" width="88" height="28" rx="14"/><circle cx="58" cy="76" r="21"/><circle cx="58" cy="116" r="21"/><circle cx="134" cy="76" r="21"/><circle cx="134" cy="116" r="21"/></g><g fill="#1c5cab"><circle cx="74" cy="96" r="7.5"/><circle cx="95" cy="87" r="5.5"/><circle cx="96" cy="106" r="6.5"/><circle cx="116" cy="95" r="7"/></g></svg>' +
       '<h2 class="center">' + esc(tr('registerTitle')) + '</h2>' +
       '<p class="muted center">' + esc(tr('registerIntro')) + '</p>' +
-      '<form id="registerForm">' +
+      '<form id="registerForm" novalidate>' +
         '<label for="hnInput">' + esc(tr('registerHN')) + '</label>' +
         '<input type="text" id="hnInput" name="hn" inputmode="numeric" autocomplete="off">' +
-        '<div class="checkbox-row"><input type="checkbox" id="hnUnknown" name="hnUnknown"><label for="hnUnknown">' + esc(tr('registerHNUnknown')) + '</label></div>' +
         '<label for="yobInput">' + esc(tr('registerYearOfBirth')) + '</label>' +
         '<input type="number" id="yobInput" name="yearOfBirth" inputmode="numeric">' +
-        '<div class="field-hint">' + esc(tr('registerYearHint')) + '</div>' +
+        '<div class="field-hint">' + esc(tr('registerYearBEHint')) + '</div>' +
         '<label>' + esc(tr('registerSex')) + '</label>' +
         '<div class="choice-grid">' +
-          '<button type="button" class="choice-btn" data-action="reg-sex" data-value="female">' + esc(tr('registerSexFemale')) + '</button>' +
-          '<button type="button" class="choice-btn" data-action="reg-sex" data-value="male">' + esc(tr('registerSexMale')) + '</button>' +
+          '<button type="button" class="choice-btn' + (registrationSex === 'female' ? ' selected' : '') + '" data-action="reg-sex" data-value="female">' + esc(tr('registerSexFemale')) + '</button>' +
+          '<button type="button" class="choice-btn' + (registrationSex === 'male' ? ' selected' : '') + '" data-action="reg-sex" data-value="male">' + esc(tr('registerSexMale')) + '</button>' +
         '</div>' +
-        '<input type="hidden" name="sex" id="regSexField" value="">' +
+        '<input type="hidden" name="sex" id="regSexField" value="' + esc(registrationSex || '') + '">' +
         '<div class="card" style="margin-top:16px;">' +
           '<h3>' + esc(tr('pdpaTitle')) + '</h3>' +
           '<p class="muted">' + esc(tr('pdpaBody')) + '</p>' +
@@ -786,9 +822,8 @@
 
   function handleRegisterSubmit(form) {
     var fd = new FormData(form);
-    var hnUnknown = !!fd.get('hnUnknown');
     var hn = (fd.get('hn') || '').trim();
-    var yearRaw = fd.get('yearOfBirth');
+    var yearRaw = parseInt(fd.get('yearOfBirth'), 10);
     var sex = fd.get('sex');
     var errorBox = $('#registerError');
 
@@ -797,14 +832,16 @@
       errorBox.textContent = tr(msgKey);
     }
 
-    if (!hn && !hnUnknown) return fail('registerHNRequired');
-    if (C.deriveAge(yearRaw) === null) return fail('registerYearInvalid');
+    if (!hn) return fail('registerHNRequiredOnly');
+    // Years are collected in the Buddhist era only, so a Gregorian year is a mistake.
+    if (!yearRaw || yearRaw < 2400 || yearRaw > 2600 || C.deriveAge(yearRaw) === null) {
+      return fail('registerYearInvalidBE');
+    }
     if (!sex) return fail('registerSexRequired');
     if (!fd.get('consent')) return fail('registerConsentRequired');
 
     var payload = C.buildRegistrationPayload({
-      hn: hn, hnUnknown: hnUnknown, yearOfBirth: yearRaw, sex: sex,
-      consent: true, deviceUuid: C.generateDeviceUuid()
+      hn: hn, yearOfBirth: yearRaw, sex: sex, consent: true
     }, SHARED_TOKEN);
 
     var validation = C.validateRegistrationPayload(payload);
@@ -829,7 +866,9 @@
 
   function questionApplies(q) {
     if (!q.dependsOn) return true;
-    return state.profile[q.dependsOn.field] === q.dependsOn.value;
+    var actual = state.profile[q.dependsOn.field];
+    if (q.dependsOn.min !== undefined) return typeof actual === 'number' && actual >= q.dependsOn.min;
+    return actual === q.dependsOn.value;
   }
 
   function currentQuestionIndex() {
@@ -847,7 +886,7 @@
       finishOnboarding();
       showingTierResult = true;
     }
-    if (showingTierResult) return renderTierResult();
+    if (showingTierResult) return renderAssessmentResult();
 
     var q = qs[idx];
     var value = state.profile[q.field];
@@ -879,8 +918,8 @@
   }
 
   function finishOnboarding() {
-    state.tier = C.resolveTier(state.profile);
-    state.balance.currentLevel = C.defaultBalanceLevelForProfile(state.profile, state.tier);
+    refreshClassification();
+    state.balance.currentLevel = C.defaultBalanceLevelForProfile(state.profile, state.fallRisk);
     state.balance.levelSetDate = todayStr();
     if (state.profile.currentMedClass && state.profile.currentMedClass !== 'none' && !state.medication.classId) {
       state.medication.classId = state.profile.currentMedClass;
@@ -888,17 +927,56 @@
     saveState();
   }
 
-  function tierPrefix() { return { A: 'tierA', B: 'tierB', C: 'tierC' }[state.tier]; }
+  var BONE_STATUS_TONE = {
+    unknown: 'status-unknown', normal: 'status-good', osteopenia: 'status-mid',
+    osteoporosis: 'status-high', severeOsteoporosis: 'status-high'
+  };
+  var FALL_RISK_TONE = { low: 'status-good', moderate: 'status-mid', high: 'status-high' };
 
-  function renderTierResult() {
-    var p = tierPrefix();
+  function refreshClassification() {
+    var latestScan = C.latestBmdEntry(state.tracking.bmdLogs);
+    var scanTScore = C.lowestTScore(latestScan);
+    if (scanTScore !== null) state.profile.tScore = scanTScore;
+
+    var latestTug = latestEntry(state.tracking.tugTests);
+    state.boneStatus = C.resolveBoneStatus(state.profile);
+    state.fallRisk = C.resolveFallRisk(state.profile, { tugSeconds: latestTug ? latestTug.seconds : undefined });
+  }
+
+  function renderStatusBlocks(showActions) {
+    var bone = state.boneStatus;
+    var fall = state.fallRisk;
+    var html = '<div class="status-block">' +
+      '<div class="muted">' + esc(tr('boneStatusLabel')) + '</div>' +
+      '<span class="badge ' + BONE_STATUS_TONE[bone] + '">' + esc(tr('boneStatus' + capitalise(bone) + '_name')) + '</span>' +
+      '<p class="meaning"><strong>' + esc(tr('homeWhatThisMeans')) + ':</strong> ' +
+        esc(tr('boneStatus' + capitalise(bone) + '_desc')) + '</p>' +
+      '<p class="basis">' + esc(tr('boneStatusBasis')) + '</p></div>';
+
+    html += '<div class="status-block">' +
+      '<div class="muted">' + esc(tr('fallRiskLabel')) + '</div>' +
+      '<span class="badge ' + FALL_RISK_TONE[fall] + '">' + esc(tr('fallRisk' + capitalise(fall) + '_name')) + '</span>' +
+      '<p class="meaning">' + esc(tr('fallRisk' + capitalise(fall) + '_desc')) + '</p>' +
+      '<p class="basis">' + esc(tr('fallRiskBasis')) + '</p>';
+    if (showActions) {
+      html += '<div class="action"><strong>' + esc(tr('homeManagementLabel')) + '</strong>' +
+        esc(tr('fallRisk' + capitalise(fall) + '_action')) + '</div>';
+    }
+    html += '</div>';
+    return html;
+  }
+
+  function capitalise(value) {
+    return String(value).charAt(0).toUpperCase() + String(value).slice(1);
+  }
+
+  function renderAssessmentResult() {
     return '' +
-      '<h1>' + esc(tr('tierResultTitle')) + '</h1>' +
-      '<div class="card accent">' +
-        '<span class="badge tier-' + state.tier.toLowerCase() + '">' + esc(tr(p + '_name')) + '</span>' +
-        '<p style="margin-top:12px;">' + esc(tr(p + '_desc')) + '</p>' +
-        '<p class="muted">' + esc(tr('balanceLevelLabel')) + ': ' + esc(tr('balanceLevel' + state.balance.currentLevel)) + '</p>' +
-      '</div>' +
+      '<h1>' + esc(tr('assessmentResultTitle')) + '</h1>' +
+      '<p class="muted">' + esc(tr('assessmentIntro')) + '</p>' +
+      '<div class="card accent">' + renderStatusBlocks(true) + '</div>' +
+      '<div class="card"><p class="muted">' + esc(tr('balanceLevelLabel')) + ': <strong>' +
+        esc(tr('balanceLevel' + state.balance.currentLevel)) + '</strong></p></div>' +
       '<button type="button" class="btn" data-action="finish-onboarding-review">' + esc(tr('onboardingFinish')) + '</button>';
   }
 
@@ -925,18 +1003,18 @@
   }
 
   function renderHome() {
-    var p = tierPrefix();
     var med = medStatus();
     var checkinDue = C.isMonthlyCheckinDue(state.monthlyCheckin.lastDate, todayStr());
     var nutritionDue = C.isNutritionReviewDue(state.nutrition.lastAssessedDate, todayStr());
     var tip = SAFETY_TIP_KEYS[new Date().getDate() % SAFETY_TIP_KEYS.length];
 
     var html = '<h1>' + esc(tr('homeTodayTitle')) + '</h1>';
-    html += '<p class="muted">' + esc(tr('homeGreeting')) + '</p>';
-    html += '<div class="card accent"><div class="badge-row">' +
-      '<span class="badge tier-' + state.tier.toLowerCase() + '">' + esc(tr(p + '_name')) + '</span>' +
-      '<span class="badge level">' + esc(tr('balanceLevel' + state.balance.currentLevel)) + '</span>' +
-      '</div></div>';
+    html += '<div class="card accent"><h2>' + esc(tr('homeStatusTitle')) + '</h2>' +
+      renderStatusBlocks(true) +
+      '<div class="status-block"><div class="muted">' + esc(tr('balanceLevelLabel')) + '</div>' +
+      '<span class="badge level">' + esc(tr('balanceLevel' + state.balance.currentLevel)) + '</span></div>' +
+      '</div>';
+    html += renderFraxCard();
 
     if (checkinDue) {
       html += '<div class="card warn"><div class="card-head"><span class="ico">📋</span><h3>' + esc(tr('homeCheckinDue')) + '</h3></div>' +
@@ -965,7 +1043,6 @@
     html += '</div>';
 
     html += '<div class="card"><div class="card-head"><span class="ico">💡</span><h3>' + esc(tr('homeSafetyTip')) + '</h3></div><p>' + esc(tr(tip)) + '</p></div>';
-    html += renderSyncPanel();
     return html;
   }
 
@@ -1005,6 +1082,113 @@
       '<div class="countdown-detail">' + detail +
         '<p><strong>' + esc(formatDate(med.nextDue)) + '</strong></p>' +
       '</div></div>';
+  }
+
+  function renderFraxCard() {
+    var worksheet = C.buildFraxWorksheet(state.profile, state.frax, state.tracking.bmdLogs);
+    var ready = C.fraxWorksheetComplete(worksheet);
+
+    var html = '<div class="card"><div class="card-head"><span class="ico">📊</span><h3>' + esc(tr('fraxTitle')) + '</h3></div>';
+    html += '<p class="muted">' + esc(tr('fraxIntro')) + '</p>';
+
+    if (worksheet.recordedMajorRisk !== null || worksheet.recordedHipRisk !== null) {
+      html += '<div class="frax-results">';
+      if (worksheet.recordedMajorRisk !== null) {
+        html += '<div class="frax-figure"><span class="label">' + esc(tr('fraxMajorRisk')) + '</span>' +
+          '<span class="figure">' + worksheet.recordedMajorRisk + '%</span></div>';
+      }
+      if (worksheet.recordedHipRisk !== null) {
+        html += '<div class="frax-figure"><span class="label">' + esc(tr('fraxHipRisk')) + '</span>' +
+          '<span class="figure">' + worksheet.recordedHipRisk + '%</span></div>';
+      }
+      html += '</div>';
+      if (worksheet.recordedOn) {
+        html += '<p class="muted">' + esc(tr('fraxRecordedOn')) + ' ' + esc(formatDate(worksheet.recordedOn)) + '</p>';
+      }
+    } else {
+      html += '<p class="muted">' + esc(tr('fraxNotRecorded')) + '</p>';
+    }
+
+    html += '<details class="table-view"><summary>' + esc(tr('fraxYourDetails')) + '</summary><table class="data"><tbody>' +
+      fraxRow(tr('registerSex'), worksheet.sex ? tr(worksheet.sex === 'male' ? 'registerSexMale' : 'registerSexFemale') : '—') +
+      fraxRow(tr('registerAgeLabel'), worksheet.age === null ? '—' : worksheet.age) +
+      fraxRow(tr('fraxWeight'), worksheet.weightKg === null ? '—' : worksheet.weightKg) +
+      fraxRow(tr('fraxHeight'), worksheet.heightCm === null ? '—' : worksheet.heightCm) +
+      fraxRow(tr('fraxBmi'), worksheet.bmi === null ? '—' : worksheet.bmi) +
+      fraxRow(tr('fraxFemoralNeck'), worksheet.femoralNeckTScore === null ? '—' : worksheet.femoralNeckTScore) +
+      worksheet.factors.map(function (factor) {
+        return fraxRow(tr(factor.labelKey), tr(factor.value ? 'yes' : 'no'));
+      }).join('') +
+      '</tbody></table></details>';
+
+    html += '<p class="' + (ready ? 'status-line good' : 'status-line warn') + '">' +
+      (ready ? '✓ ' + esc(tr('fraxReady')) : '● ' + esc(tr('fraxNeedWeightHeight'))) + '</p>';
+
+    html += '<div class="stack">' +
+      '<button type="button" class="btn secondary" data-action="open-frax">' +
+        esc(worksheet.weightKg === null ? tr('fraxFillData') : tr('fraxEditData')) + '</button>' +
+      '<a class="btn secondary" href="' + esc(C.FRAX_URL) + '" target="_blank" rel="noopener">' + esc(tr('fraxOpenCalculator')) + '</a>' +
+      '</div>';
+    html += '<p class="muted" style="margin-top:10px;">' + esc(tr('fraxWhyNotComputed')) + '</p>';
+    return html + '</div>';
+  }
+
+  function fraxRow(label, value) {
+    return '<tr><td>' + esc(label) + '</td><td>' + esc(String(value)) + '</td></tr>';
+  }
+
+  function collectFraxInputs() {
+    var weight = $('#fraxWeight');
+    var height = $('#fraxHeight');
+    var major = $('#fraxMajor');
+    var hip = $('#fraxHip');
+    if (!weight) return;
+
+    var weightValue = parseFloat(weight.value);
+    var heightValue = parseFloat(height.value);
+    var majorValue = parseFloat(major.value);
+    var hipValue = parseFloat(hip.value);
+
+    state.frax.weightKg = isNaN(weightValue) ? undefined : weightValue;
+    state.frax.heightCm = isNaN(heightValue) ? undefined : heightValue;
+    if (!isNaN(majorValue)) state.frax.majorFractureRisk = majorValue;
+    if (!isNaN(hipValue)) state.frax.hipFractureRisk = hipValue;
+    if (!isNaN(majorValue) || !isNaN(hipValue)) state.frax.recordedOn = todayStr();
+  }
+
+  function renderFraxForm() {
+    var frax = state.frax || {};
+    var html = '<div class="card-head"><span class="ico">📊</span><h2 style="margin:0;">' + esc(tr('fraxFillData')) + '</h2></div>';
+    html += '<p class="muted">' + esc(tr('fraxWhyNotComputed')) + '</p>';
+    html += '<div class="field-row">' +
+      '<div><label for="fraxWeight">' + esc(tr('fraxWeight')) + '</label>' +
+        '<input type="number" id="fraxWeight" step="0.1" inputmode="decimal" value="' + esc(frax.weightKg === undefined ? '' : frax.weightKg) + '"></div>' +
+      '<div><label for="fraxHeight">' + esc(tr('fraxHeight')) + '</label>' +
+        '<input type="number" id="fraxHeight" step="0.1" inputmode="decimal" value="' + esc(frax.heightCm === undefined ? '' : frax.heightCm) + '"></div>' +
+      '</div>';
+
+    html += '<div style="margin-top:14px;">' + C.FRAX_FACTORS.filter(function (factor) {
+      return factor.id !== 'previousFracture' && factor.id !== 'glucocorticoids';
+    }).map(function (factor) {
+      var on = !!frax[factor.id];
+      return '<button type="button" class="safety-item ' + (on ? 'done' : 'todo') + '" data-action="toggle-frax-factor" data-factor="' + factor.id + '" aria-pressed="' + on + '">' +
+        '<span class="txt">' + esc(tr(factor.labelKey)) + '</span>' +
+        '<span class="state">' + (on ? '✓ ' + esc(tr('yes')) : esc(tr('no'))) + '</span></button>';
+    }).join('') + '</div>';
+
+    html += '<h3 style="margin-top:16px;">' + esc(tr('fraxRecordResult')) + '</h3>';
+    html += '<div class="field-row">' +
+      '<div><label for="fraxMajor">' + esc(tr('fraxMajorRisk')) + ' (%)</label>' +
+        '<input type="number" id="fraxMajor" step="0.1" inputmode="decimal" value="' + esc(frax.majorFractureRisk === undefined ? '' : frax.majorFractureRisk) + '"></div>' +
+      '<div><label for="fraxHip">' + esc(tr('fraxHipRisk')) + ' (%)</label>' +
+        '<input type="number" id="fraxHip" step="0.1" inputmode="decimal" value="' + esc(frax.hipFractureRisk === undefined ? '' : frax.hipFractureRisk) + '"></div>' +
+      '</div>';
+
+    html += '<div class="btn-row" style="margin-top:16px;">' +
+      '<button type="button" class="btn secondary" data-action="close-frax">' + esc(tr('cancel')) + '</button>' +
+      '<button type="button" class="btn" data-action="save-frax">' + esc(tr('save')) + '</button>' +
+      '</div>';
+    return html;
   }
 
   function renderSyncPanel() {
@@ -1079,6 +1263,8 @@
     }
     html += '</div>';
 
+    html += renderMedProgress();
+
     if (med.doNotStop) {
       html += '<div class="card critical"><div class="card-head"><span class="ico">🛑</span><h3>' + esc(tr('drugDoNotStop')) + '</h3></div><p>' + esc(loc(med.doNotStop)) + '</p></div>';
     }
@@ -1104,7 +1290,54 @@
 
     html += '<div class="card"><p class="muted">' + esc(tr('drugSupplementNote')) + '</p>' +
       '<button type="button" class="btn ghost" data-action="clear-med">' + esc(tr('drugChange')) + '</button></div>';
+    html += renderMedHistory();
     return html;
+  }
+
+  function renderMedProgress() {
+    var progress = C.medicationProgress(state.medication, todayStr());
+    if (!progress) return '';
+
+    var html = '<div class="card"><div class="card-head"><span class="ico">📆</span><h3>' + esc(tr('drugDuration')) + '</h3></div>';
+    html += '<p class="chart-latest">' + (progress.months >= 1
+      ? progress.months + ' <span class="muted" style="font-size:1rem;">' + esc(tr('drugMonthsUnit')) + '</span>'
+      : '<span style="font-size:1.2rem;">' + esc(tr('drugLessThanMonth')) + '</span>') + '</p>';
+
+    if (progress.doses > 0) {
+      html += '<p>' + esc(tr('drugDosesReceived')) + ': <strong>' + progress.doses + ' ' +
+        esc(progress.isInjection ? tr('drugInjectionsUnit') : tr('drugDosesUnit')) + '</strong></p>';
+    }
+
+    if (progress.courseTotalDoses) {
+      html += progress.courseComplete
+        ? '<p class="status-line warn">● ' + esc(tr('drugCourseComplete').replace('{total}', progress.courseTotalDoses)) + '</p>'
+        : '<p class="status-line">' + esc(tr('drugCourseProgress')
+            .replace('{n}', progress.nextDoseNumber)
+            .replace('{total}', progress.courseTotalDoses)) + '</p>' +
+          '<div class="progress-bar"><div style="width:' +
+            Math.round(progress.doses / progress.courseTotalDoses * 100) + '%"></div></div>';
+    }
+    return html + '</div>';
+  }
+
+  function renderMedHistory() {
+    var history = state.medicationHistory || [];
+    var html = '<div class="card"><div class="card-head"><span class="ico">📜</span><h3>' + esc(tr('drugHistoryTitle')) + '</h3></div>';
+    if (!history.length) {
+      html += '<p class="muted">' + esc(tr('drugHistoryEmpty')) + '</p>';
+    } else {
+      html += '<ul class="plain">' + history.slice().reverse().map(function (entry) {
+        var med = C.getMedClass(entry.classId);
+        var name = med ? loc(med.name) : entry.classId;
+        var icon = med ? med.icon : '💊';
+        var period = entry.months === null ? '' : tr('drugHistoryPeriod').replace('{n}', entry.months);
+        return '<li>' + icon + ' <strong>' + esc(name) + '</strong><br>' +
+          '<span class="muted">' + esc(formatDate(entry.startDate)) + ' – ' + esc(formatDate(entry.endDate)) +
+          (period ? ' · ' + esc(period) : '') +
+          (entry.doses ? ' · ' + entry.doses + ' ' + esc(tr('drugDosesUnit')) : '') + '</span></li>';
+      }).join('') + '</ul>';
+    }
+    return html + '</div>';
   }
 
   function infoCard(icon, titleKey, body) {
@@ -1166,8 +1399,9 @@
 
     if (state.nutrition.result) html += renderNutritionResultCards(state.nutrition.result);
 
-    html += '<div class="card"><div class="card-head"><span class="ico">🦴</span><h3>' + esc(tr('boneWhatIsTitle')) + '</h3></div><p>' + esc(tr('boneWhatIsBody')) + '</p></div>';
-    html += '<div class="card"><div class="card-head"><span class="ico">🚫</span><h3>' + esc(tr('avoidTitle')) + '</h3></div><p>' + esc(tr('avoidBody')) + '</p></div>';
+    html += '<div class="card"><div class="card-head"><span class="ico">🥛</span><h3>' + esc(tr('foodCalciumKnowledgeTitle')) + '</h3></div><p>' + esc(tr('foodCalciumKnowledgeBody')) + '</p></div>';
+    html += '<div class="card"><div class="card-head"><span class="ico">☀️</span><h3>' + esc(tr('foodVitDKnowledgeTitle')) + '</h3></div><p>' + esc(tr('foodVitDKnowledgeBody')) + '</p></div>';
+    html += '<div class="card warn"><div class="card-head"><span class="ico">🚫</span><h3>' + esc(tr('foodAvoidTitle')) + '</h3></div><p>' + esc(tr('foodAvoidBody')) + '</p></div>';
     return html;
   }
 
@@ -1409,7 +1643,7 @@
     html += renderTugCard();
     html += renderFallsCard();
     html += renderAdherenceCard();
-    html += renderDxaCard();
+    html += renderBmdHistory();
     return html;
   }
 
@@ -1417,49 +1651,73 @@
     var logs = state.tracking.bmdLogs || [];
     var spine = C.buildBmdSeries(logs, 'spine');
     var hip = C.buildBmdSeries(logs, 'hip');
-    var latest = latestEntry(logs);
+    var latest = C.latestBmdEntry(logs);
 
     var html = '<div class="chart-card"><div class="card-head"><span class="ico">🦴</span><h3>' + esc(tr('bmdTitle')) + '</h3></div>';
     html += '<p class="muted">' + esc(tr('bmdIntro')) + '</p>';
 
+    if (bmdJustSaved) {
+      html += '<p class="status-line good">✓ ' + esc(tr('bmdUpdatedStatus')) + '</p>';
+      bmdJustSaved = false;
+    }
     if (!C.hasBmdData(logs)) {
       html += '<p class="muted">' + esc(tr('bmdNoData')) + '</p>';
     } else {
       if (latest) {
         html += '<p>' + esc(tr('bmdLatestScan')) + ' ' + esc(formatDate(latest.date)) + ': ' +
-          (typeof latest.spineBmd === 'number' ? '<strong>' + esc(tr('bmdSpine')) + ' ' + latest.spineBmd + '</strong>' + (typeof latest.spineT === 'number' ? ' (T ' + latest.spineT + ')' : '') : '') +
-          (typeof latest.hipBmd === 'number' ? ' · <strong>' + esc(tr('bmdHip')) + ' ' + latest.hipBmd + '</strong>' + (typeof latest.hipT === 'number' ? ' (T ' + latest.hipT + ')' : '') : '') +
+          (typeof latest.spineT === 'number' ? '<strong>' + esc(tr('bmdSpine')) + ' ' + latest.spineT + '</strong>' : '') +
+          (typeof latest.spineT === 'number' && typeof latest.hipT === 'number' ? ' · ' : '') +
+          (typeof latest.hipT === 'number' ? '<strong>' + esc(tr('bmdHip')) + ' ' + latest.hipT + '</strong>' : '') +
           '</p>';
       }
-      html += deltaChip(C.seriesChange(spine.length >= 2 ? spine : hip, 3), 'g/cm²', true);
+      html += deltaChip(C.seriesChange(spine.length >= 2 ? spine : hip, 1), '', true);
       html += '<div class="chart-wrap">' + lineChart({
         title: tr('bmdChartTitle'),
-        unit: 'g/cm²',
+        unit: 'T-score',
         series: [
           { points: spine, color: 'var(--series-1)', name: tr('bmdSpine') },
           { points: hip, color: 'var(--series-2)', name: tr('bmdHip') }
         ],
-        formatAxis: function (v) { return v.toFixed(2); }
+        refValue: C.T_SCORE_OSTEOPOROSIS,
+        refLabel: tr('bmdThresholdOsteoporosis'),
+        refColor: 'var(--critical)',
+        formatAxis: function (v) { return v.toFixed(1); }
       }) + '</div>';
       html += '<p class="muted">' + esc(tr('bmdHigherBetter')) + '</p>';
     }
 
     html += '<form id="bmdForm">' +
+      '<p class="muted">' + esc(tr('bmdEnterTScores')) + '</p>' +
       '<label for="bmdDate">' + esc(tr('bmdScanDate')) + '</label>' +
       '<input type="date" id="bmdDate" value="' + todayStr() + '">' +
-      '<label>' + esc(tr('bmdSpine')) + '</label>' +
       '<div class="field-row">' +
-        '<input type="number" id="bmdSpineValue" step="0.001" inputmode="decimal" placeholder="' + esc(tr('bmdValueLabel')) + '">' +
-        '<input type="number" id="bmdSpineT" step="0.1" inputmode="decimal" placeholder="' + esc(tr('bmdTScoreLabel')) + '">' +
-      '</div>' +
-      '<label>' + esc(tr('bmdHip')) + '</label>' +
-      '<div class="field-row">' +
-        '<input type="number" id="bmdHipValue" step="0.001" inputmode="decimal" placeholder="' + esc(tr('bmdValueLabel')) + '">' +
-        '<input type="number" id="bmdHipT" step="0.1" inputmode="decimal" placeholder="' + esc(tr('bmdTScoreLabel')) + '">' +
+        '<div><label for="bmdSpineT">' + esc(tr('bmdSpine')) + '</label>' +
+          '<input type="number" id="bmdSpineT" step="0.1" inputmode="decimal" placeholder="' + esc(tr('bmdTScoreLabel')) + '"></div>' +
+        '<div><label for="bmdHipT">' + esc(tr('bmdHip')) + '</label>' +
+          '<input type="number" id="bmdHipT" step="0.1" inputmode="decimal" placeholder="' + esc(tr('bmdTScoreLabel')) + '"></div>' +
       '</div>' +
       '<button type="button" class="btn secondary" style="margin-top:12px;" data-action="save-bmd">' + esc(tr('bmdAdd')) + '</button>' +
       '</form></div>';
     return html;
+  }
+
+  function renderBmdHistory() {
+    var logs = (state.tracking.bmdLogs || []).filter(function (e) { return C.lowestTScore(e) !== null; });
+    var html = '<div class="card"><div class="card-head"><span class="ico">📋</span><h3>' + esc(tr('bmdPreviousResults')) + '</h3></div>';
+    if (!logs.length) {
+      html += '<p class="muted">' + esc(tr('bmdNoData')) + '</p>';
+    } else {
+      html += '<table class="data"><thead><tr>' +
+        '<th>' + esc(tr('bmdScanDate')) + '</th>' +
+        '<th>' + esc(tr('bmdSpine')) + '</th>' +
+        '<th>' + esc(tr('bmdHip')) + '</th></tr></thead><tbody>' +
+        logs.slice().reverse().map(function (entry) {
+          return '<tr><td>' + esc(formatDate(entry.date)) + '</td>' +
+            '<td>' + (typeof entry.spineT === 'number' ? entry.spineT : '—') + '</td>' +
+            '<td>' + (typeof entry.hipT === 'number' ? entry.hipT : '—') + '</td></tr>';
+        }).join('') + '</tbody></table>';
+    }
+    return html + '</div>';
   }
 
   function renderHeightCard() {
@@ -1588,17 +1846,6 @@
     return html;
   }
 
-  function renderDxaCard() {
-    var dxa = state.tracking;
-    var next = dxa.dxaLastDate ? C.addMonthsSafe(dxa.dxaLastDate, dxa.dxaIntervalMonths) : null;
-    return '<div class="card"><div class="card-head"><span class="ico">🩻</span><h3>' + esc(tr('dxaTitle')) + '</h3></div>' +
-      '<label for="dxaDateInput">' + esc(tr('dxaLastDate')) + '</label>' +
-      '<input type="date" id="dxaDateInput" value="' + esc(dxa.dxaLastDate || '') + '">' +
-      '<button type="button" class="btn secondary" style="margin-top:10px;" data-action="save-dxa">' + esc(tr('save')) + '</button>' +
-      (next ? '<p style="margin-top:10px;">' + esc(tr('dxaNextDue')) + ': <strong>' + esc(formatDate(next)) + '</strong></p>' : '') +
-      '<p class="muted">' + esc(tr('dxaNote')) + '</p></div>';
-  }
-
   /* ---------- alert tab ---------- */
 
   function renderAlert() {
@@ -1628,8 +1875,9 @@
 
   function renderKnowledge() {
     var html = '<h1>' + esc(tr('tabTitleKnowledge')) + '</h1>';
-    [['learnWhatIsTitle', 'boneWhatIsBody', '🦴'], ['learnMedMattersTitle', 'learnMedMattersBody', '💊'],
-     ['learnTScoreTitle', 'learnTScoreBody', '📊'], ['learnExpectTitle', 'learnExpectBody', '🎯']].forEach(function (panel) {
+    [['learnWhatIsTitle', 'boneWhatIsBody', '🦴'], ['learnTScoreTitle', 'learnTScoreBody', '📊'],
+     ['learnScreeningTitle', 'learnScreeningBody', '🩻'], ['learnMedMattersTitle', 'learnMedMattersBody', '💊'],
+     ['learnExpectTitle', 'learnExpectBody', '🎯']].forEach(function (panel) {
       html += '<div class="card"><div class="card-head"><span class="ico">' + panel[2] + '</span><h3>' + esc(tr(panel[0])) + '</h3></div><p>' + esc(tr(panel[1])) + '</p></div>';
     });
     html += '<div class="card link-list">' + C.RESOURCE_LINKS.map(function (link) {
@@ -1717,7 +1965,9 @@
     enqueueSyncRecord('checkin', {
       falls: checkin.fallLogged ? 1 : 0,
       missedDoses: checkin.missedDoses ? 1 : 0,
-      balanceLevel: state.balance.currentLevel
+      balanceLevel: state.balance.currentLevel,
+      boneStatus: state.boneStatus,
+      fallRisk: state.fallRisk
     });
     checkin.fallLogged = false;
     checkin.missedDoses = false;
@@ -1890,12 +2140,6 @@
         e.preventDefault();
         handleRegisterSubmit(form);
       });
-      var hnUnknown = $('#hnUnknown');
-      hnUnknown.addEventListener('change', function () {
-        var hnInput = $('#hnInput');
-        hnInput.disabled = hnUnknown.checked;
-        if (hnUnknown.checked) hnInput.value = '';
-      });
     }
     var numberInput = $('#onboardingNumberInput');
     if (numberInput) {
@@ -1914,14 +2158,19 @@
     if (!el) return;
     var action = el.getAttribute('data-action');
 
-    if (action === 'go-tab') {
+    if (action === 'toggle-lang') {
+      state.lang = state.lang === 'th' ? 'en' : 'th';
+      saveState(); render();
+
+    } else if (action === 'go-tab') {
       state.activeTab = el.getAttribute('data-tab');
       saveState(); render();
 
     } else if (action === 'reg-sex') {
+      registrationSex = el.getAttribute('data-value');
       $all('[data-action="reg-sex"]').forEach(function (b) { b.classList.remove('selected'); });
       el.classList.add('selected');
-      $('#regSexField').value = el.getAttribute('data-value');
+      $('#regSexField').value = registrationSex;
 
     } else if (action === 'answer') {
       var field = el.getAttribute('data-field');
@@ -1929,6 +2178,7 @@
       state.profile[field] = el.getAttribute('data-type') === 'boolean' ? raw === 'true' : raw;
       if (field === 'priorFragilityFracture' && raw === 'false') delete state.profile.fractureSite;
       if (field === 'tScoreKnown' && raw === 'false') delete state.profile.tScore;
+      if (field === 'fallsLast12mo' && !state.profile.fallsLast12mo) delete state.profile.fallWithInjury;
       saveState(); render();
 
     } else if (action === 'onboarding-next') {
@@ -1964,14 +2214,23 @@
       if (start) { state.medication.startDate = start; saveState(); render(); }
 
     } else if (action === 'clear-med') {
-      state.medication = { classId: null, startDate: null, lastTakenDate: null, adherenceLog: state.medication.adherenceLog };
+      var archived = C.archiveMedication(state.medication, todayStr());
+      if (archived) {
+        if (!state.medicationHistory) state.medicationHistory = [];
+        state.medicationHistory.push(archived);
+      }
+      state.medication = { classId: null, startDate: null, lastTakenDate: null, adherenceLog: [] };
+      pendingMedClassId = null;
       saveState(); render();
 
     } else if (action === 'mark-med-taken') {
       state.medication.lastTakenDate = todayStr();
       state.medication.adherenceLog.push({ date: todayStr() });
       saveState();
-      enqueueSyncRecord('adherence', {});
+      enqueueSyncRecord('adherence', {
+        medication: state.medication.classId,
+        doseNumber: state.medication.adherenceLog.length
+      });
       render();
 
     } else if (action === 'open-nutrition') {
@@ -2064,31 +2323,55 @@
     } else if (action === 'save-bmd') {
       var bmdEntry = {
         date: $('#bmdDate').value || todayStr(),
-        spineBmd: parseFloat($('#bmdSpineValue').value),
         spineT: parseFloat($('#bmdSpineT').value),
-        hipBmd: parseFloat($('#bmdHipValue').value),
         hipT: parseFloat($('#bmdHipT').value)
       };
-      ['spineBmd', 'spineT', 'hipBmd', 'hipT'].forEach(function (k) {
-        if (isNaN(bmdEntry[k])) delete bmdEntry[k];
-      });
-      if (typeof bmdEntry.spineBmd === 'number' || typeof bmdEntry.hipBmd === 'number') {
+      ['spineT', 'hipT'].forEach(function (k) { if (isNaN(bmdEntry[k])) delete bmdEntry[k]; });
+
+      if (C.lowestTScore(bmdEntry) !== null) {
         if (!state.tracking.bmdLogs) state.tracking.bmdLogs = [];
         state.tracking.bmdLogs.push(bmdEntry);
         state.tracking.bmdLogs.sort(function (a, b) { return a.date < b.date ? -1 : 1; });
-        if (!state.tracking.dxaLastDate || bmdEntry.date > state.tracking.dxaLastDate) {
-          state.tracking.dxaLastDate = bmdEntry.date;
-        }
+        refreshClassification();
+        bmdJustSaved = true;
         saveState();
         enqueueSyncRecord('bmd', {
           scanDate: bmdEntry.date,
-          spineBmd: bmdEntry.spineBmd === undefined ? '' : bmdEntry.spineBmd,
           spineT: bmdEntry.spineT === undefined ? '' : bmdEntry.spineT,
-          hipBmd: bmdEntry.hipBmd === undefined ? '' : bmdEntry.hipBmd,
-          hipT: bmdEntry.hipT === undefined ? '' : bmdEntry.hipT
+          hipT: bmdEntry.hipT === undefined ? '' : bmdEntry.hipT,
+          lowestT: C.lowestTScore(bmdEntry),
+          boneStatus: state.boneStatus
         });
         render();
       }
+
+    } else if (action === 'open-frax') {
+      fraxFormOpen = true;
+      render();
+
+    } else if (action === 'close-frax') {
+      fraxFormOpen = false;
+      render();
+
+    } else if (action === 'toggle-frax-factor') {
+      // The toggle re-renders the form, so capture the typed fields first.
+      collectFraxInputs();
+      var factorId = el.getAttribute('data-factor');
+      state.frax[factorId] = !state.frax[factorId];
+      saveState(); render();
+
+    } else if (action === 'save-frax') {
+      collectFraxInputs();
+      fraxFormOpen = false;
+      saveState();
+      enqueueSyncRecord('frax', {
+        weightKg: state.frax.weightKg === undefined ? '' : state.frax.weightKg,
+        heightCm: state.frax.heightCm === undefined ? '' : state.frax.heightCm,
+        bmi: C.computeBmi(state.frax.weightKg, state.frax.heightCm) || '',
+        majorFractureRisk: state.frax.majorFractureRisk === undefined ? '' : state.frax.majorFractureRisk,
+        hipFractureRisk: state.frax.hipFractureRisk === undefined ? '' : state.frax.hipFractureRisk
+      });
+      render();
 
     } else if (action === 'sync-now') {
       el.disabled = true;
@@ -2120,6 +2403,8 @@
       try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
       state = defaultState();
       pendingMedClassId = null;
+      registrationSex = null;
+      fraxFormOpen = false;
       resetConfirmOpen = false;
       reminderOpen = false;
       checkin = { open: false, steps: [], index: 0, fallLogged: false, missedDoses: false };
@@ -2128,11 +2413,7 @@
       showingTierResult = false;
       saveState(); render();
 
-    } else if (action === 'save-dxa') {
-      var dxaDate = $('#dxaDateInput').value;
-      if (dxaDate) { state.tracking.dxaLastDate = dxaDate; saveState(); render(); }
-
-    } else if (action === 'open-checkin') {
+        } else if (action === 'open-checkin') {
       checkin = { open: true, steps: buildCheckinSteps(), index: 0, fallLogged: false, missedDoses: false };
       render();
 
@@ -2212,7 +2493,7 @@
     });
   }
 
-  if (state.registered && state.tier) maybeOpenDoseReminder();
+  if (state.registered && state.boneStatus) maybeOpenDoseReminder();
   render();
   flushSyncQueue();
 })();

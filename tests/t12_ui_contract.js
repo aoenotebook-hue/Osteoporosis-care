@@ -9,10 +9,14 @@ var html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
  * Keys the UI builds at runtime rather than writing out literally
  * (tr(prefix + '_name'), tr('balanceLevel' + level), and so on).
  */
-var DYNAMIC_CONTENT_KEYS = [
-  'tierA_name', 'tierA_desc', 'tierB_name', 'tierB_desc', 'tierC_name', 'tierC_desc',
-  'balanceLevel1', 'balanceLevel2', 'balanceLevel3'
-];
+var DYNAMIC_CONTENT_KEYS = ['balanceLevel1', 'balanceLevel2', 'balanceLevel3'];
+
+['Unknown', 'Normal', 'Osteopenia', 'Osteoporosis', 'SevereOsteoporosis'].forEach(function (status) {
+  DYNAMIC_CONTENT_KEYS.push('boneStatus' + status + '_name', 'boneStatus' + status + '_desc');
+});
+['Low', 'Moderate', 'High'].forEach(function (risk) {
+  DYNAMIC_CONTENT_KEYS.push('fallRisk' + risk + '_name', 'fallRisk' + risk + '_desc', 'fallRisk' + risk + '_action');
+});
 
 function matchAll(source, regex, group) {
   var found = [];

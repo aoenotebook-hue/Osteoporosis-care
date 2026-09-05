@@ -13,9 +13,9 @@ function run() {
   });
 
   cases.push({
-    name: 'daily bisphosphonate adds 1 day',
+    name: 'the daily oral bisphosphonate is no longer offered',
     fn: function () {
-      helpers.assertEqual(core.computeNextDue('bisphosphonate_daily', '2026-03-31'), '2026-04-01');
+      helpers.assertEqual(core.getMedClass('bisphosphonate_daily'), null);
     }
   });
 
@@ -96,7 +96,7 @@ function run() {
   cases.push({
     name: 'bisphosphonates and denosumab are flagged for the dental warning',
     fn: function () {
-      ['bisphosphonate_weekly', 'bisphosphonate_daily', 'denosumab', 'zoledronate'].forEach(function (id) {
+      ['bisphosphonate_weekly', 'denosumab', 'zoledronate'].forEach(function (id) {
         helpers.assertEqual(core.getMedClass(id).dentalCare, true, id + ' should carry the dental note flag');
       });
     }
