@@ -6,57 +6,73 @@ function run() {
   var cases = [];
 
   cases.push({
-    name: 'the app never invents a FRAX score, since the formula is licensed',
+    name: 'the app never invents a fracture risk score',
     fn: function () {
       var exported = Object.keys(core).join(' ');
-      helpers.assert(!/computeFrax|calculateFrax|fraxScore/i.test(exported),
-        'nothing should compute a FRAX score locally: ' + exported);
-      helpers.assert(/^https:\/\/frax\.shef\.ac\.uk\//.test(core.FRAX_URL), 'the official calculator should be linked');
+      helpers.assert(!/computeQFracture|calculateQFracture|qfractureScore|computeFrax/i.test(exported),
+        'nothing should compute a risk score locally without the published coefficients: ' + exported);
+      helpers.assert(/^https:\/\/qfracture\.org/.test(core.QFRACTURE_URL), 'the official calculator should be linked');
     }
   });
 
   cases.push({
-    name: 'the worksheet gathers what the official calculator asks for',
+    name: 'QFracture needs no bone density result, unlike FRAX',
     fn: function () {
-      var sheet = core.buildFraxWorksheet(
-        { age: 72, sex: 'female', priorFragilityFracture: true, longTermSteroid: true },
-        { weightKg: 52, heightCm: 155, currentSmoking: true },
-        [{ date: '2026-01-01', spineT: -2.8, hipT: -2.4 }]
+      var sheet = core.buildQFractureWorksheet({ age: 72, sex: 'female' }, { weightKg: 52, heightCm: 155 });
+      helpers.assert(!('femoralNeckTScore' in sheet), 'QFracture does not take a T-score');
+      helpers.assertEqual(core.qfractureWorksheetComplete(sheet), true, 'complete without any scan');
+    }
+  });
+
+  cases.push({
+    name: 'the worksheet gathers the health history QFracture asks for',
+    fn: function () {
+      var sheet = core.buildQFractureWorksheet(
+        { age: 72, sex: 'female', priorFragilityFracture: true, longTermSteroid: true, fallsLast12mo: 2 },
+        { weightKg: 52, heightCm: 155, smoking: true, parkinsons: true }
       );
-      helpers.assertEqual(sheet.age, 72);
-      helpers.assertEqual(sheet.sex, 'female');
       helpers.assertEqual(sheet.bmi, 21.6);
-      helpers.assertEqual(sheet.femoralNeckTScore, -2.4, 'FRAX uses the hip reading');
 
       var byId = {};
-      sheet.factors.forEach(function (f) { byId[f.id] = f.value; });
-      helpers.assertEqual(byId.previousFracture, true, 'taken from the assessment, not asked twice');
-      helpers.assertEqual(byId.glucocorticoids, true, 'taken from the assessment, not asked twice');
-      helpers.assertEqual(byId.currentSmoking, true);
-      helpers.assertEqual(byId.parentHipFracture, false);
+      sheet.factors.forEach(function (f) { byId[f.id] = f; });
+      helpers.assertEqual(byId.previousFracture.value, true, 'carried from the assessment');
+      helpers.assertEqual(byId.previousFracture.fromAssessment, true, 'and marked as already answered');
+      helpers.assertEqual(byId.steroids.value, true, 'carried from the assessment');
+      helpers.assertEqual(byId.falls.value, true, 'carried from the assessment');
+      helpers.assertEqual(byId.smoking.value, true);
+      helpers.assertEqual(byId.parkinsons.value, true);
+      helpers.assertEqual(byId.dementia.value, false);
+    }
+  });
+
+  cases.push({
+    name: 'hormone replacement is only asked of women',
+    fn: function () {
+      var femaleIds = core.qfractureFactorsFor({ sex: 'female' }).map(function (f) { return f.id; });
+      var maleIds = core.qfractureFactorsFor({ sex: 'male' }).map(function (f) { return f.id; });
+      helpers.assert(femaleIds.indexOf('hrt') !== -1);
+      helpers.assert(maleIds.indexOf('hrt') === -1);
     }
   });
 
   cases.push({
     name: 'a worksheet is only complete once weight and height are known',
     fn: function () {
-      var incomplete = core.buildFraxWorksheet({ age: 70, sex: 'female' }, {}, []);
-      helpers.assertEqual(core.fraxWorksheetComplete(incomplete), false);
-      var complete = core.buildFraxWorksheet({ age: 70, sex: 'female' }, { weightKg: 55, heightCm: 158 }, []);
-      helpers.assertEqual(core.fraxWorksheetComplete(complete), true);
+      helpers.assertEqual(core.qfractureWorksheetComplete(core.buildQFractureWorksheet({ age: 70, sex: 'female' }, {})), false);
+      helpers.assertEqual(core.qfractureWorksheetComplete(core.buildQFractureWorksheet({ age: 70, sex: 'female' }, { weightKg: 55, heightCm: 158 })), true);
     }
   });
 
   cases.push({
     name: 'a clinician-entered result is carried through, and absent when never recorded',
     fn: function () {
-      var withResult = core.buildFraxWorksheet({ age: 70, sex: 'female' },
-        { weightKg: 55, heightCm: 158, majorFractureRisk: 18.5, hipFractureRisk: 7.2, recordedOn: '2026-06-01' }, []);
+      var withResult = core.buildQFractureWorksheet({ age: 70, sex: 'female' },
+        { weightKg: 55, heightCm: 158, majorFractureRisk: 18.5, hipFractureRisk: 7.2, recordedOn: '2026-06-01' });
       helpers.assertEqual(withResult.recordedMajorRisk, 18.5);
       helpers.assertEqual(withResult.recordedHipRisk, 7.2);
       helpers.assertEqual(withResult.recordedOn, '2026-06-01');
 
-      var without = core.buildFraxWorksheet({ age: 70, sex: 'female' }, {}, []);
+      var without = core.buildQFractureWorksheet({ age: 70, sex: 'female' }, {});
       helpers.assertEqual(without.recordedMajorRisk, null);
       helpers.assertEqual(without.recordedHipRisk, null);
     }
@@ -158,7 +174,7 @@ function run() {
     }
   });
 
-  return helpers.runSuite('t13_frax_medication', cases);
+  return helpers.runSuite('t13_qfracture_medication', cases);
 }
 
 module.exports = run;

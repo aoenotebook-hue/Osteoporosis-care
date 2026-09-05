@@ -27,9 +27,9 @@ review, all built around a **risk-tier + balance-level resolver**.
 
 | Tab | What it holds |
 |---|---|
-| หน้าหลัก / Home | Bone condition and fall risk with what each means and what to do, the FRAX card, a countdown ring to the next dose, due prompts and a safety tip |
+| หน้าหลัก / Home | Bone condition and fall risk with what each means and what to do, the QFracture 10-year risk card, a countdown ring to the next dose, due prompts and a safety tip |
 | ยา / Medicine | The patient's own drug, picked from icon cards: next dose, how long they have been on it, doses received, course position for romosozumab, how to take it, missed doses, side effects, dental note, do-not-stop warning, and past medicines with their durations |
-| อาหาร / Food | Yearly nutrition review and its calcium, vitamin D and protein recommendations, plus where calcium and vitamin D come from and what to cut down |
+| อาหาร / Food | Yearly nutrition review and its calcium, vitamin D and protein recommendations, plus bulleted guides to where calcium and vitamin D come from and what to cut down |
 | ออกกำลัง / Move | Exercises scoped to the balance level, each with written how-to steps; information only, no logging |
 | กันล้ม / Safety | 20-item home safety check with per-item icons; done items turn blue, outstanding ones stay highlighted |
 | ติดตาม / Track | Spine and hip T-scores, height, chair-stand, TUG, falls and adherence — each with a progression chart, a change-since-first chip and a table view, with past scan results listed at the bottom |
@@ -72,33 +72,36 @@ them misleads the patient:
   day, a phone notification where the browser allows it, and a calendar
   file with an alarm a week ahead and another on the day.
 
-### About FRAX
+### About the 10-year fracture risk (QFracture)
 
-**The app does not calculate a FRAX score, and should not.** The FRAX
-coefficients are licensed by the University of Sheffield and are not
-published, so any number computed offline would be a guess wearing a
-clinical label.
+QFracture suits this app better than FRAX: it works from health history
+and **needs no bone density result**, so a patient who has never had a
+DXA still gets a number. The app collects everything the calculator asks
+for — age, sex, weight, height and BMI, previous fracture, falls in the
+past year, a parent with a broken hip or thin bones, care-home living,
+smoking, alcohol, diabetes, dementia, cancer, asthma or COPD, heart
+disease or stroke, liver disease, kidney disease, Parkinson's,
+rheumatoid arthritis or lupus, malabsorption, gland problems,
+anticonvulsants, antidepressants, steroid tablets, and HRT for women.
+Anything the assessment already asked is carried over and shown
+read-only rather than asked twice.
 
-What it does instead: it collects everything the official calculator
-asks for (age, sex, weight, height and BMI, femoral-neck T-score from
-the recorded scan, previous fracture, parent hip fracture, smoking,
-glucocorticoids, rheumatoid arthritis, secondary osteoporosis, alcohol),
-shows it as a worksheet, links to the official FRAX tool, and stores the
-10-year major and hip percentages you read off it. The card says plainly
-that the figures came from the calculator, not from the app.
+**The app does not compute the score.** QFracture's algorithm is
+published, unlike FRAX's, so it *can* be implemented — but the
+coefficient tables are not bundled here and this build environment has
+no outbound network access to fetch them. Inventing coefficients would
+produce a plausible-looking percentage that is wrong, which is worse
+than no number at all in a patient-facing app.
 
-If you want a computed score inside the app, the licensed options are a
-FRAX API agreement with Sheffield, or an openly published model such as
-QFracture or Garvan — tell me which and I will wire it in.
+To turn on in-app calculation, put the published QFracture coefficient
+tables (the ClinRisk open-source release) in the repo and say so — the
+worksheet already assembles every input in the right shape, so it is a
+data drop plus one scoring function, and I will validate it against the
+published worked examples before it goes anywhere near a patient.
 
-### About the phone reminder
-
-Scheduled web push does not survive a closed tab on iOS, so it cannot be
-relied on for a dose that is a week away. The app therefore uses three
-layers: the in-app pop-up (always works when the app is opened), a
-Notifications-API message (where the browser permits it), and the
-**calendar file, which is the dependable one** — once added, the phone's
-own calendar fires the alarm whether or not the app is running.
+Until then the flow is: fill in the details → open qfracture.org →
+enter them → record the two percentages back in the app, where they are
+stored, dated, and synced to the FractureRisk sheet.
 
 ## Running the tests
 
@@ -137,7 +140,7 @@ latter answers with a login page the app cannot follow. `SHARED_TOKEN`
 must be identical in `Code.gs` and `index.html`.
 
 Sheets are created on first write: Registrations, CheckIns, Falls,
-Adherence, Nutrition, Bmd, Frax. Same-day check-in, nutrition, BMD and
+Adherence, Nutrition, Bmd, FractureRisk. Same-day check-in, nutrition, BMD and
 FRAX records merge into one row; a second fall on the same day is kept
 as a separate event; an exact repeat is skipped.
 
@@ -194,6 +197,21 @@ Static hosting (e.g. GitHub Pages): `index.html`, `app-core.js`,
 10. **The BMD screening criteria** in the Learn tab follow common
    international guidance; confirm them against the Thai guideline you
    use before the pilot.
+
+## Writing for patients
+
+The app is read by people in their seventies and eighties, often on a
+small screen, so the content follows a few rules the test suite enforces:
+
+- No patient-facing string runs past 260 characters. Anything longer
+  belongs in `LISTS` in `app-core.js`, rendered as bullets.
+- Everyday words over medical ones: "กระดูกบาง" rather than
+  "ภาวะมวลกระดูกต่ำ", "broken a bone in a small fall" rather than
+  "fragility fracture". Where a clinical term has to appear (T-score),
+  the sentence explains it.
+- Both languages are written for the patient, not translated word for
+  word from each other — `t1_i18n_parity` catches any string where the
+  two are identical, which usually means one was never really written.
 
 ## Accessibility
 

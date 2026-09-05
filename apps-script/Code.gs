@@ -15,7 +15,7 @@
  * Google answers with a login page that the app cannot follow.
  */
 
-var SCRIPT_VERSION = '2026-09-05';
+var SCRIPT_VERSION = '2026-09-05b';
 var SHARED_TOKEN = 'mQ6tfi1HQa0fBNbhzt2AoVk_YKMfmX5v';
 
 var SHEET_COLUMNS = {
@@ -25,7 +25,7 @@ var SHEET_COLUMNS = {
   Adherence: ['patientId', 'date', 'medication', 'doseNumber', 'receivedAt'],
   Nutrition: ['patientId', 'date', 'calciumIntakeMg', 'calciumSupplementMg', 'vitaminDSupplementIu', 'proteinIntakeG', 'receivedAt'],
   Bmd: ['patientId', 'date', 'scanDate', 'spineT', 'hipT', 'lowestT', 'boneStatus', 'receivedAt'],
-  Frax: ['patientId', 'date', 'weightKg', 'heightCm', 'bmi', 'majorFractureRisk', 'hipFractureRisk', 'receivedAt']
+  FractureRisk: ['patientId', 'date', 'tool', 'weightKg', 'heightCm', 'bmi', 'majorFractureRisk', 'hipFractureRisk', 'receivedAt']
 };
 
 /**
@@ -38,7 +38,7 @@ var SHEET_ROUTING = {
   checkin: { sheet: 'CheckIns', dedupe: 'merge' },
   nutrition: { sheet: 'Nutrition', dedupe: 'merge' },
   bmd: { sheet: 'Bmd', dedupe: 'merge' },
-  frax: { sheet: 'Frax', dedupe: 'merge' },
+  frax: { sheet: 'FractureRisk', dedupe: 'merge' },
   adherence: { sheet: 'Adherence', dedupe: 'date' },
   falls: { sheet: 'Falls', dedupe: 'content' }
 };

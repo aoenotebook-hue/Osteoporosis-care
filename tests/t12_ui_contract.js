@@ -104,6 +104,42 @@ function run() {
   });
 
   cases.push({
+    name: 'patient-facing text stays short enough to read on a phone',
+    fn: function () {
+      // Anything longer than this is a wall of text on a small screen; break it
+      // into a LISTS entry rendered as bullets instead.
+      var LIMIT = 260;
+      var tooLong = [];
+      Object.keys(core.CONTENT).forEach(function (key) {
+        var entry = core.CONTENT[key];
+        if (entry.th.length > LIMIT) tooLong.push('CONTENT.' + key + ' (th ' + entry.th.length + ')');
+        if (entry.en.length > LIMIT) tooLong.push('CONTENT.' + key + ' (en ' + entry.en.length + ')');
+      });
+      Object.keys(core.LISTS).forEach(function (listKey) {
+        core.LISTS[listKey].forEach(function (item, i) {
+          if (item.th.length > LIMIT) tooLong.push('LISTS.' + listKey + '[' + i + '] (th)');
+          if (item.en.length > LIMIT) tooLong.push('LISTS.' + listKey + '[' + i + '] (en)');
+        });
+      });
+      helpers.assertEqual(tooLong.length, 0, 'too long to read comfortably: ' + tooLong.join(', '));
+    }
+  });
+
+  cases.push({
+    name: 'every bullet list is bilingual and actually rendered',
+    fn: function () {
+      Object.keys(core.LISTS).forEach(function (listKey) {
+        helpers.assert(core.LISTS[listKey].length > 0, listKey + ' is empty');
+        core.LISTS[listKey].forEach(function (item, i) {
+          helpers.assert(item.th && item.en, listKey + '[' + i + '] is missing a language');
+          helpers.assert(item.th !== item.en, listKey + '[' + i + '] looks untranslated');
+        });
+        helpers.assert(html.indexOf("'" + listKey + "'") !== -1, listKey + ' is never rendered');
+      });
+    }
+  });
+
+  cases.push({
     name: 'the emergency screen can always build its call buttons',
     fn: function () {
       helpers.assert(!!core.ALERT_CONTACTS.hospitalPhone, 'the hospital number must exist for the Urgent tab');

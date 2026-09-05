@@ -29,10 +29,7 @@
     a2hsDismiss: t('ไว้ภายหลัง', 'Not now'),
 
     pdpaTitle: t('ความยินยอมให้ใช้ข้อมูลส่วนบุคคล (PDPA)', 'Personal Data Consent (PDPA)'),
-    pdpaBody: t(
-      'ข้อมูลของท่านจะถูกเก็บและใช้เพื่อการดูแลรักษาและติดตามผลในโครงการดูแลกระดูกพรุนเท่านั้น ท่านสามารถขอถอนความยินยอมได้ทุกเมื่อโดยแจ้งที่โรงพยาบาล',
-      'Your data is stored and used only for care and follow-up in this osteoporosis programme. You may withdraw your consent at any time by telling the hospital.'
-    ),
+    pdpaBody: t('ข้อมูลของท่านใช้เพื่อการดูแลรักษาและติดตามอาการเท่านั้น ท่านขอถอนความยินยอมได้ทุกเมื่อ เพียงแจ้งที่โรงพยาบาล', 'Your information is used only to care for you and follow your progress. You can withdraw your consent at any time by telling the hospital.'),
     pdpaCheckbox: t('ข้าพเจ้ายินยอมให้เก็บและใช้ข้อมูลตามรายละเอียดข้างต้น', 'I consent to my data being collected and used as described above'),
 
     registerTitle: t('ลงทะเบียนครั้งแรก', 'First-time Registration'),
@@ -73,62 +70,80 @@
     none: t('ไม่ได้ใช้ยา', 'Not taking any'),
 
     assessmentResultTitle: t('ผลการประเมินของท่าน', 'Your assessment'),
-    assessmentIntro: t('แอปแบ่งการประเมินเป็น 2 เรื่อง คือสภาพกระดูก และโอกาสหกล้ม เพราะทั้งสองเรื่องดูแลคนละแบบ', 'The app looks at two separate things: the condition of your bones, and your chance of falling. They are managed differently.'),
+    assessmentIntro: t('แอปจะดู 2 เรื่อง คือ กระดูกของท่านเป็นอย่างไร และท่านมีโอกาสหกล้มมากแค่ไหน เพราะสองเรื่องนี้ดูแลคนละแบบ', 'The app looks at two things: how your bones are, and how likely you are to fall. Each is looked after differently.'),
 
     boneStatusLabel: t('สภาพกระดูก', 'Bone condition'),
-    boneStatusBasis: t('ดูจากผลตรวจความหนาแน่นกระดูก (T-score) และประวัติกระดูกหักจากอุบัติเหตุเล็กน้อยเท่านั้น', 'Judged only on your bone density result (T-score) and any fracture from a minor injury.'),
+    boneStatusBasis: t('ดูจาก 2 อย่างเท่านั้น คือ ผลตรวจความหนาแน่นกระดูก และเคยกระดูกหักจากการล้มเบา ๆ หรือไม่', 'Based on two things only: your bone scan result, and whether you have broken a bone in a small fall.'),
     boneStatusUnknown_name: t('ยังไม่ทราบ', 'Not yet known'),
-    boneStatusUnknown_desc: t('ท่านยังไม่เคยตรวจความหนาแน่นกระดูก และไม่เคยกระดูกหักจากอุบัติเหตุเล็กน้อย จึงยังบอกไม่ได้ว่ากระดูกบางหรือไม่ ควรปรึกษาแพทย์ว่าถึงเวลาตรวจหรือยัง', 'You have not had a bone density scan and have not broken a bone from a minor injury, so we cannot yet say whether your bones are thin. Ask your doctor whether it is time for a scan.'),
+    boneStatusUnknown_desc: t('ท่านยังไม่เคยตรวจความหนาแน่นกระดูก และไม่เคยกระดูกหักจากการล้มเบา ๆ จึงยังบอกไม่ได้ ลองถามแพทย์ว่าถึงเวลาตรวจหรือยัง', 'You have not had a bone scan, and you have not broken a bone in a small fall, so we cannot tell yet. Ask your doctor if it is time for a scan.'),
     boneStatusNormal_name: t('กระดูกปกติ', 'Normal bone'),
-    boneStatusNormal_desc: t('ความหนาแน่นกระดูกอยู่ในเกณฑ์ปกติ (T-score ตั้งแต่ -1.0 ขึ้นไป) ดูแลเรื่องอาหารและการออกกำลังกายต่อไปเพื่อรักษาไว้ให้ได้', 'Your bone density is in the normal range (T-score of -1.0 or above). Keep up your food and exercise habits to hold it there.'),
+    boneStatusNormal_desc: t('กระดูกของท่านแข็งแรงดี ทำต่อไปแบบนี้ กินอาหารให้ครบและขยับตัวสม่ำเสมอ', 'Your bones are in good shape. Keep going: eat well and keep moving.'),
     boneStatusOsteopenia_name: t('กระดูกบาง', 'Thinning bone'),
-    boneStatusOsteopenia_desc: t('ความหนาแน่นกระดูกต่ำกว่าปกติเล็กน้อย (T-score ระหว่าง -1.0 ถึง -2.5) ยังไม่ถึงขั้นกระดูกพรุน แต่ควรเริ่มดูแลจริงจังตั้งแต่ตอนนี้', 'Your bone density is a little below normal (T-score between -1.0 and -2.5). This is not osteoporosis yet, but it is the right time to take it seriously.'),
+    boneStatusOsteopenia_desc: t('กระดูกของท่านเริ่มบางลงเล็กน้อย ยังไม่ถึงขั้นกระดูกพรุน แต่เป็นจังหวะดีที่จะเริ่มดูแลตั้งแต่ตอนนี้', 'Your bones have started to thin a little. This is not osteoporosis yet, but it is a good time to start looking after them.'),
     boneStatusOsteoporosis_name: t('กระดูกพรุน', 'Osteoporosis'),
-    boneStatusOsteoporosis_desc: t('ความหนาแน่นกระดูกถึงเกณฑ์กระดูกพรุน (T-score -2.5 หรือต่ำกว่า) หรือเคยกระดูกหักจากอุบัติเหตุเล็กน้อยมาก่อน ควรได้รับการรักษาด้วยยาร่วมกับการป้องกันการล้ม', 'Your bone density has reached the osteoporosis range (T-score of -2.5 or lower), or you have already broken a bone from a minor injury. This usually needs medication alongside fall prevention.'),
+    boneStatusOsteoporosis_desc: t('กระดูกของท่านบางมากแล้ว หรือเคยหักจากการล้มเบา ๆ ส่วนใหญ่ต้องใช้ยาช่วย ร่วมกับการระวังไม่ให้ล้ม', 'Your bones are quite thin now, or you have already broken one in a small fall. Most people need medicine for this, along with care not to fall.'),
     boneStatusSevereOsteoporosis_name: t('กระดูกพรุนที่เคยหักแล้ว', 'Osteoporosis with a fracture'),
-    boneStatusSevereOsteoporosis_desc: t('ท่านเคยกระดูกสะโพกหรือกระดูกสันหลังหักจากอุบัติเหตุเล็กน้อย ซึ่งถือว่าเป็นกระดูกพรุนแม้ผลตรวจจะยังไม่ถึงเกณฑ์ โอกาสหักซ้ำสูง จึงจำเป็นต้องใช้ยาต่อเนื่องและป้องกันการล้มอย่างเคร่งครัด', 'You have broken a hip or a bone in your spine from a minor injury. That counts as osteoporosis even if the scan number looks better, and the chance of another fracture is high, so continuous treatment and strict fall prevention matter.'),
+    boneStatusSevereOsteoporosis_desc: t('ท่านเคยกระดูกสะโพกหรือกระดูกสันหลังหักจากการล้มเบา ๆ แบบนี้ถือว่ากระดูกพรุน แม้ผลตรวจจะดูไม่แย่ก็ตาม โอกาสหักซ้ำสูง จึงต้องใช้ยาต่อเนื่องและระวังการล้มเป็นพิเศษ', 'You have broken a hip or a bone in your back from a small fall. That counts as osteoporosis even if the scan looks better. The chance of another break is high, so medicine and extra care not to fall both matter.'),
 
     fallRiskLabel: t('โอกาสหกล้ม', 'Chance of falling'),
-    fallRiskBasis: t('ดูจากจำนวนครั้งที่ล้มใน 1 ปี การบาดเจ็บจากการล้ม ความรู้สึกทรงตัวไม่มั่นคง และผลทดสอบลุกเดินจับเวลา', 'Judged on how often you fell in the past year, whether a fall injured you, whether you feel unsteady, and your timed walking test.'),
+    fallRiskBasis: t('ดูจากจำนวนครั้งที่ล้มในปีที่ผ่านมา ล้มแล้วเจ็บหรือไม่ รู้สึกเดินมั่นคงไหม และเวลาที่ใช้ในการทดสอบลุกเดิน', 'Based on how often you fell in the past year, whether a fall hurt you, whether you feel steady, and your walking test time.'),
     fallRiskLow_name: t('โอกาสหกล้มต่ำ', 'Low chance of falling'),
-    fallRiskLow_desc: t('ปีที่ผ่านมาท่านไม่ได้ล้ม และเดินได้มั่นคงดี', 'You have not fallen in the past year and you walk steadily.'),
-    fallRiskLow_action: t('ฝึกการทรงตัวสัปดาห์ละ 3 วัน เดินให้สม่ำเสมอ และตรวจความปลอดภัยในบ้านปีละครั้ง', 'Do balance exercises 3 days a week, walk regularly, and check your home for hazards once a year.'),
+    fallRiskLow_desc: t('ปีที่ผ่านมาท่านไม่ได้ล้ม และเดินได้มั่นคง', 'You have not fallen in the past year, and you walk steadily.'),
+    fallRiskLow_action: t('ฝึกการทรงตัวสัปดาห์ละ 3 วัน เดินออกกำลังให้สม่ำเสมอ และตรวจความปลอดภัยในบ้านปีละครั้ง', 'Do the balance exercises 3 days a week, walk regularly, and check your home for hazards once a year.'),
     fallRiskModerate_name: t('โอกาสหกล้มปานกลาง', 'Moderate chance of falling'),
-    fallRiskModerate_desc: t('ท่านเคยล้ม 1 ครั้งโดยไม่บาดเจ็บ หรือรู้สึกเดินไม่ค่อยมั่นคง หรือกังวลเรื่องการล้ม', 'You fell once without injury, or you feel unsteady, or you worry about falling.'),
-    fallRiskModerate_action: t('ฝึกการทรงตัวและความแข็งแรงตามโปรแกรมในแอปอย่างสม่ำเสมอ ตรวจความปลอดภัยในบ้านทุก 6 เดือน นำยาทั้งหมดที่ใช้ให้แพทย์ทบทวน และตรวจสายตาปีละครั้ง', 'Follow the balance and strength programme in the app regularly, check your home every 6 months, have your doctor review all your medicines, and get your eyes checked yearly.'),
+    fallRiskModerate_desc: t('ท่านล้ม 1 ครั้งแต่ไม่เจ็บ หรือรู้สึกเดินไม่ค่อยมั่นคง หรือกลัวว่าจะล้ม', 'You fell once without getting hurt, or you feel unsteady, or you worry about falling.'),
+    fallRiskModerate_action: t('ทำท่าฝึกทรงตัวและท่าเพิ่มความแข็งแรงในแอปให้สม่ำเสมอ ตรวจความปลอดภัยในบ้านทุก 6 เดือน เอายาทุกตัวที่กินไปให้แพทย์ดู และตรวจตาปีละครั้ง', 'Do the balance and strength exercises in the app regularly. Check your home every 6 months. Show your doctor every medicine you take, and get your eyes tested once a year.'),
     fallRiskHigh_name: t('โอกาสหกล้มสูง', 'High chance of falling'),
-    fallRiskHigh_desc: t('ท่านล้มตั้งแต่ 2 ครั้งขึ้นไป หรือล้มแล้วบาดเจ็บ หรือทดสอบลุกเดินใช้เวลาตั้งแต่ 12 วินาทีขึ้นไป', 'You have fallen twice or more, or a fall injured you, or your timed walking test took 12 seconds or longer.'),
-    fallRiskHigh_action: t('ควรแจ้งแพทย์เพื่อประเมินการเดินและการทรงตัวโดยละเอียด อาจต้องพบนักกายภาพบำบัด ใช้อุปกรณ์ช่วยเดินที่เหมาะสม รีบแก้ไขจุดเสี่ยงในบ้าน และทบทวนยาที่ทำให้ง่วงหรือหน้ามืด', 'Tell your doctor so your walking and balance can be assessed properly. You may need a physiotherapist, a walking aid that fits you, urgent fixes to hazards at home, and a review of any medicine that makes you drowsy or light-headed.'),
+    fallRiskHigh_desc: t('ท่านล้มตั้งแต่ 2 ครั้งขึ้นไป หรือล้มแล้วเจ็บ หรือทดสอบลุกเดินใช้เวลา 12 วินาทีขึ้นไป', 'You have fallen twice or more, or a fall hurt you, or your walking test took 12 seconds or longer.'),
+    fallRiskHigh_action: t('บอกแพทย์ให้ตรวจการเดินและการทรงตัวอย่างละเอียด อาจต้องพบนักกายภาพบำบัด ใช้ไม้เท้าหรือวอล์คเกอร์ที่พอดีกับตัว รีบแก้จุดเสี่ยงในบ้าน และให้แพทย์ดูยาที่ทำให้ง่วงหรือหน้ามืด', 'Ask your doctor to check your walking and balance properly. You may need a physiotherapist, or a cane or walker that fits you. Fix the risky spots at home soon, and ask your doctor about any medicine that makes you sleepy or dizzy.'),
 
-    homeStatusTitle: t('สถานะปัจจุบันของท่าน', 'Where you stand right now'),
-    homeWhatThisMeans: t('หมายความว่าอย่างไร', 'What this means'),
-    homeManagementLabel: t('สิ่งที่ควรทำ', 'What to do about it'),
+    homeStatusTitle: t('ตอนนี้ท่านเป็นอย่างไร', 'How you are right now'),
+    homeWhatThisMeans: t('แปลว่าอะไร', 'What this means'),
+    homeManagementLabel: t('ควรทำอะไรบ้าง', 'What to do'),
 
-    fraxTitle: t('ความเสี่ยงกระดูกหักใน 10 ปี (FRAX)', '10-year fracture risk (FRAX)'),
-    fraxIntro: t('FRAX เป็นเครื่องมือมาตรฐานที่ประเมินโอกาสกระดูกหักในอีก 10 ปีข้างหน้า', 'FRAX is the standard tool for estimating your chance of a fracture over the next 10 years.'),
-    fraxWhyNotComputed: t('แอปนี้ไม่ได้คำนวณคะแนนเอง เพราะสูตรของ FRAX เป็นลิขสิทธิ์เฉพาะ แอปจะรวบรวมข้อมูลที่ต้องใช้ให้พร้อม แล้วให้แพทย์คำนวณจากเว็บไซต์ทางการ จากนั้นจึงบันทึกผลไว้ที่นี่', 'This app does not calculate the score itself, because the FRAX formula is licensed. It gathers the information the calculator needs so your doctor can work it out on the official site, and the result is recorded here.'),
-    fraxOpenCalculator: t('เปิดเว็บไซต์ FRAX', 'Open the FRAX website'),
-    fraxFillData: t('กรอกข้อมูลสำหรับ FRAX', 'Fill in your FRAX details'),
-    fraxEditData: t('แก้ไขข้อมูล FRAX', 'Edit your FRAX details'),
-    fraxMajorRisk: t('โอกาสกระดูกหักสำคัญใน 10 ปี', 'Major fracture in 10 years'),
-    fraxHipRisk: t('โอกาสกระดูกสะโพกหักใน 10 ปี', 'Hip fracture in 10 years'),
-    fraxNotRecorded: t('ยังไม่ได้บันทึกผล FRAX จากแพทย์', 'No FRAX result recorded from your doctor yet'),
-    fraxRecordedOn: t('บันทึกเมื่อ', 'Recorded on'),
-    fraxNeedWeightHeight: t('กรอกน้ำหนักและส่วนสูงก่อน ข้อมูลจึงจะครบสำหรับการคำนวณ', 'Enter your weight and height so the details are complete enough to calculate.'),
-    fraxReady: t('ข้อมูลครบพร้อมสำหรับคำนวณแล้ว', 'Your details are ready for the calculator'),
-    fraxYourDetails: t('ข้อมูลของท่านสำหรับ FRAX', 'Your FRAX details'),
-    fraxWeight: t('น้ำหนัก (กก.)', 'Weight (kg)'),
-    fraxHeight: t('ส่วนสูง (ซม.)', 'Height (cm)'),
-    fraxBmi: t('ดัชนีมวลกาย', 'Body mass index'),
-    fraxFemoralNeck: t('T-score สะโพก', 'Hip T-score'),
-    fraxRecordResult: t('บันทึกผลที่แพทย์คำนวณให้', 'Record the result from your doctor'),
-    fraxPreviousFracture: t('เคยกระดูกหักจากอุบัติเหตุเล็กน้อย', 'Broken a bone from a minor injury'),
-    fraxParentHipFracture: t('พ่อหรือแม่เคยกระดูกสะโพกหัก', 'A parent broke a hip'),
-    fraxSmoking: t('สูบบุหรี่อยู่ในปัจจุบัน', 'Currently smoke'),
-    fraxGlucocorticoids: t('ใช้ยาสเตียรอยด์ต่อเนื่อง', 'On long-term steroids'),
-    fraxRheumatoid: t('เป็นโรคข้ออักเสบรูมาตอยด์', 'Have rheumatoid arthritis'),
-    fraxSecondary: t('มีโรคอื่นที่ทำให้กระดูกพรุน เช่น ไทรอยด์เป็นพิษ เบาหวานชนิดที่ 1 หรือลำไส้ดูดซึมผิดปกติ', 'Have another condition that thins bone, such as an overactive thyroid, type 1 diabetes, or poor gut absorption'),
-    fraxAlcohol: t('ดื่มแอลกอฮอล์ตั้งแต่ 3 แก้วมาตรฐานต่อวัน', 'Drink 3 or more standard drinks a day'),
+    qfTitle: t('โอกาสกระดูกหักใน 10 ปีข้างหน้า', 'Chance of a broken bone in the next 10 years'),
+    qfIntro: t('เครื่องมือนี้ชื่อ QFracture ใช้ประวัติสุขภาพของท่านประเมินว่าใน 10 ปีข้างหน้ามีโอกาสกระดูกหักแค่ไหน', 'This tool is called QFracture. It uses your health history to work out how likely a broken bone is over the next 10 years.'),
+    qfWhyNotComputed: t('แอปยังไม่ได้คิดตัวเลขนี้เอง แต่จะรวบรวมข้อมูลไว้ให้ครบ เพื่อให้แพทย์คำนวณจากเว็บไซต์ แล้วนำผลมาบันทึกไว้ที่นี่', 'The app does not work the number out itself. It keeps your details ready so your doctor can calculate it on the website, and the answer is saved here.'),
+    qfOpenCalculator: t('เปิดเว็บไซต์ QFracture', 'Open the QFracture website'),
+    qfFillData: t('กรอกข้อมูลสุขภาพ', 'Fill in your health details'),
+    qfEditData: t('แก้ไขข้อมูลสุขภาพ', 'Edit your health details'),
+    qfMajorRisk: t('โอกาสกระดูกหักใน 10 ปี', 'Broken bone within 10 years'),
+    qfHipRisk: t('โอกาสกระดูกสะโพกหักใน 10 ปี', 'Broken hip within 10 years'),
+    qfNotRecorded: t('ยังไม่มีผลจากแพทย์', 'No result from your doctor yet'),
+    qfRecordedOn: t('บันทึกเมื่อ', 'Recorded on'),
+    qfNeedWeightHeight: t('กรอกน้ำหนักและส่วนสูงก่อน', 'Please fill in your weight and height first'),
+    qfReady: t('ข้อมูลครบแล้ว พร้อมให้แพทย์คำนวณ', 'Your details are complete and ready for your doctor'),
+    qfYourDetails: t('ข้อมูลของท่าน', 'Your details'),
+    qfWeight: t('น้ำหนัก (กก.)', 'Weight (kg)'),
+    qfHeight: t('ส่วนสูง (ซม.)', 'Height (cm)'),
+    qfBmi: t('ดัชนีมวลกาย', 'Body mass index'),
+    qfRecordResult: t('บันทึกผลจากแพทย์', 'Record the result from your doctor'),
+    qfHealthConditions: t('โรคประจำตัวและยาที่ใช้', 'Health conditions and medicines'),
+    qfLifestyle: t('การใช้ชีวิต', 'Daily life'),
+    qfTapWhatApplies: t('แตะข้อที่ตรงกับท่าน', 'Tap anything that is true for you'),
+    qfNoDxaNeeded: t('ไม่ต้องใช้ผลตรวจความหนาแน่นกระดูก', 'No bone density scan needed'),
+
+    qfPreviousFracture: t('เคยกระดูกหักจากอุบัติเหตุเล็กน้อย', 'I have broken a bone from a small injury'),
+    qfParentOsteoporosis: t('พ่อหรือแม่เคยกระดูกสะโพกหัก หรือเป็นกระดูกพรุน', 'My mother or father broke a hip, or has thin bones'),
+    qfSmoking: t('สูบบุหรี่อยู่ตอนนี้', 'I smoke at the moment'),
+    qfAlcohol: t('ดื่มเหล้าหรือเบียร์เกือบทุกวัน', 'I drink alcohol most days'),
+    qfCareHome: t('อาศัยอยู่ในบ้านพักคนชราหรือสถานดูแล', 'I live in a care home or nursing home'),
+    qfFalls: t('เคยหกล้มในปีที่ผ่านมา', 'I have fallen in the past year'),
+    qfDiabetes: t('เป็นเบาหวาน', 'I have diabetes'),
+    qfDementia: t('เป็นโรคสมองเสื่อม', 'I have dementia'),
+    qfCancer: t('เคยเป็นมะเร็ง', 'I have had cancer'),
+    qfAsthmaCopd: t('เป็นหืด หรือถุงลมโป่งพอง', 'I have asthma or a long-term lung problem'),
+    qfHeartStroke: t('เคยเป็นโรคหัวใจ หรือเส้นเลือดสมองตีบ', 'I have had heart trouble or a stroke'),
+    qfLiver: t('เป็นโรคตับเรื้อรัง', 'I have a long-term liver problem'),
+    qfKidney: t('เป็นโรคไตเรื้อรัง', 'I have a long-term kidney problem'),
+    qfParkinsons: t('เป็นโรคพาร์กินสัน', 'I have Parkinson\'s disease'),
+    qfRheumatoid: t('เป็นโรคข้ออักเสบรูมาตอยด์ หรือโรคแพ้ภูมิตัวเอง', 'I have rheumatoid arthritis or lupus'),
+    qfMalabsorption: t('ลำไส้ดูดซึมอาหารได้ไม่ดี เช่น โรคลำไส้อักเสบเรื้อรัง', 'My gut does not absorb food well, such as long-term bowel disease'),
+    qfEndocrine: t('มีปัญหาต่อมไร้ท่อ เช่น ไทรอยด์เป็นพิษ', 'I have a gland problem, such as an overactive thyroid'),
+    qfEpilepsy: t('กินยากันชัก', 'I take medicine for fits or seizures'),
+    qfAntidepressants: t('กินยาต้านเศร้า', 'I take medicine for depression'),
+    qfSteroids: t('กินยาสเตียรอยด์เป็นประจำ', 'I take steroid tablets regularly'),
+    qfHrt: t('ใช้ฮอร์โมนทดแทนวัยหมดประจำเดือน', 'I use hormone replacement after the menopause'),
 
     balanceLevel1: t('ระดับ 1 — จับที่ยึดตลอด', 'Level 1 — Always supported'),
     balanceLevel2: t('ระดับ 2 — แตะที่ยึดเบา ๆ', 'Level 2 — Light support'),
@@ -145,10 +160,7 @@
     homeCheckinDue: t('ถึงเวลาเช็คอินประจำเดือน', 'Your monthly check-in is due'),
     homeCheckinStart: t('เริ่มเช็คอิน', 'Start check-in'),
     homeNutritionDue: t('ถึงเวลาประเมินอาหารประจำปี', 'Your yearly nutrition review is due'),
-    boneWhatIsBody: t(
-      'กระดูกพรุนคือภาวะที่เนื้อกระดูกบางลงและเปราะ ทำให้หักได้ง่ายแม้ล้มเบา ๆ มักไม่มีอาการจนกระทั่งกระดูกหัก การได้รับแคลเซียม วิตามินดี โปรตีนที่เพียงพอ ร่วมกับการใช้ยาและออกกำลังกายอย่างเหมาะสม ช่วยลดโอกาสกระดูกหักได้',
-      'Osteoporosis means the bone becomes thin and fragile, so it can break even from a light fall. It usually causes no symptoms until a fracture happens. Enough calcium, vitamin D and protein, together with the right medication and exercise, lowers the chance of fracture.'
-    ),
+    boneWhatIsBody: t('กระดูกพรุนคือกระดูกที่บางและเปราะลง จึงหักง่ายแม้ล้มเบา ๆ มักไม่มีอาการเจ็บอะไรเลยจนกว่าจะหัก การกินอาหารให้ครบ ออกกำลังกาย และใช้ยาตามที่แพทย์สั่ง ช่วยลดโอกาสหักได้', 'Osteoporosis means the bone has become thin and brittle, so it can break even in a light fall. It usually causes no pain at all until something breaks. Eating well, exercising, and taking the medicine your doctor prescribes all lower the chance of a break.'),
     boneNutritionTitle: t('ประเมินอาหารประจำปี', 'Yearly Nutrition Review'),
     boneNutritionIntro: t('ประเมินปีละครั้ง เพื่อคำนวณว่าท่านควรได้รับอาหารเสริมเท่าไร', 'Done once a year to work out how much supplement you need'),
     nutritionLastDone: t('ประเมินครั้งล่าสุด', 'Last reviewed'),
@@ -199,7 +211,7 @@
     drugDoNotStop: t('ห้ามหยุดยาเอง', 'Do not stop on your own'),
     drugAdherenceLog: t('ประวัติการได้รับยา', 'Dose history'),
     drugAdherenceEmpty: t('ยังไม่มีประวัติ', 'No doses recorded yet'),
-    drugSupplementNote: t('แคลเซียมและวิตามินดีเป็นอาหารเสริม ไม่ใช่ยารักษากระดูกพรุน ดูขนาดที่ท่านควรได้ที่แท็บอาหาร', 'Calcium and vitamin D are supplements, not osteoporosis treatment — see the Nutrition tab for your recommended amounts'),
+    drugSupplementNote: t('แคลเซียมและวิตามินดีเป็นอาหารเสริม ไม่ใช่ยารักษากระดูกพรุน ดูปริมาณที่ท่านควรได้ที่แท็บอาหาร', 'Calcium and vitamin D are supplements, not treatment for thin bones. The Food tab shows how much you need.'),
 
     moveIntro: t('ท่าออกกำลังกายเหล่านี้คัดมาให้เหมาะกับระดับการทรงตัวของท่าน ทำช้า ๆ และหยุดทันทีหากเจ็บหรือเวียนศีรษะ', 'These exercises are matched to your balance level. Go slowly, and stop at once if you feel pain or dizziness.'),
     moveGroupBalance: t('ฝึกการทรงตัว', 'Balance'),
@@ -234,9 +246,9 @@
     visionTitle: t('สายตา', 'Vision'),
     visionBody: t('ตรวจสายตาอย่างน้อยปีละครั้ง และถ้าใช้แว่นหลายระยะ ควรระวังเป็นพิเศษเวลาเดินลงบันได', 'Have your eyes checked at least once a year. If you wear multifocal glasses, take extra care on stairs.'),
     fallRiskMedsTitle: t('ยาที่อาจทำให้ล้มง่าย', 'Medicines that can make you fall'),
-    fallRiskMedsBody: t('ยานอนหลับ ยาคลายกังวล ยาลดความดันบางชนิด ยาแก้แพ้ และแอลกอฮอล์ อาจทำให้ง่วงหรือหน้ามืด นำยาทั้งหมดที่ใช้ไปให้แพทย์ทบทวนปีละครั้ง', 'Sleeping pills, anti-anxiety medicines, some blood pressure pills, antihistamines and alcohol can cause drowsiness or dizziness. Bring all your medicines for your doctor to review once a year.'),
+    fallRiskMedsBody: t('ยานอนหลับ ยาคลายกังวล ยาลดความดันบางตัว ยาแก้แพ้ และเหล้า ทำให้ง่วงหรือหน้ามืดได้ ปีละครั้งให้เอายาทุกตัวที่กินไปให้แพทย์ดู', 'Sleeping pills, medicine for worry, some blood pressure pills, allergy medicine and alcohol can all make you sleepy or dizzy. Once a year, show your doctor every medicine you take.'),
     gettingUpTitle: t('ถ้าล้มแล้วลุกไม่ขึ้น ทำอย่างไร', 'If you fall and cannot get up'),
-    gettingUpBody: t('ตั้งสติ อย่ารีบลุก พลิกตัวตะแคงแล้วคลานไปหาเก้าอี้หรือเฟอร์นิเจอร์ที่มั่นคง คุกเข่าข้างหนึ่งแล้วค่อย ๆ ดันตัวขึ้นนั่ง หากลุกไม่ไหวให้ใช้โทรศัพท์ขอความช่วยเหลือและรักษาความอบอุ่นไว้', 'Stay calm and do not rush. Roll onto your side, crawl to a sturdy chair or furniture, kneel on one knee and push yourself up to sit. If you cannot get up, use your phone to call for help and keep yourself warm.'),
+    gettingUpBody: t('ถ้าล้ม อย่ารีบลุก ตั้งสติก่อน แล้วพลิกตัวตะแคง คลานไปหาเก้าอี้หรือโต๊ะที่มั่นคง คุกเข่าข้างหนึ่ง แล้วค่อย ๆ ดันตัวขึ้นนั่ง ถ้าลุกไม่ไหว ให้โทรขอความช่วยเหลือและห่มผ้าให้อุ่นไว้', 'If you fall, do not rush to get up. Calm yourself first. Roll onto your side, crawl to a steady chair or table, kneel on one knee, and push yourself up to sit. If you cannot get up, phone for help and keep yourself warm.'),
     reauditReminder: t('ควรตรวจซ้ำทุก 6 เดือน', 'Re-check every 6 months'),
     safetyLastChecked: t('ตรวจครั้งล่าสุด', 'Last checked'),
     safetySave: t('บันทึกผลการตรวจ', 'Save this check'),
@@ -256,9 +268,9 @@
     heightChartTitle: t('ส่วนสูงที่เปลี่ยนไป', 'Height over time'),
     heightCurrent: t('วัดส่วนสูงวันนี้ (ซม.)', "Today's height (cm)"),
     heightEvery6Months: t('วัดทุก 6 เดือน', 'Measure every 6 months'),
-    heightLossWarning: t('ส่วนสูงลดลงตั้งแต่ 2 ซม. ขึ้นไป ควรแจ้งแพทย์เพราะอาจมีกระดูกสันหลังยุบ', 'Your height has dropped 2 cm or more — tell your doctor, as this can mean a spinal fracture'),
+    heightLossWarning: t('ส่วนสูงลดลง 2 เซนติเมตรขึ้นไป ควรบอกแพทย์ เพราะอาจมีกระดูกสันหลังยุบ', 'You have lost 2 cm or more in height. Tell your doctor, as a bone in your back may have collapsed.'),
     heightLossOk: t('ส่วนสูงยังคงที่ดี', 'Your height is holding steady'),
-    selfTestSafety: t('ความปลอดภัยก่อนทดสอบ: ต้องมีคนอยู่ด้วยเสมอ วางเก้าอี้ชิดกำแพง และหยุดทันทีหากเวียนศีรษะหรือเจ็บ', 'Safety first: always have someone with you, place the chair against a wall, and stop at once if you feel dizzy or sore.'),
+    selfTestSafety: t('ก่อนทดสอบ ต้องมีคนอยู่ด้วยเสมอ วางเก้าอี้ให้พิงกำแพง และหยุดทันทีถ้าเวียนหัวหรือเจ็บ', 'Before you test: always have someone with you, put the chair against a wall, and stop at once if you feel dizzy or sore.'),
     chairStandTitle: t('ลุก-นั่งเก้าอี้ 30 วินาที', '30-Second Chair Stand'),
     chairStandChartTitle: t('จำนวนครั้งที่ลุกได้ใน 30 วินาที', 'Chair stands in 30 seconds'),
     chairStandInstructions: t('นั่งกลางเก้าอี้ กอดอกไว้ ลุกขึ้นยืนให้สุดแล้วนั่งลง ทำซ้ำให้ได้มากที่สุดใน 30 วินาที', 'Sit in the middle of the chair with arms crossed. Stand up fully, then sit back down, as many times as you can in 30 seconds.'),
@@ -269,7 +281,7 @@
     tugChartTitle: t('เวลาที่ใช้ในการลุกเดิน (วินาที)', 'Timed Up and Go (seconds)'),
     tugInstructions: t('ลุกจากเก้าอี้ เดินไปข้างหน้า 3 เมตร เลี้ยวกลับ เดินกลับมานั่ง จับเวลาตั้งแต่เริ่มลุกจนนั่งลง', 'Stand up from the chair, walk 3 metres, turn around, walk back and sit down. Time it from standing to sitting.'),
     tugPass: t('อยู่ในเกณฑ์ปกติ', 'Within the normal range'),
-    tugSlow: t('ใช้เวลา 12 วินาทีขึ้นไป บ่งชี้ความเสี่ยงล้มสูงขึ้น ควรปรึกษาแพทย์', '12 seconds or more suggests a higher fall risk — discuss with your doctor'),
+    tugSlow: t('ใช้เวลา 12 วินาทีขึ้นไป แปลว่าเสี่ยงล้มมากขึ้น ควรบอกแพทย์', 'Taking 12 seconds or more means falls are more likely. Tell your doctor.'),
     startTimer: t('เริ่มจับเวลา', 'Start'),
     stopTimer: t('หยุด', 'Stop'),
     recordResult: t('บันทึกผล', 'Save result'),
@@ -316,11 +328,11 @@
     alertAfterFall: t('ท่านเพิ่งบันทึกว่าล้มและบาดเจ็บ กรุณาอ่านรายการด้านล่างและติดต่อตามคำแนะนำ', 'You have just recorded a fall with injury. Please read the list below and follow the action shown.'),
     learnWhatIsTitle: t('โรคกระดูกพรุนคืออะไร', 'What is osteoporosis?'),
     learnTScoreTitle: t('ค่า T-score หมายถึงอะไร', 'What does the T-score mean?'),
-    learnTScoreBody: t('T-score เปรียบเทียบความหนาแน่นกระดูกของท่านกับคนหนุ่มสาวที่กระดูกปกติ ค่าตั้งแต่ -1 ขึ้นไปถือว่าปกติ ระหว่าง -1 ถึง -2.5 คือกระดูกบาง และ -2.5 หรือต่ำกว่าคือกระดูกพรุน', 'The T-score compares your bone density with that of a healthy young adult. Above -1 is normal, between -1 and -2.5 is thinning bone, and -2.5 or lower is osteoporosis.'),
+    learnTScoreBody: t('T-score คือตัวเลขที่บอกว่ากระดูกของท่านแน่นแค่ไหน เทียบกับคนหนุ่มสาวที่กระดูกปกติ ตั้งแต่ -1 ขึ้นไปคือปกติ ระหว่าง -1 ถึง -2.5 คือเริ่มบาง และ -2.5 หรือต่ำกว่าคือกระดูกพรุน', 'The T-score is a number that says how solid your bones are, compared with a healthy young adult. Above -1 is normal. Between -1 and -2.5 means thinning. Minus 2.5 or lower means osteoporosis.'),
     learnMedMattersTitle: t('ทำไมการใช้ยาต่อเนื่องจึงสำคัญ', 'Why staying on your medication matters'),
-    learnMedMattersBody: t('ยารักษากระดูกพรุนช่วยลดโอกาสกระดูกหักได้อย่างชัดเจน แต่ต้องใช้ต่อเนื่องจึงจะได้ผล การหยุดยาบางชนิดเอง โดยเฉพาะยาฉีดเดโนซูแมบ อาจทำให้กระดูกสันหลังหักหลายระดับได้ จึงต้องปรึกษาแพทย์ก่อนหยุดยาเสมอ', 'Osteoporosis medication clearly lowers the chance of fracture, but only if taken consistently. Stopping some medicines on your own — especially denosumab injections — can lead to several spinal fractures at once, so always talk to your doctor before stopping.'),
+    learnMedMattersBody: t('ยารักษากระดูกพรุนช่วยลดโอกาสกระดูกหักได้จริง แต่ต้องใช้ต่อเนื่องจึงได้ผล ยาบางชนิดโดยเฉพาะยาฉีดเดโนซูแมบ ถ้าหยุดเองอาจทำให้กระดูกสันหลังหักหลายข้อพร้อมกัน ต้องปรึกษาแพทย์ก่อนหยุดยาเสมอ', 'Medicine for thin bones really does lower the chance of a break, but only if you keep taking it. Stopping some medicines on your own, especially denosumab injections, can break several bones in the back at once. Always ask your doctor first.'),
     learnExpectTitle: t('ควรคาดหวังผลอย่างไร', 'What to expect'),
-    learnExpectBody: t('การดูแลอย่างต่อเนื่องช่วยลดความเสี่ยงล้มและกระดูกหักได้มาก แต่ไม่สามารถรับประกันว่าจะไม่หักเลย และไม่ได้ทำให้กระดูกกลับมาเป็นปกติเหมือนตอนหนุ่มสาว เป้าหมายคือรักษาความแข็งแรงและใช้ชีวิตได้ตามปกติ', 'Consistent care greatly lowers the risk of falls and fractures, but it cannot guarantee you will never break a bone, and it does not return the bone to how it was when you were young. The goal is to keep your strength and keep living normally.'),
+    learnExpectBody: t('การดูแลอย่างต่อเนื่องช่วยลดโอกาสล้มและกระดูกหักได้มาก แต่ไม่ได้แปลว่าจะไม่หักเลย และไม่ได้ทำให้กระดูกกลับไปแข็งแรงเหมือนตอนหนุ่มสาว เป้าหมายคือใช้ชีวิตได้ตามปกติและแข็งแรงที่สุดเท่าที่ทำได้', 'Looking after yourself steadily lowers the chance of falls and breaks a great deal. It does not mean a break can never happen, and it does not make your bones young again. The aim is to stay as strong as you can and carry on with normal life.'),
 
     resTopfTitle: t('มูลนิธิโรคกระดูกพรุนแห่งประเทศไทย', 'Thai Osteoporosis Foundation'),
     resTopfDesc: t('แนวทางการดูแลรักษาโรคกระดูกพรุนฉบับภาษาไทย', 'Thai-language guidance on osteoporosis care'),
@@ -353,7 +365,7 @@
     homeCountdownOverdue: t('เลยกำหนด', 'Overdue'),
 
     bmdTitle: t('ค่าความหนาแน่นกระดูก (BMD)', 'Bone Density (BMD)'),
-    bmdIntro: t('บันทึกค่าจากใบผลตรวจ DXA ทุกครั้งที่ไปตรวจ เพื่อดูแนวโน้มว่ากระดูกดีขึ้นหรือแย่ลง', 'Copy the values from your DXA report at each scan, to see whether your bone is improving or declining.'),
+    bmdIntro: t('ทุกครั้งที่ไปตรวจความหนาแน่นกระดูก ให้จดค่า T-score จากใบผลมาใส่ไว้ที่นี่ จะได้เห็นว่าดีขึ้นหรือแย่ลง', 'Each time you have a bone scan, copy the T-score from the report into here. Then you can see whether it is getting better or worse.'),
     bmdSpine: t('กระดูกสันหลัง', 'Spine'),
     bmdHip: t('สะโพก', 'Hip'),
     bmdTScoreLabel: t('ค่า T-score', 'T-score'),
@@ -401,14 +413,14 @@
     drugHistoryPeriod: t('รวม {n} เดือน', '{n} months in total'),
 
     foodCalciumKnowledgeTitle: t('แคลเซียมอยู่ในอาหารอะไรบ้าง', 'Where calcium comes from'),
-    foodCalciumKnowledgeBody: t('แหล่งแคลเซียมที่ดีที่สุดคือ นมและโยเกิร์ต (แก้วละประมาณ 300 มก.) ปลาเล็กปลาน้อยและกุ้งแห้งที่กินได้ทั้งตัว (2 ช้อนโต๊ะ ประมาณ 220-230 มก.) ปลากระป๋องที่กินก้างได้ เต้าหู้แข็ง งาดำ และผักใบเขียวเข้มอย่างคะน้า ตำลึง ใบยอ ร่างกายดูดซึมได้ดีขึ้นเมื่อแบ่งกินทีละไม่เกิน 500 มก. ไม่ควรกินรวดเดียวทั้งวัน', 'The best sources are milk and yoghurt (about 300 mg a glass), small whole fish and dried shrimp eaten with the bones (2 tablespoons is about 220-230 mg), canned fish with soft bones, firm tofu, black sesame, and dark leafy greens such as Chinese kale, ivy gourd and noni leaf. The body absorbs calcium better in portions of 500 mg or less, so spread it through the day rather than taking it all at once.'),
+    foodCalciumKnowledgeBody: t('ร่างกายต้องการแคลเซียมทุกวัน และอาหารไทยหลายอย่างก็มีแคลเซียมสูง', 'Your body needs calcium every day, and many everyday Thai foods are rich in it.'),
     foodVitDKnowledgeTitle: t('วิตามินดีได้จากไหน', 'Where vitamin D comes from'),
-    foodVitDKnowledgeBody: t('วิตามินดีส่วนใหญ่ร่างกายสร้างเองจากแสงแดด ให้แขนหรือขาโดนแดดอ่อน ๆ ประมาณ 10-15 นาที สัปดาห์ละ 2-3 ครั้ง (ก่อน 9 โมงเช้า หรือหลัง 4 โมงเย็น) ส่วนในอาหารมีไม่มาก พบในปลาทะเลไขมันสูงอย่างแซลมอนและปลาทู ไข่แดง เห็ดตากแดด และนมที่เสริมวิตามินดี วิตามินดีจำเป็นเพราะช่วยให้ร่างกายดูดซึมแคลเซียมได้', 'Most vitamin D is made by your own skin in sunlight: let the sun reach your arms or legs for 10-15 minutes, 2-3 times a week, before 9am or after 4pm. Food contains much less — oily sea fish such as salmon and mackerel, egg yolk, sun-dried mushrooms, and fortified milk. It matters because without it the body cannot absorb calcium properly.'),
+    foodVitDKnowledgeBody: t('วิตามินดีเป็นตัวช่วยให้ร่างกายดูดซึมแคลเซียมได้ ถ้าขาดวิตามินดี กินแคลเซียมเท่าไรก็ไม่พอ', 'Vitamin D is what lets your body take in calcium. Without it, no amount of calcium is enough.'),
     foodAvoidTitle: t('อาหารและเครื่องดื่มที่ควรเลี่ยง', 'Food and drinks to cut down'),
-    foodAvoidBody: t('เค็มจัด: เกลือมากทำให้ร่างกายขับแคลเซียมออกทางปัสสาวะมากขึ้น ควรลดน้ำปลา ซีอิ๊ว อาหารหมักดอง และบะหมี่กึ่งสำเร็จรูป — กาแฟ: ไม่เกินวันละ 2 แก้ว — แอลกอฮอล์: ไม่เกินวันละ 2 หน่วย เพราะทำให้กระดูกบางลงและเสี่ยงล้ม — น้ำอัดลม: มีฟอสเฟตสูงและมักดื่มแทนนม — บุหรี่: เร่งการสูญเสียมวลกระดูกโดยตรง ควรงดเด็ดขาด', 'Very salty food: salt makes the body lose calcium in the urine, so cut down on fish sauce, soy sauce, pickles and instant noodles. Coffee: no more than 2 cups a day. Alcohol: no more than 2 units a day — it thins bone and makes falls more likely. Fizzy drinks: high in phosphate and often drunk instead of milk. Smoking: it directly speeds up bone loss and is worth stopping altogether.'),
+    foodAvoidBody: t('ของบางอย่างทำให้กระดูกบางเร็วขึ้น ควรลดหรือเลี่ยง', 'Some things make bone thin out faster. It helps to cut down or avoid them.'),
 
     learnScreeningTitle: t('ใครควรตรวจความหนาแน่นกระดูก (DXA)', 'Who should have a bone density scan'),
-    learnScreeningBody: t('โดยทั่วไปแนะนำให้ตรวจในกรณีต่อไปนี้ — ผู้หญิงอายุ 65 ปีขึ้นไป และผู้ชายอายุ 70 ปีขึ้นไปทุกคน — ผู้หญิงวัยหมดประจำเดือนที่อายุน้อยกว่า 65 ปี และผู้ชายอายุ 50-69 ปี ที่มีปัจจัยเสี่ยง เช่น น้ำหนักตัวน้อย พ่อแม่เคยกระดูกสะโพกหัก สูบบุหรี่ หรือดื่มแอลกอฮอล์มาก — ผู้ที่อายุ 50 ปีขึ้นไปและเคยกระดูกหักจากอุบัติเหตุเล็กน้อย — ผู้ที่ใช้ยาสเตียรอยด์ต่อเนื่องตั้งแต่ 3 เดือนขึ้นไป — ผู้ที่ส่วนสูงลดลงตั้งแต่ 2 ซม. หรือมีภาวะที่ทำให้กระดูกบาง เช่น ไทรอยด์เป็นพิษ หรือโรคลำไส้ดูดซึมผิดปกติ ทั้งนี้ให้แพทย์ผู้ดูแลเป็นผู้ตัดสินใจร่วมกับท่าน', 'A scan is generally advised for: every woman aged 65 and over and every man aged 70 and over; postmenopausal women under 65 and men aged 50-69 who carry risk factors such as low body weight, a parent who broke a hip, smoking or heavy drinking; anyone aged 50 or over who has broken a bone from a minor injury; anyone taking steroids continuously for 3 months or more; and anyone who has lost 2 cm or more in height or has a condition that thins bone, such as an overactive thyroid or poor gut absorption. Your own doctor decides this with you.'),
+    learnScreeningBody: t('โดยทั่วไปแนะนำให้ตรวจในกลุ่มต่อไปนี้ แต่แพทย์ผู้ดูแลจะเป็นผู้ตัดสินใจร่วมกับท่าน', 'A scan is usually advised for the people below, though your own doctor decides this with you.'),
 
     registerYearBEHint: t('กรอกเป็น พ.ศ. เช่น 2495', 'Enter the Buddhist-era year, for example 2495'),
     registerYearInvalidBE: t('กรุณากรอกปีเกิดเป็น พ.ศ. เช่น 2495', 'Please enter the year of birth in the Buddhist era, for example 2495'),
@@ -427,6 +439,41 @@
     cancel: t('ยกเลิก', 'Cancel'),
     back: t('ย้อนกลับ', 'Back'),
     offlineNotice: t('ขณะนี้ไม่มีอินเทอร์เน็ต ข้อมูลจะถูกส่งให้อัตโนมัติเมื่อกลับมาออนไลน์', 'You are offline — your data will be sent automatically when you reconnect')
+  };
+
+
+  var LISTS = {
+    learnScreening: [
+      t('ผู้หญิงอายุ 65 ปีขึ้นไป และผู้ชายอายุ 70 ปีขึ้นไป ควรตรวจทุกคน', 'Every woman aged 65 and over, and every man aged 70 and over'),
+      t('ผู้หญิงที่หมดประจำเดือนแล้วแต่อายุยังไม่ถึง 65 ปี ถ้ามีน้ำหนักตัวน้อย สูบบุหรี่ ดื่มเหล้าจัด หรือพ่อแม่เคยสะโพกหัก', 'Women past the menopause but under 65, if they are underweight, smoke, drink a lot, or a parent broke a hip'),
+      t('ผู้ชายอายุ 50-69 ปี ที่มีปัจจัยเสี่ยงแบบเดียวกัน', 'Men aged 50 to 69 with those same risks'),
+      t('ใครก็ตามที่อายุเกิน 50 ปี แล้วกระดูกหักจากการล้มเบา ๆ', 'Anyone over 50 who has broken a bone in a small fall'),
+      t('คนที่กินยาสเตียรอยด์ติดต่อกันตั้งแต่ 3 เดือนขึ้นไป', 'Anyone taking steroid tablets for 3 months or more'),
+      t('คนที่ส่วนสูงลดลงตั้งแต่ 2 เซนติเมตร หรือหลังค่อมผิดปกติ', 'Anyone who has lost 2 cm or more in height, or whose back has become rounded'),
+      t('คนที่มีโรคที่ทำให้กระดูกบาง เช่น ไทรอยด์เป็นพิษ หรือลำไส้ดูดซึมอาหารไม่ดี', 'Anyone with an illness that thins bone, such as an overactive thyroid or a gut that does not absorb food well')
+    ],
+    foodCalcium: [
+      t('นมจืด 1 แก้ว หรือโยเกิร์ต 1 ถ้วย ให้แคลเซียมประมาณ 300 มก.', 'A glass of milk or a pot of yoghurt gives about 300 mg'),
+      t('ปลาเล็กปลาน้อยหรือกุ้งแห้ง 2 ช้อนโต๊ะ ให้ประมาณ 220 มก. เพราะกินได้ทั้งก้าง', 'Two tablespoons of small whole fish or dried shrimp gives about 220 mg, because you eat the bones'),
+      t('ปลากระป๋องที่ก้างนิ่ม ครึ่งกระป๋อง ให้ประมาณ 240 มก.', 'Half a tin of fish with soft bones gives about 240 mg'),
+      t('เต้าหู้แข็งครึ่งถ้วย หรืองาดำ 1 ช้อนโต๊ะ ให้ประมาณ 130 มก.', 'Half a cup of firm tofu, or a tablespoon of black sesame, gives about 130 mg'),
+      t('ผักใบเขียวเข้ม เช่น คะน้า ตำลึง ใบยอ 1 ถ้วยสุก ให้ประมาณ 150 มก.', 'A cup of cooked dark greens such as Chinese kale, ivy gourd or noni leaf gives about 150 mg'),
+      t('กินทีละน้อยแต่บ่อยครั้งดีกว่ากินทีเดียวมาก ๆ เพราะร่างกายรับได้ครั้งละไม่เกิน 500 มก.', 'Little and often works better than all at once, because the body takes in only about 500 mg at a time')
+    ],
+    foodVitD: [
+      t('แสงแดดสำคัญที่สุด ให้แขนหรือขาโดนแดด 10-15 นาที สัปดาห์ละ 2-3 ครั้ง', 'Sunlight matters most: let the sun reach your arms or legs for 10 to 15 minutes, 2 or 3 times a week'),
+      t('เลือกแดดอ่อน ก่อน 9 โมงเช้า หรือหลัง 4 โมงเย็น', 'Choose gentle sun, before 9 in the morning or after 4 in the afternoon'),
+      t('อาหารที่มีวิตามินดี ได้แก่ ปลาทะเลตัวใหญ่อย่างแซลมอนและปลาทู ไข่แดง และเห็ดตากแดด', 'Foods with vitamin D include oily sea fish such as salmon and mackerel, egg yolk, and sun-dried mushrooms'),
+      t('ถ้าโดนแดดน้อย ควรกินวิตามินดีเสริมตามที่แพทย์แนะนำ', 'If you get little sun, take a vitamin D supplement as your doctor advises'),
+      t('ถ้าขาดวิตามินดี ร่างกายจะดูดซึมแคลเซียมไม่ได้ แม้กินแคลเซียมมากก็ไม่พอ', 'Without vitamin D the body cannot take in calcium, however much calcium you eat')
+    ],
+    foodAvoid: [
+      t('อาหารเค็มจัด เช่น น้ำปลา ซีอิ๊ว ของหมักดอง บะหมี่ซอง เพราะเกลือทำให้แคลเซียมหลุดออกทางปัสสาวะ', 'Very salty food such as fish sauce, soy sauce, pickles and instant noodles — salt washes calcium out in your urine'),
+      t('กาแฟ ไม่ควรเกินวันละ 2 แก้ว', 'Coffee — no more than 2 cups a day'),
+      t('เหล้าเบียร์ ไม่ควรเกินวันละ 2 แก้ว เพราะทำให้กระดูกบางและเสี่ยงล้ม', 'Alcohol — no more than 2 drinks a day, as it thins bone and makes falls more likely'),
+      t('น้ำอัดลม เพราะมักดื่มแทนนม และมีฟอสเฟตสูง', 'Fizzy drinks — people often drink them instead of milk, and they are high in phosphate'),
+      t('บุหรี่ ควรงดให้ได้ เพราะทำให้กระดูกบางลงโดยตรง', 'Cigarettes — worth stopping altogether, as they thin bone directly')
+    ]
   };
 
   function parseYMD(s) {
@@ -494,7 +541,7 @@
   /**
    * Bone status is a diagnosis, so it rests only on bone density and
    * fracture history. Age, steroids and falls raise fracture *risk* and
-   * belong to the fall-risk and FRAX pictures, not to this label.
+   * belong to the fall-risk and fracture-risk pictures, not to this label.
    *
    * A hip or vertebral fragility fracture counts as osteoporosis on
    * clinical grounds whatever the density reading says.
@@ -1243,20 +1290,36 @@
   }
 
   /**
-   * FRAX is a licensed algorithm whose coefficients are not published, so the
-   * app never computes a score. It gathers the inputs the official calculator
-   * asks for, and stores the percentages a clinician read off that tool.
+   * QFracture estimates 10-year fracture risk from health history, without
+   * needing a bone density scan. Its coefficient tables are published but
+   * are not bundled here, so the app collects the inputs, sends the patient
+   * to the official calculator, and stores the percentages read off it
+   * rather than guessing at a number.
    */
-  var FRAX_URL = 'https://frax.shef.ac.uk/FRAX/tool.aspx?country=57';
+  var QFRACTURE_URL = 'https://qfracture.org';
 
-  var FRAX_FACTORS = [
-    { id: 'previousFracture', labelKey: 'fraxPreviousFracture' },
-    { id: 'parentHipFracture', labelKey: 'fraxParentHipFracture' },
-    { id: 'currentSmoking', labelKey: 'fraxSmoking' },
-    { id: 'glucocorticoids', labelKey: 'fraxGlucocorticoids' },
-    { id: 'rheumatoidArthritis', labelKey: 'fraxRheumatoid' },
-    { id: 'secondaryOsteoporosis', labelKey: 'fraxSecondary' },
-    { id: 'alcohol3Units', labelKey: 'fraxAlcohol' }
+  var QFRACTURE_FACTORS = [
+    { id: 'previousFracture', labelKey: 'qfPreviousFracture', group: 'history', fromProfile: 'priorFragilityFracture' },
+    { id: 'falls', labelKey: 'qfFalls', group: 'history', fromProfile: 'anyFallLastYear' },
+    { id: 'parentOsteoporosis', labelKey: 'qfParentOsteoporosis', group: 'history' },
+    { id: 'careHome', labelKey: 'qfCareHome', group: 'lifestyle' },
+    { id: 'smoking', labelKey: 'qfSmoking', group: 'lifestyle' },
+    { id: 'alcohol', labelKey: 'qfAlcohol', group: 'lifestyle' },
+    { id: 'diabetes', labelKey: 'qfDiabetes', group: 'conditions' },
+    { id: 'dementia', labelKey: 'qfDementia', group: 'conditions' },
+    { id: 'cancer', labelKey: 'qfCancer', group: 'conditions' },
+    { id: 'asthmaCopd', labelKey: 'qfAsthmaCopd', group: 'conditions' },
+    { id: 'heartStroke', labelKey: 'qfHeartStroke', group: 'conditions' },
+    { id: 'liverDisease', labelKey: 'qfLiver', group: 'conditions' },
+    { id: 'kidneyDisease', labelKey: 'qfKidney', group: 'conditions' },
+    { id: 'parkinsons', labelKey: 'qfParkinsons', group: 'conditions' },
+    { id: 'rheumatoidArthritis', labelKey: 'qfRheumatoid', group: 'conditions' },
+    { id: 'malabsorption', labelKey: 'qfMalabsorption', group: 'conditions' },
+    { id: 'endocrine', labelKey: 'qfEndocrine', group: 'conditions' },
+    { id: 'epilepsy', labelKey: 'qfEpilepsy', group: 'medicines' },
+    { id: 'antidepressants', labelKey: 'qfAntidepressants', group: 'medicines' },
+    { id: 'steroids', labelKey: 'qfSteroids', group: 'medicines', fromProfile: 'longTermSteroid' },
+    { id: 'hrt', labelKey: 'qfHrt', group: 'medicines', femaleOnly: true }
   ];
 
   function computeBmi(weightKg, heightCm) {
@@ -1267,30 +1330,48 @@
     return Math.round((w / (meters * meters)) * 10) / 10;
   }
 
-  function buildFraxWorksheet(profile, frax, bmdLogs) {
+  /**
+   * Anything the assessment already asked is carried across rather than
+   * asked a second time, and stays read-only in this form.
+   */
+  function qfractureFactorValue(factor, profile, answers) {
+    if (factor.fromProfile === 'priorFragilityFracture') return !!profile.priorFragilityFracture;
+    if (factor.fromProfile === 'longTermSteroid') return !!profile.longTermSteroid;
+    if (factor.fromProfile === 'anyFallLastYear') return (profile.fallsLast12mo || 0) > 0;
+    return !!answers[factor.id];
+  }
+
+  function qfractureFactorsFor(profile) {
+    return QFRACTURE_FACTORS.filter(function (factor) {
+      return !factor.femaleOnly || (profile || {}).sex === 'female';
+    });
+  }
+
+  function buildQFractureWorksheet(profile, answers) {
     profile = profile || {};
-    frax = frax || {};
-    var latest = latestBmdEntry(bmdLogs);
+    answers = answers || {};
     return {
       age: profile.age === undefined ? null : profile.age,
       sex: profile.sex || null,
-      weightKg: frax.weightKg === undefined ? null : frax.weightKg,
-      heightCm: frax.heightCm === undefined ? null : frax.heightCm,
-      bmi: computeBmi(frax.weightKg, frax.heightCm),
-      femoralNeckTScore: latest ? (typeof latest.hipT === 'number' ? latest.hipT : null) : null,
-      factors: FRAX_FACTORS.map(function (factor) {
-        var value = factor.id === 'previousFracture'
-          ? !!profile.priorFragilityFracture
-          : (factor.id === 'glucocorticoids' ? !!profile.longTermSteroid : !!frax[factor.id]);
-        return { id: factor.id, labelKey: factor.labelKey, value: value };
+      weightKg: answers.weightKg === undefined ? null : answers.weightKg,
+      heightCm: answers.heightCm === undefined ? null : answers.heightCm,
+      bmi: computeBmi(answers.weightKg, answers.heightCm),
+      factors: qfractureFactorsFor(profile).map(function (factor) {
+        return {
+          id: factor.id,
+          labelKey: factor.labelKey,
+          group: factor.group,
+          fromAssessment: !!factor.fromProfile,
+          value: qfractureFactorValue(factor, profile, answers)
+        };
       }),
-      recordedMajorRisk: typeof frax.majorFractureRisk === 'number' ? frax.majorFractureRisk : null,
-      recordedHipRisk: typeof frax.hipFractureRisk === 'number' ? frax.hipFractureRisk : null,
-      recordedOn: frax.recordedOn || null
+      recordedMajorRisk: typeof answers.majorFractureRisk === 'number' ? answers.majorFractureRisk : null,
+      recordedHipRisk: typeof answers.hipFractureRisk === 'number' ? answers.hipFractureRisk : null,
+      recordedOn: answers.recordedOn || null
     };
   }
 
-  function fraxWorksheetComplete(worksheet) {
+  function qfractureWorksheetComplete(worksheet) {
     return !!(worksheet && worksheet.age !== null && worksheet.sex && worksheet.bmi !== null);
   }
 
@@ -1394,6 +1475,7 @@
     T_SCORE_NORMAL: T_SCORE_NORMAL,
     T_SCORE_OSTEOPOROSIS: T_SCORE_OSTEOPOROSIS,
     CONTENT: CONTENT,
+    LISTS: LISTS,
     parseYMD: parseYMD,
     formatYMD: formatYMD,
     addDaysSafe: addDaysSafe,
@@ -1470,11 +1552,12 @@
     hasBmdData: hasBmdData,
     lowestTScore: lowestTScore,
     latestBmdEntry: latestBmdEntry,
-    FRAX_URL: FRAX_URL,
-    FRAX_FACTORS: FRAX_FACTORS,
+    QFRACTURE_URL: QFRACTURE_URL,
+    QFRACTURE_FACTORS: QFRACTURE_FACTORS,
+    qfractureFactorsFor: qfractureFactorsFor,
     computeBmi: computeBmi,
-    buildFraxWorksheet: buildFraxWorksheet,
-    fraxWorksheetComplete: fraxWorksheetComplete,
+    buildQFractureWorksheet: buildQFractureWorksheet,
+    qfractureWorksheetComplete: qfractureWorksheetComplete,
     monthsBetween: monthsBetween,
     medicationProgress: medicationProgress,
     archiveMedication: archiveMedication,
