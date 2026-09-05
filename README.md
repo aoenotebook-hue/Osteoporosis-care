@@ -51,15 +51,25 @@ then open `http://localhost:8080/index.html`. Service workers and
 
 1. Create a Google Sheet, open **Extensions → Apps Script**, paste in
    `apps-script/Code.gs`.
-2. Set `SHARED_TOKEN` in `Code.gs` to a private random string.
-3. **Deploy → New deployment → Web app** (Execute as: Me, Access:
+2. **Deploy → New deployment → Web app** (Execute as: Me, Access:
    Anyone), copy the Web App URL.
-4. In `index.html`, set `WEBHOOK_URL` to that URL and `SHARED_TOKEN` to
-   the same string as step 2.
+3. `WEBHOOK_URL` in `index.html` is already wired to the deployed URL,
+   and `SHARED_TOKEN` in both `index.html` and `apps-script/Code.gs` is
+   already set to a generated secret — the two files must always carry
+   the *same* token. **Whichever one you edit first, copy the same
+   value into the other before deploying/redeploying.**
+4. Apps Script web app deployments are pinned to a code snapshot: after
+   editing `Code.gs` (e.g. to rotate `SHARED_TOKEN` or extend the
+   sheets), use **Deploy → Manage deployments → Edit → New version** —
+   saving the script alone does not update the live `/exec` URL.
 5. Sheets (`Registrations`, `CheckIns`, `Falls`, `Adherence`,
    `Exercise`) are created automatically on first write.
+6. This sandbox's network policy blocks `script.google.com`, so the
+   live webhook could not be smoke-tested from here — verify it
+   yourself: complete Registration in the app once and confirm a row
+   appears in the `Registrations` sheet.
 
-Until `WEBHOOK_URL` is set, the app runs fully offline and queues
+If `WEBHOOK_URL` is ever cleared, the app runs fully offline and queues
 registration/records in `syncQueue` for later flushing.
 
 ## Deploying the app

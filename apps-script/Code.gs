@@ -7,7 +7,7 @@
  * SHARED_TOKEN value below into SHARED_TOKEN in index.html.
  */
 
-var SHARED_TOKEN = 'REPLACE_WITH_SHARED_TOKEN';
+var SHARED_TOKEN = 'mQ6tfi1HQa0fBNbhzt2AoVk_YKMfmX5v';
 
 var SHEET_COLUMNS = {
   Registrations: ['patientId', 'hn', 'hnUnknown', 'name', 'phone', 'yearOfBirth', 'sex', 'consent', 'receivedAt'],
