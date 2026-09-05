@@ -27,7 +27,7 @@ review, all built around a **risk-tier + balance-level resolver**.
 
 | Tab | What it holds |
 |---|---|
-| หน้าหลัก / Home | Bone condition and fall risk with what each means and what to do, the QFracture 10-year risk card, a countdown ring to the next dose, due prompts and a safety tip |
+| หน้าหลัก / Home | Bone condition and fall risk with what each means and what to do, the 10-year fracture risk card, a countdown ring to the next dose, due prompts and a safety tip |
 | ยา / Medicine | The patient's own drug, picked from icon cards: next dose, how long they have been on it, doses received, course position for romosozumab, how to take it, missed doses, side effects, dental note, do-not-stop warning, and past medicines with their durations |
 | อาหาร / Food | Yearly nutrition review and its calcium, vitamin D and protein recommendations, plus bulleted guides to where calcium and vitamin D come from and what to cut down |
 | ออกกำลัง / Move | Exercises scoped to the balance level, each with written how-to steps; information only, no logging |
@@ -72,36 +72,79 @@ them misleads the patient:
   day, a phone notification where the browser allows it, and a calendar
   file with an alarm a week ahead and another on the day.
 
-### About the 10-year fracture risk (QFracture)
+### About the 10-year fracture risk (FRAX)
 
-QFracture suits this app better than FRAX: it works from health history
-and **needs no bone density result**, so a patient who has never had a
-DXA still gets a number. The app collects everything the calculator asks
-for — age, sex, weight, height and BMI, previous fracture, falls in the
-past year, a parent with a broken hip or thin bones, care-home living,
-smoking, alcohol, diabetes, dementia, cancer, asthma or COPD, heart
-disease or stroke, liver disease, kidney disease, Parkinson's,
-rheumatoid arthritis or lupus, malabsorption, gland problems,
-anticonvulsants, antidepressants, steroid tablets, and HRT for women.
-Anything the assessment already asked is carried over and shown
-read-only rather than asked twice.
+The card gathers everything the official FRAX calculator asks for — age,
+sex, weight, height and BMI, a previous fracture from a small fall, a
+parent who broke a hip, current smoking, regular steroid tablets,
+rheumatoid arthritis, another illness that thins bone, three or more
+alcoholic drinks a day, and the femoral neck T-score when a DXA has been
+recorded. Anything the assessment already asked is carried over and shown
+read-only rather than asked twice. The card links straight to the Thai
+FRAX tool (`frax.shef.ac.uk`, country 57), and the two percentages that
+come back are recorded, dated, and synced to the FractureRisk sheet.
 
-**The app does not compute the score.** QFracture's algorithm is
-published, unlike FRAX's, so it *can* be implemented — but the
-coefficient tables are not bundled here and this build environment has
-no outbound network access to fetch them. Inventing coefficients would
-produce a plausible-looking percentage that is wrong, which is worse
-than no number at all in a patient-facing app.
+The card then works in one of two modes, and never mixes them:
 
-To turn on in-app calculation, put the published QFracture coefficient
-tables (the ClinRisk open-source release) in the repo and say so — the
-worksheet already assembles every input in the right shape, so it is a
-data drop plus one scoring function, and I will validate it against the
-published worked examples before it goes anywhere near a patient.
+1. **The official result.** Once the doctor's two percentages are
+   recorded, the card shows them under a green *"Result from the official
+   FRAX calculator"*, exactly as entered.
+2. **The app's own estimate**, used only while no official result exists.
+   It appears under an amber *"The app's own estimate — not an official
+   FRAX result"* banner, as a range rather than a single figure, with a
+   "How this was worked out" panel showing the starting point, every
+   multiplier applied, the total, and the source.
 
-Until then the flow is: fill in the details → open qfracture.org →
-enter them → record the two percentages back in the app, where they are
-stored, dated, and synced to the FractureRisk sheet.
+**FRAX itself is not and cannot be computed here.** Its coefficients are
+licensed and unpublished, so no code in this repo reproduces them. The
+estimate is a deliberately simple stand-in: a published population
+baseline for the patient's age and sex, multiplied by a relative risk for
+each factor present.
+
+- **Where the multipliers come from:** the pooled relative risks in the
+  meta-analyses behind FRAX (Kanis et al.) and, for bone density, the
+  per-standard-deviation gradient of risk (Marshall et al.). The exact
+  string shown on screen is in `FRAX_ESTIMATE_SOURCE`.
+
+Applied naively, that model reads two to three times above FRAX — it put
+a 74-year-old with a previous fracture, a parental hip fracture and a
+femoral neck T-score of −2.6 at 55%, against roughly 20–25% from the real
+tool. Three corrections bring it back into range, all following from the
+fact that the baseline is a population *average* rather than a risk-free
+person:
+
+- **Each relative risk is rescaled against that average**
+  (`rr / (1 + prevalence × (rr − 1))`). A published RR compares people
+  who have the factor against people who do not; applying it whole to an
+  average that already contains both counts the risk twice.
+- **The T-score is judged against the average for that age**, not against
+  a young adult. A 75-year-old with a T-score of −1.9 is typical of her
+  age and gets no bone-density multiplier; a better-than-average scan
+  lowers the estimate.
+- **Stacked factors are pulled back** (combined multiplier raised to the
+  power 0.75). Risks overlap — someone with a previous fracture likely
+  also has thin bone — so multiplying them whole compounds the same
+  frailty several times. A single factor is barely touched.
+
+`t13_frax_medication` checks the result against published FRAX ranges for
+three reference profiles, so the estimate cannot silently drift off by
+multiples again.
+
+- **What it still does not model:** competing mortality and the
+  dose-response detail FRAX carries. It stays coarse, so the multiplier
+  is capped (×8 major, ×12 hip), the probability is capped (90% / 70%),
+  and the figure is always shown as a ±30% range rather than a point.
+- **What most needs your review:** `FRAX_BASELINE_RISK` in
+  `app-core.js`. Those age/sex baselines, and the `meanTScore` column
+  beside them, are approximate figures for an Asian population.
+  Replacing them with Thai epidemiology is the single change that would
+  most improve the estimate, and the card says on screen that a doctor
+  should check them first. The `prevalence` figures on `FRAX_FACTORS`
+  are the second such guess and deserve the same look.
+
+So the intended flow stays: fill in the details → open the FRAX site →
+enter them → record the two percentages back in the app, which then
+replaces the estimate with the real thing.
 
 ## Running the tests
 
@@ -197,6 +240,11 @@ Static hosting (e.g. GitHub Pages): `index.html`, `app-core.js`,
 10. **The BMD screening criteria** in the Learn tab follow common
    international guidance; confirm them against the Thai guideline you
    use before the pilot.
+11. **The fracture-risk estimate** shown when no official FRAX result
+   has been recorded uses approximate Asian baselines
+   (`FRAX_BASELINE_RISK`). Review those figures, and decide whether you
+   want the estimate shown to patients at all or only the official
+   result — it is one `else if` in `renderFraxCard()`.
 
 ## Writing for patients
 

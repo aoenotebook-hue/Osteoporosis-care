@@ -287,6 +287,10 @@
     cursor: pointer; min-height: 44px; font-size: 0.85rem; margin-top: 6px;
   }
 
+  .estimate-banner {
+    background: var(--warning-bg); border: 1px solid var(--warning); color: var(--warning-ink);
+    border-radius: 10px; padding: 10px 12px; margin: 10px 0; font-weight: 700; font-size: 0.9rem;
+  }
   .frax-results { display: flex; gap: 12px; flex-wrap: wrap; margin: 10px 0; }
   .frax-figure { background: var(--surface-alt); border-radius: 12px; padding: 10px 14px; flex: 1 1 45%; }
   .frax-figure .label { display: block; font-size: 0.82rem; color: var(--muted); }
@@ -737,7 +741,7 @@
       screen.innerHTML = renderActiveScreen() + renderFooter();
       if (checkin.open) overlay.innerHTML = '<div class="overlay"><div class="modal">' + renderCheckin() + '</div></div>';
       else if (nutrition.open) overlay.innerHTML = '<div class="overlay"><div class="modal">' + renderNutritionWizard() + '</div></div>';
-      else if (fraxFormOpen) overlay.innerHTML = '<div class="overlay"><div class="modal">' + renderQFractureForm() + '</div></div>';
+      else if (fraxFormOpen) overlay.innerHTML = '<div class="overlay"><div class="modal">' + renderFraxForm() + '</div></div>';
       else if (resetConfirmOpen) overlay.innerHTML = '<div class="overlay"><div class="modal">' + renderResetConfirm() + '</div></div>';
       else if (reminderOpen) overlay.innerHTML = '<div class="overlay"><div class="modal">' + renderDoseReminder() + '</div></div>';
     }
@@ -1020,7 +1024,7 @@
       '<div class="status-block"><div class="muted">' + esc(tr('balanceLevelLabel')) + '</div>' +
       '<span class="badge level">' + esc(tr('balanceLevel' + state.balance.currentLevel)) + '</span></div>' +
       '</div>';
-    html += renderQFractureCard();
+    html += renderFraxCard();
 
     if (checkinDue) {
       html += '<div class="card warn"><div class="card-head"><span class="ico">📋</span><h3>' + esc(tr('homeCheckinDue')) + '</h3></div>' +
@@ -1090,53 +1094,86 @@
       '</div></div>';
   }
 
-  function renderQFractureCard() {
-    var worksheet = C.buildQFractureWorksheet(state.profile, state.frax);
-    var ready = C.qfractureWorksheetComplete(worksheet);
+  function renderFraxCard() {
+    var worksheet = C.buildFraxWorksheet(state.profile, state.frax, state.tracking.bmdLogs);
+    var ready = C.fraxWorksheetComplete(worksheet);
+    var result = C.fractureRiskToShow(worksheet);
 
-    var html = '<div class="card"><div class="card-head"><span class="ico">📊</span><h3>' + esc(tr('qfTitle')) + '</h3></div>';
-    html += '<p>' + esc(tr('qfIntro')) + '</p>';
-    html += '<p class="muted">✓ ' + esc(tr('qfNoDxaNeeded')) + '</p>';
+    var html = '<div class="card"><div class="card-head"><span class="ico">📊</span><h3>' + esc(tr('fraxTitle')) + '</h3></div>';
+    html += '<p>' + esc(tr('fraxIntro')) + '</p>';
 
-    if (worksheet.recordedMajorRisk !== null || worksheet.recordedHipRisk !== null) {
-      html += '<div class="frax-results">';
-      if (worksheet.recordedMajorRisk !== null) {
-        html += '<div class="frax-figure"><span class="label">' + esc(tr('qfMajorRisk')) + '</span>' +
-          '<span class="figure">' + worksheet.recordedMajorRisk + '%</span></div>';
+    if (result && result.isOfficial) {
+      html += '<p class="status-line good">✓ ' + esc(tr('fraxOfficialLabel')) + '</p>';
+      html += '<div class="frax-results">' +
+        riskFigure(tr('fraxMajorRisk'), result.major === null ? null : result.major + '%') +
+        riskFigure(tr('fraxHipRisk'), result.hip === null ? null : result.hip + '%') +
+        '</div>';
+      if (result.recordedOn) {
+        html += '<p class="muted">' + esc(tr('fraxRecordedOn')) + ' ' + esc(formatDate(result.recordedOn)) + '</p>';
       }
-      if (worksheet.recordedHipRisk !== null) {
-        html += '<div class="frax-figure"><span class="label">' + esc(tr('qfHipRisk')) + '</span>' +
-          '<span class="figure">' + worksheet.recordedHipRisk + '%</span></div>';
-      }
-      html += '</div>';
-      if (worksheet.recordedOn) {
-        html += '<p class="muted">' + esc(tr('qfRecordedOn')) + ' ' + esc(formatDate(worksheet.recordedOn)) + '</p>';
-      }
+    } else if (result) {
+      html += '<div class="estimate-banner">⚠ ' + esc(tr('fraxEstimateLabel')) + '</div>';
+      html += '<div class="frax-results">' +
+        riskFigure(tr('fraxMajorRisk'), esc(tr('fraxAboutRange')) + ' ' + result.majorRange[0] + '–' + result.majorRange[1] + '%') +
+        riskFigure(tr('fraxHipRisk'), esc(tr('fraxAboutRange')) + ' ' + result.hipRange[0] + '–' + result.hipRange[1] + '%') +
+        '</div>';
+      html += '<p class="muted">' + esc(tr('fraxEstimateCaution')) + '</p>';
+      html += renderEstimateWorking(result);
     } else {
-      html += '<p class="muted">' + esc(tr('qfNotRecorded')) + '</p>';
+      html += '<p class="muted">' + esc(tr('fraxNotRecorded')) + '</p>';
     }
 
-    html += '<details class="table-view"><summary>' + esc(tr('qfYourDetails')) + '</summary><table class="data"><tbody>' +
+    html += '<details class="table-view"><summary>' + esc(tr('fraxYourDetails')) + '</summary><table class="data"><tbody>' +
       fraxRow(tr('registerSex'), worksheet.sex ? tr(worksheet.sex === 'male' ? 'registerSexMale' : 'registerSexFemale') : '—') +
       fraxRow(tr('registerAgeLabel'), worksheet.age === null ? '—' : worksheet.age) +
-      fraxRow(tr('qfWeight'), worksheet.weightKg === null ? '—' : worksheet.weightKg) +
-      fraxRow(tr('qfHeight'), worksheet.heightCm === null ? '—' : worksheet.heightCm) +
-      fraxRow(tr('qfBmi'), worksheet.bmi === null ? '—' : worksheet.bmi) +
+      fraxRow(tr('fraxWeight'), worksheet.weightKg === null ? '—' : worksheet.weightKg) +
+      fraxRow(tr('fraxHeight'), worksheet.heightCm === null ? '—' : worksheet.heightCm) +
+      fraxRow(tr('fraxBmi'), worksheet.bmi === null ? '—' : worksheet.bmi) +
+      fraxRow(tr('fraxFemoralNeck'), worksheet.femoralNeckTScore === null ? '—' : worksheet.femoralNeckTScore) +
       worksheet.factors.filter(function (f) { return f.value; }).map(function (factor) {
         return fraxRow(tr(factor.labelKey), tr('yes'));
       }).join('') +
       '</tbody></table></details>';
 
-    html += '<p class="' + (ready ? 'status-line good' : 'status-line warn') + '">' +
-      (ready ? '✓ ' + esc(tr('qfReady')) : '● ' + esc(tr('qfNeedWeightHeight'))) + '</p>';
+    if (!ready) html += '<p class="status-line warn">● ' + esc(tr('fraxNeedWeightHeight')) + '</p>';
+    else if (!(result && result.isOfficial)) html += '<p class="status-line">● ' + esc(tr('fraxReady')) + '</p>';
 
     html += '<div class="stack">' +
       '<button type="button" class="btn secondary" data-action="open-frax">' +
-        esc(worksheet.weightKg === null ? tr('qfFillData') : tr('qfEditData')) + '</button>' +
-      '<a class="btn secondary" href="' + esc(C.QFRACTURE_URL) + '" target="_blank" rel="noopener">' + esc(tr('qfOpenCalculator')) + '</a>' +
+        esc(worksheet.weightKg === null ? tr('fraxFillData') : tr('fraxEditData')) + '</button>' +
+      '<a class="btn secondary" href="' + esc(C.FRAX_URL) + '" target="_blank" rel="noopener">' + esc(tr('fraxOpenCalculator')) + '</a>' +
       '</div>';
-    html += '<p class="muted" style="margin-top:10px;">' + esc(tr('qfWhyNotComputed')) + '</p>';
     return html + '</div>';
+  }
+
+  function riskFigure(label, value) {
+    return '<div class="frax-figure"><span class="label">' + esc(label) + '</span>' +
+      '<span class="figure">' + (value === null ? '—' : value) + '</span></div>';
+  }
+
+  /**
+   * The estimate shows its working: where it started, what multiplied it, and
+   * who published the multipliers — so it can be checked rather than trusted.
+   */
+  function renderEstimateWorking(result) {
+    var html = '<details class="table-view"><summary>' + esc(tr('fraxHowCalculated')) + '</summary>';
+    html += '<table class="data"><tbody>';
+    html += '<tr><td>' + esc(tr('fraxBaselineLabel')) + '</td><td>' +
+      result.baseline.major + '% / ' + result.baseline.hip + '%</td></tr>';
+    result.steps.forEach(function (step) {
+      html += '<tr><td>' + esc(tr(step.labelKey)) + '</td><td>× ' + step.majorRr + ' / × ' + step.hipRr + '</td></tr>';
+    });
+    // Without this row the multipliers above would not multiply out to the
+    // total, and the panel would look like it had made an arithmetic slip.
+    if (result.overlapAdjusted) {
+      html += '<tr><td>' + esc(tr('fraxOverlapAdjust')) + '</td><td>−</td></tr>';
+    }
+    html += '<tr><td><strong>' + esc(tr('fraxMultiplierLabel')) + '</strong></td><td><strong>' +
+      result.major + '% / ' + result.hip + '%</strong></td></tr>';
+    html += '</tbody></table>';
+    html += '<p class="muted">' + esc(tr('fraxSourceLabel')) + ': ' + esc(result.source) + '</p>';
+    html += '<p class="muted">' + esc(tr('fraxBaselineCaveat')) + '</p>';
+    return html + '</details>';
   }
 
   function fraxRow(label, value) {
@@ -1162,46 +1199,36 @@
     if (!isNaN(majorValue) || !isNaN(hipValue)) state.frax.recordedOn = todayStr();
   }
 
-  function renderQFractureForm() {
-    var worksheet = C.buildQFractureWorksheet(state.profile, state.frax);
-    var groups = [
-      { id: 'history', labelKey: 'qfHealthConditions' },
-      { id: 'lifestyle', labelKey: 'qfLifestyle' },
-      { id: 'conditions', labelKey: 'qfHealthConditions' },
-      { id: 'medicines', labelKey: 'qfHealthConditions' }
-    ];
+  function renderFraxForm() {
+    var worksheet = C.buildFraxWorksheet(state.profile, state.frax, state.tracking.bmdLogs);
 
-    var html = '<div class="card-head"><span class="ico">📊</span><h2 style="margin:0;">' + esc(tr('qfFillData')) + '</h2></div>';
+    var html = '<div class="card-head"><span class="ico">📊</span><h2 style="margin:0;">' + esc(tr('fraxFillData')) + '</h2></div>';
     html += '<div class="field-row">' +
-      '<div><label for="fraxWeight">' + esc(tr('qfWeight')) + '</label>' +
+      '<div><label for="fraxWeight">' + esc(tr('fraxWeight')) + '</label>' +
         '<input type="number" id="fraxWeight" step="0.1" inputmode="decimal" value="' + esc(state.frax.weightKg === undefined ? '' : state.frax.weightKg) + '"></div>' +
-      '<div><label for="fraxHeight">' + esc(tr('qfHeight')) + '</label>' +
+      '<div><label for="fraxHeight">' + esc(tr('fraxHeight')) + '</label>' +
         '<input type="number" id="fraxHeight" step="0.1" inputmode="decimal" value="' + esc(state.frax.heightCm === undefined ? '' : state.frax.heightCm) + '"></div>' +
       '</div>';
 
-    html += '<h3 style="margin-top:16px;">' + esc(tr('qfTapWhatApplies')) + '</h3>';
-    groups.forEach(function (group, index) {
-      var inGroup = worksheet.factors.filter(function (f) { return f.group === group.id; });
-      if (!inGroup.length) return;
-      if (index === 1) html += '<p class="muted" style="margin-top:12px;">' + esc(tr('qfLifestyle')) + '</p>';
-      html += inGroup.map(function (factor) {
-        // Anything the assessment already established is shown, not re-asked.
-        if (factor.fromAssessment) {
-          return '<div class="safety-item ' + (factor.value ? 'done' : 'todo') + '" style="cursor:default;">' +
-            '<span class="txt">' + esc(tr(factor.labelKey)) + '</span>' +
-            '<span class="state">' + (factor.value ? '✓ ' + esc(tr('yes')) : esc(tr('no'))) + '</span></div>';
-        }
-        return '<button type="button" class="safety-item ' + (factor.value ? 'done' : 'todo') + '" data-action="toggle-frax-factor" data-factor="' + factor.id + '" aria-pressed="' + factor.value + '">' +
-          '<span class="txt">' + esc(tr(factor.labelKey)) + '</span>' +
-          '<span class="state">' + (factor.value ? '✓ ' + esc(tr('yes')) : esc(tr('no'))) + '</span></button>';
-      }).join('');
-    });
+    html += '<h3 style="margin-top:16px;">' + esc(tr('fraxTapWhatApplies')) + '</h3>';
+    html += worksheet.factors.map(function (factor) {
+      // Anything the assessment already established is shown, not re-asked.
+      if (factor.fromAssessment) {
+        return '<div class="safety-item ' + (factor.value ? 'done' : 'todo') + '" style="cursor:default;">' +
+          '<span class="txt">' + esc(tr(factor.labelKey)) +
+          '<br><span class="muted" style="font-size:0.8rem;">' + esc(tr('fraxFromAssessment')) + '</span></span>' +
+          '<span class="state">' + (factor.value ? '✓ ' + esc(tr('yes')) : esc(tr('no'))) + '</span></div>';
+      }
+      return '<button type="button" class="safety-item ' + (factor.value ? 'done' : 'todo') + '" data-action="toggle-frax-factor" data-factor="' + factor.id + '" aria-pressed="' + factor.value + '">' +
+        '<span class="txt">' + esc(tr(factor.labelKey)) + '</span>' +
+        '<span class="state">' + (factor.value ? '✓ ' + esc(tr('yes')) : esc(tr('no'))) + '</span></button>';
+    }).join('');
 
-    html += '<h3 style="margin-top:16px;">' + esc(tr('qfRecordResult')) + '</h3>';
+    html += '<h3 style="margin-top:16px;">' + esc(tr('fraxRecordResult')) + '</h3>';
     html += '<div class="field-row">' +
-      '<div><label for="fraxMajor">' + esc(tr('qfMajorRisk')) + ' (%)</label>' +
+      '<div><label for="fraxMajor">' + esc(tr('fraxMajorRisk')) + ' (%)</label>' +
         '<input type="number" id="fraxMajor" step="0.1" inputmode="decimal" value="' + esc(state.frax.majorFractureRisk === undefined ? '' : state.frax.majorFractureRisk) + '"></div>' +
-      '<div><label for="fraxHip">' + esc(tr('qfHipRisk')) + ' (%)</label>' +
+      '<div><label for="fraxHip">' + esc(tr('fraxHipRisk')) + ' (%)</label>' +
         '<input type="number" id="fraxHip" step="0.1" inputmode="decimal" value="' + esc(state.frax.hipFractureRisk === undefined ? '' : state.frax.hipFractureRisk) + '"></div>' +
       '</div>';
 
@@ -2396,13 +2423,16 @@
       collectFraxInputs();
       fraxFormOpen = false;
       saveState();
+      // The tool column says which of the two the figures are, so an estimate
+      // is never read back off the sheet as though a clinician had run FRAX.
+      var shown = C.fractureRiskToShow(C.buildFraxWorksheet(state.profile, state.frax, state.tracking.bmdLogs));
       enqueueSyncRecord('frax', {
         weightKg: state.frax.weightKg === undefined ? '' : state.frax.weightKg,
         heightCm: state.frax.heightCm === undefined ? '' : state.frax.heightCm,
         bmi: C.computeBmi(state.frax.weightKg, state.frax.heightCm) || '',
-        tool: 'QFracture',
-        majorFractureRisk: state.frax.majorFractureRisk === undefined ? '' : state.frax.majorFractureRisk,
-        hipFractureRisk: state.frax.hipFractureRisk === undefined ? '' : state.frax.hipFractureRisk
+        tool: !shown ? 'incomplete' : (shown.isOfficial ? 'FRAX-official' : 'app-estimate'),
+        majorFractureRisk: shown && shown.major !== null ? shown.major : '',
+        hipFractureRisk: shown && shown.hip !== null ? shown.hip : ''
       });
       render();
 

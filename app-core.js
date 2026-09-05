@@ -35,7 +35,7 @@
     registerTitle: t('ลงทะเบียนครั้งแรก', 'First-time Registration'),
     registerIntro: t('กรอกข้อมูลเพียง 3 อย่าง เพื่อเริ่มใช้งาน', 'Just three details to get started'),
     registerHN: t('เลขประจำตัวผู้ป่วย (HN)', 'Hospital Number (HN)'),
-    registerYearOfBirth: t('ปีเกิด (พ.ศ. หรือ ค.ศ.)', 'Year of birth'),
+    registerYearOfBirth: t('ปีเกิด (พ.ศ.)', 'Year of birth (Buddhist era)'),
     registerSex: t('เพศ', 'Sex'),
     registerAgeLabel: t('อายุ', 'Age'),
     registerSexMale: t('ชาย', 'Male'),
@@ -101,49 +101,45 @@
     homeWhatThisMeans: t('แปลว่าอะไร', 'What this means'),
     homeManagementLabel: t('ควรทำอะไรบ้าง', 'What to do'),
 
-    qfTitle: t('โอกาสกระดูกหักใน 10 ปีข้างหน้า', 'Chance of a broken bone in the next 10 years'),
-    qfIntro: t('เครื่องมือนี้ชื่อ QFracture ใช้ประวัติสุขภาพของท่านประเมินว่าใน 10 ปีข้างหน้ามีโอกาสกระดูกหักแค่ไหน', 'This tool is called QFracture. It uses your health history to work out how likely a broken bone is over the next 10 years.'),
-    qfWhyNotComputed: t('แอปยังไม่ได้คิดตัวเลขนี้เอง แต่จะรวบรวมข้อมูลไว้ให้ครบ เพื่อให้แพทย์คำนวณจากเว็บไซต์ แล้วนำผลมาบันทึกไว้ที่นี่', 'The app does not work the number out itself. It keeps your details ready so your doctor can calculate it on the website, and the answer is saved here.'),
-    qfOpenCalculator: t('เปิดเว็บไซต์ QFracture', 'Open the QFracture website'),
-    qfFillData: t('กรอกข้อมูลสุขภาพ', 'Fill in your health details'),
-    qfEditData: t('แก้ไขข้อมูลสุขภาพ', 'Edit your health details'),
-    qfMajorRisk: t('โอกาสกระดูกหักใน 10 ปี', 'Broken bone within 10 years'),
-    qfHipRisk: t('โอกาสกระดูกสะโพกหักใน 10 ปี', 'Broken hip within 10 years'),
-    qfNotRecorded: t('ยังไม่มีผลจากแพทย์', 'No result from your doctor yet'),
-    qfRecordedOn: t('บันทึกเมื่อ', 'Recorded on'),
-    qfNeedWeightHeight: t('กรอกน้ำหนักและส่วนสูงก่อน', 'Please fill in your weight and height first'),
-    qfReady: t('ข้อมูลครบแล้ว พร้อมให้แพทย์คำนวณ', 'Your details are complete and ready for your doctor'),
-    qfYourDetails: t('ข้อมูลของท่าน', 'Your details'),
-    qfWeight: t('น้ำหนัก (กก.)', 'Weight (kg)'),
-    qfHeight: t('ส่วนสูง (ซม.)', 'Height (cm)'),
-    qfBmi: t('ดัชนีมวลกาย', 'Body mass index'),
-    qfRecordResult: t('บันทึกผลจากแพทย์', 'Record the result from your doctor'),
-    qfHealthConditions: t('โรคประจำตัวและยาที่ใช้', 'Health conditions and medicines'),
-    qfLifestyle: t('การใช้ชีวิต', 'Daily life'),
-    qfTapWhatApplies: t('แตะข้อที่ตรงกับท่าน', 'Tap anything that is true for you'),
-    qfNoDxaNeeded: t('ไม่ต้องใช้ผลตรวจความหนาแน่นกระดูก', 'No bone density scan needed'),
+    fraxTitle: t('โอกาสกระดูกหักใน 10 ปีข้างหน้า', 'Chance of a broken bone in the next 10 years'),
+    fraxIntro: t('เครื่องมือมาตรฐานชื่อ FRAX ใช้ประวัติสุขภาพประเมินว่าใน 10 ปีข้างหน้ามีโอกาสกระดูกหักแค่ไหน', 'The standard tool for this is called FRAX. It uses your health history to work out how likely a broken bone is over the next 10 years.'),
+    fraxOfficialLabel: t('ผลจากเครื่องคำนวณ FRAX อย่างเป็นทางการ', 'Result from the official FRAX calculator'),
+    fraxEstimateLabel: t('ค่าประมาณจากแอป ไม่ใช่ผล FRAX อย่างเป็นทางการ', "The app's own estimate — not an official FRAX result"),
+    fraxEstimateCaution: t('ค่านี้เป็นเพียงการประมาณอย่างหยาบ ตัวเลขจริงอาจสูงหรือต่ำกว่านี้ ให้แพทย์คำนวณจากเว็บไซต์ FRAX เพื่อยืนยันเสมอ', 'This is only a rough estimate, and the real figure may be higher or lower. Always have your doctor confirm it on the FRAX website.'),
+    fraxHowCalculated: t('คิดมาอย่างไร', 'How this was worked out'),
+    fraxBaselineLabel: t('ค่าเริ่มต้นตามอายุและเพศ', 'Starting point for your age and sex'),
+    fraxMultiplierLabel: t('คูณด้วยปัจจัยเสี่ยงของท่าน', 'Multiplied by your risk factors'),
+    fraxOverlapAdjust: t('ลดลงเพราะปัจจัยเสี่ยงเหล่านี้ทับซ้อนกัน', 'Reduced, because these risks overlap each other'),
+    fraxSourceLabel: t('ที่มาของตัวเลข', 'Where these numbers come from'),
+    fraxBaselineCaveat: t('ค่าเริ่มต้นนี้เป็นค่าประมาณสำหรับประชากรเอเชีย ควรให้แพทย์ตรวจสอบให้ตรงกับคนไทยก่อนใช้จริง', 'The starting figures are approximate for an Asian population, and a doctor should check them against Thai data before real use.'),
+    fraxOpenCalculator: t('เปิดเว็บไซต์ FRAX', 'Open the FRAX website'),
+    fraxFillData: t('กรอกข้อมูลสุขภาพ', 'Fill in your health details'),
+    fraxEditData: t('แก้ไขข้อมูลสุขภาพ', 'Edit your health details'),
+    fraxMajorRisk: t('โอกาสกระดูกหักใน 10 ปี', 'Broken bone within 10 years'),
+    fraxHipRisk: t('โอกาสกระดูกสะโพกหักใน 10 ปี', 'Broken hip within 10 years'),
+    fraxAboutRange: t('ประมาณ', 'about'),
+    fraxNotRecorded: t('ยังไม่มีผลจากแพทย์', 'No result from your doctor yet'),
+    fraxRecordedOn: t('บันทึกเมื่อ', 'Recorded on'),
+    fraxNeedWeightHeight: t('กรอกน้ำหนักและส่วนสูงก่อน', 'Please fill in your weight and height first'),
+    fraxReady: t('ข้อมูลครบแล้ว พร้อมให้แพทย์คำนวณ', 'Your details are complete and ready for your doctor'),
+    fraxYourDetails: t('ข้อมูลของท่าน', 'Your details'),
+    fraxWeight: t('น้ำหนัก (กก.)', 'Weight (kg)'),
+    fraxHeight: t('ส่วนสูง (ซม.)', 'Height (cm)'),
+    fraxBmi: t('ดัชนีมวลกาย', 'Body mass index'),
+    fraxFemoralNeck: t('T-score สะโพก', 'Hip T-score'),
+    fraxRecordResult: t('บันทึกผลจากแพทย์', 'Record the result from your doctor'),
+    fraxTapWhatApplies: t('แตะข้อที่ตรงกับท่าน', 'Tap anything that is true for you'),
+    fraxFromAssessment: t('ตอบไว้แล้วในแบบประเมิน', 'Already answered in your assessment'),
 
-    qfPreviousFracture: t('เคยกระดูกหักจากอุบัติเหตุเล็กน้อย', 'I have broken a bone from a small injury'),
-    qfParentOsteoporosis: t('พ่อหรือแม่เคยกระดูกสะโพกหัก หรือเป็นกระดูกพรุน', 'My mother or father broke a hip, or has thin bones'),
-    qfSmoking: t('สูบบุหรี่อยู่ตอนนี้', 'I smoke at the moment'),
-    qfAlcohol: t('ดื่มเหล้าหรือเบียร์เกือบทุกวัน', 'I drink alcohol most days'),
-    qfCareHome: t('อาศัยอยู่ในบ้านพักคนชราหรือสถานดูแล', 'I live in a care home or nursing home'),
-    qfFalls: t('เคยหกล้มในปีที่ผ่านมา', 'I have fallen in the past year'),
-    qfDiabetes: t('เป็นเบาหวาน', 'I have diabetes'),
-    qfDementia: t('เป็นโรคสมองเสื่อม', 'I have dementia'),
-    qfCancer: t('เคยเป็นมะเร็ง', 'I have had cancer'),
-    qfAsthmaCopd: t('เป็นหืด หรือถุงลมโป่งพอง', 'I have asthma or a long-term lung problem'),
-    qfHeartStroke: t('เคยเป็นโรคหัวใจ หรือเส้นเลือดสมองตีบ', 'I have had heart trouble or a stroke'),
-    qfLiver: t('เป็นโรคตับเรื้อรัง', 'I have a long-term liver problem'),
-    qfKidney: t('เป็นโรคไตเรื้อรัง', 'I have a long-term kidney problem'),
-    qfParkinsons: t('เป็นโรคพาร์กินสัน', 'I have Parkinson\'s disease'),
-    qfRheumatoid: t('เป็นโรคข้ออักเสบรูมาตอยด์ หรือโรคแพ้ภูมิตัวเอง', 'I have rheumatoid arthritis or lupus'),
-    qfMalabsorption: t('ลำไส้ดูดซึมอาหารได้ไม่ดี เช่น โรคลำไส้อักเสบเรื้อรัง', 'My gut does not absorb food well, such as long-term bowel disease'),
-    qfEndocrine: t('มีปัญหาต่อมไร้ท่อ เช่น ไทรอยด์เป็นพิษ', 'I have a gland problem, such as an overactive thyroid'),
-    qfEpilepsy: t('กินยากันชัก', 'I take medicine for fits or seizures'),
-    qfAntidepressants: t('กินยาต้านเศร้า', 'I take medicine for depression'),
-    qfSteroids: t('กินยาสเตียรอยด์เป็นประจำ', 'I take steroid tablets regularly'),
-    qfHrt: t('ใช้ฮอร์โมนทดแทนวัยหมดประจำเดือน', 'I use hormone replacement after the menopause'),
+    fraxPreviousFracture: t('เคยกระดูกหักจากการล้มเบา ๆ', 'I have broken a bone in a small fall'),
+    fraxParentHipFracture: t('พ่อหรือแม่เคยกระดูกสะโพกหัก', 'My mother or father broke a hip'),
+    fraxSmoking: t('สูบบุหรี่อยู่ตอนนี้', 'I smoke at the moment'),
+    fraxGlucocorticoids: t('กินยาสเตียรอยด์เป็นประจำ', 'I take steroid tablets regularly'),
+    fraxRheumatoid: t('เป็นโรคข้ออักเสบรูมาตอยด์', 'I have rheumatoid arthritis'),
+    fraxSecondary: t('มีโรคอื่นที่ทำให้กระดูกบาง เช่น ไทรอยด์เป็นพิษ เบาหวานชนิดที่ 1 หรือลำไส้ดูดซึมอาหารไม่ดี', 'I have another illness that thins bone, such as an overactive thyroid, type 1 diabetes, or a gut that does not absorb food well'),
+    fraxAlcohol: t('ดื่มเหล้าหรือเบียร์ตั้งแต่ 3 แก้วต่อวัน', 'I drink 3 or more glasses of alcohol a day'),
+    fraxLowBmi: t('น้ำหนักตัวน้อย (ดัชนีมวลกายต่ำกว่า 20)', 'Low body weight (body mass index under 20)'),
+    fraxBmdStep: t('ผลตรวจความหนาแน่นกระดูกที่สะโพก', 'Your hip bone density result'),
 
     balanceLevel1: t('ระดับ 1 — จับที่ยึดตลอด', 'Level 1 — Always supported'),
     balanceLevel2: t('ระดับ 2 — แตะที่ยึดเบา ๆ', 'Level 2 — Light support'),
@@ -1290,37 +1286,112 @@
   }
 
   /**
-   * QFracture estimates 10-year fracture risk from health history, without
-   * needing a bone density scan. Its coefficient tables are published but
-   * are not bundled here, so the app collects the inputs, sends the patient
-   * to the official calculator, and stores the percentages read off it
-   * rather than guessing at a number.
+   * FRAX is the reference tool, but its coefficients are licensed and not
+   * published, so this file cannot reproduce it. The card therefore works in
+   * two modes:
+   *
+   *   1. The official result. A clinician runs frax.shef.ac.uk and records
+   *      the two percentages here. These are shown as the official figures.
+   *   2. The app's own estimate, used only when no official result exists.
+   *      It is a multiplicative model - a population baseline for the
+   *      patient's age and sex, multiplied by a relative risk for each factor
+   *      present - and it is labelled everywhere as the app's estimate, never
+   *      as FRAX.
+   *
+   * Source of the multipliers: the pooled relative risks published in the
+   * meta-analyses behind FRAX (Kanis and colleagues), and for bone density
+   * the per-standard-deviation gradient of risk (Marshall and colleagues).
+   *
+   * Applied naively this reads two to three times above FRAX. Three
+   * corrections bring it back into range, the first two following from the
+   * same fact: the baseline is a population *average*, not a risk-free
+   * person.
+   *
+   *   - Each published relative risk compares people with the factor against
+   *     people without it. Applying it whole to an average that already
+   *     contains people with the factor counts that risk twice. So each is
+   *     rescaled against the average: rr / (1 + prevalence * (rr - 1)).
+   *     A factor of average prevalence therefore multiplies by roughly its
+   *     excess over the average, not by its full published figure.
+   *   - The T-score is measured against the average score for that age, not
+   *     against a young adult's. A 75-year-old with a T-score of -1.9 is
+   *     typical of her age, so she gets no bone-density multiplier, while a
+   *     better-than-average scan lowers the estimate.
+   *   - Stacked factors are pulled back by ESTIMATE_STACKING_EXPONENT,
+   *     because they overlap rather than compound cleanly.
+   *
+   * t13_frax_medication checks the result against published FRAX ranges for
+   * three reference profiles, so this cannot drift off by multiples again.
+   * It is still coarse - no competing-mortality or dose-response terms -
+   * hence the caps below, and the range rather than a single figure.
    */
-  var QFRACTURE_URL = 'https://qfracture.org';
+  var FRAX_URL = 'https://frax.shef.ac.uk/FRAX/tool.aspx?country=57';
 
-  var QFRACTURE_FACTORS = [
-    { id: 'previousFracture', labelKey: 'qfPreviousFracture', group: 'history', fromProfile: 'priorFragilityFracture' },
-    { id: 'falls', labelKey: 'qfFalls', group: 'history', fromProfile: 'anyFallLastYear' },
-    { id: 'parentOsteoporosis', labelKey: 'qfParentOsteoporosis', group: 'history' },
-    { id: 'careHome', labelKey: 'qfCareHome', group: 'lifestyle' },
-    { id: 'smoking', labelKey: 'qfSmoking', group: 'lifestyle' },
-    { id: 'alcohol', labelKey: 'qfAlcohol', group: 'lifestyle' },
-    { id: 'diabetes', labelKey: 'qfDiabetes', group: 'conditions' },
-    { id: 'dementia', labelKey: 'qfDementia', group: 'conditions' },
-    { id: 'cancer', labelKey: 'qfCancer', group: 'conditions' },
-    { id: 'asthmaCopd', labelKey: 'qfAsthmaCopd', group: 'conditions' },
-    { id: 'heartStroke', labelKey: 'qfHeartStroke', group: 'conditions' },
-    { id: 'liverDisease', labelKey: 'qfLiver', group: 'conditions' },
-    { id: 'kidneyDisease', labelKey: 'qfKidney', group: 'conditions' },
-    { id: 'parkinsons', labelKey: 'qfParkinsons', group: 'conditions' },
-    { id: 'rheumatoidArthritis', labelKey: 'qfRheumatoid', group: 'conditions' },
-    { id: 'malabsorption', labelKey: 'qfMalabsorption', group: 'conditions' },
-    { id: 'endocrine', labelKey: 'qfEndocrine', group: 'conditions' },
-    { id: 'epilepsy', labelKey: 'qfEpilepsy', group: 'medicines' },
-    { id: 'antidepressants', labelKey: 'qfAntidepressants', group: 'medicines' },
-    { id: 'steroids', labelKey: 'qfSteroids', group: 'medicines', fromProfile: 'longTermSteroid' },
-    { id: 'hrt', labelKey: 'qfHrt', group: 'medicines', femaleOnly: true }
+  /**
+   * majorRr / hipRr are the published relative risks. prevalence is roughly
+   * how common the factor is among older people here, and is only used to
+   * rescale the relative risk against the population average - see above.
+   */
+  var FRAX_FACTORS = [
+    { id: 'previousFracture', labelKey: 'fraxPreviousFracture', fromProfile: 'priorFragilityFracture', majorRr: 1.86, hipRr: 1.85, prevalence: 0.20 },
+    { id: 'parentHipFracture', labelKey: 'fraxParentHipFracture', majorRr: 1.54, hipRr: 2.27, prevalence: 0.12 },
+    { id: 'currentSmoking', labelKey: 'fraxSmoking', majorRr: 1.29, hipRr: 1.84, prevalence: 0.10 },
+    { id: 'glucocorticoids', labelKey: 'fraxGlucocorticoids', fromProfile: 'longTermSteroid', majorRr: 2.31, hipRr: 2.48, prevalence: 0.03 },
+    { id: 'rheumatoidArthritis', labelKey: 'fraxRheumatoid', majorRr: 1.95, hipRr: 1.95, prevalence: 0.02 },
+    { id: 'secondaryOsteoporosis', labelKey: 'fraxSecondary', majorRr: 1.45, hipRr: 1.66, prevalence: 0.08 },
+    { id: 'alcohol3Units', labelKey: 'fraxAlcohol', majorRr: 1.38, hipRr: 1.68, prevalence: 0.05 }
   ];
+
+  /**
+   * Ten-year probability (%) of a major osteoporotic fracture and of a hip
+   * fracture for an *average* person of this age and sex - not a risk-free
+   * one, which is why each relative risk is rescaled against it above.
+   * meanTScore is the femoral neck T-score typical at that age, which the
+   * bone-density step measures a patient's own scan against.
+   *
+   * These are approximate figures for an Asian population and are the one
+   * part of this model that most needs local validation before a pilot -
+   * replace them with Thai epidemiology and the estimate improves at once.
+   */
+  var FRAX_BASELINE_RISK = {
+    female: [
+      { minAge: 0, maxAge: 54, major: 4.0, hip: 0.4, meanTScore: -0.4 },
+      { minAge: 55, maxAge: 59, major: 5.0, hip: 0.6, meanTScore: -0.7 },
+      { minAge: 60, maxAge: 64, major: 6.5, hip: 1.0, meanTScore: -1.0 },
+      { minAge: 65, maxAge: 69, major: 8.0, hip: 1.6, meanTScore: -1.3 },
+      { minAge: 70, maxAge: 74, major: 10.0, hip: 2.6, meanTScore: -1.6 },
+      { minAge: 75, maxAge: 79, major: 12.0, hip: 4.2, meanTScore: -1.9 },
+      { minAge: 80, maxAge: 84, major: 13.5, hip: 6.0, meanTScore: -2.2 },
+      { minAge: 85, maxAge: 200, major: 15.0, hip: 8.0, meanTScore: -2.5 }
+    ],
+    male: [
+      { minAge: 0, maxAge: 54, major: 2.5, hip: 0.3, meanTScore: -0.2 },
+      { minAge: 55, maxAge: 59, major: 3.0, hip: 0.4, meanTScore: -0.4 },
+      { minAge: 60, maxAge: 64, major: 3.5, hip: 0.6, meanTScore: -0.6 },
+      { minAge: 65, maxAge: 69, major: 4.2, hip: 1.0, meanTScore: -0.9 },
+      { minAge: 70, maxAge: 74, major: 5.0, hip: 1.6, meanTScore: -1.2 },
+      { minAge: 75, maxAge: 79, major: 6.0, hip: 2.6, meanTScore: -1.5 },
+      { minAge: 80, maxAge: 84, major: 7.0, hip: 3.8, meanTScore: -1.8 },
+      { minAge: 85, maxAge: 200, major: 8.0, hip: 5.0, meanTScore: -2.1 }
+    ]
+  };
+
+  var FRAX_ESTIMATE_SOURCE = 'Kanis et al. (FRAX meta-analyses); Marshall et al. (BMD gradient of risk)';
+  var LOW_BMI_THRESHOLD = 20;
+  var LOW_BMI_RR = { major: 1.35, hip: 1.95, prevalence: 0.15 };
+  var T_SCORE_RR_PER_SD = { major: 1.5, hip: 2.0 };
+  /**
+   * Risk factors overlap: someone with a previous fracture is also more
+   * likely to have thin bone, so multiplying their relative risks whole
+   * compounds the same underlying frailty several times. FRAX models the
+   * overlap; this cannot, so the combined multiplier is raised to a power
+   * below one instead. A single factor is left almost untouched, while
+   * stacked ones are pulled back towards the published FRAX range.
+   */
+  var ESTIMATE_STACKING_EXPONENT = 0.75;
+  var ESTIMATE_MULTIPLIER_CAP = { major: 8, hip: 12 };
+  var ESTIMATE_RISK_CAP = { major: 90, hip: 70 };
+  var ESTIMATE_RANGE_SPREAD = 0.3;
 
   function computeBmi(weightKg, heightCm) {
     var w = parseFloat(weightKg);
@@ -1330,39 +1401,37 @@
     return Math.round((w / (meters * meters)) * 10) / 10;
   }
 
-  /**
-   * Anything the assessment already asked is carried across rather than
-   * asked a second time, and stays read-only in this form.
-   */
-  function qfractureFactorValue(factor, profile, answers) {
+  function baselineRiskFor(age, sex) {
+    var table = FRAX_BASELINE_RISK[sex === 'male' ? 'male' : 'female'];
+    for (var i = 0; i < table.length; i++) {
+      if (age >= table[i].minAge && age <= table[i].maxAge) return table[i];
+    }
+    return table[table.length - 1];
+  }
+
+  function fraxFactorValue(factor, profile, answers) {
     if (factor.fromProfile === 'priorFragilityFracture') return !!profile.priorFragilityFracture;
     if (factor.fromProfile === 'longTermSteroid') return !!profile.longTermSteroid;
-    if (factor.fromProfile === 'anyFallLastYear') return (profile.fallsLast12mo || 0) > 0;
     return !!answers[factor.id];
   }
 
-  function qfractureFactorsFor(profile) {
-    return QFRACTURE_FACTORS.filter(function (factor) {
-      return !factor.femaleOnly || (profile || {}).sex === 'female';
-    });
-  }
-
-  function buildQFractureWorksheet(profile, answers) {
+  function buildFraxWorksheet(profile, answers, bmdLogs) {
     profile = profile || {};
     answers = answers || {};
+    var latest = latestBmdEntry(bmdLogs);
     return {
       age: profile.age === undefined ? null : profile.age,
       sex: profile.sex || null,
       weightKg: answers.weightKg === undefined ? null : answers.weightKg,
       heightCm: answers.heightCm === undefined ? null : answers.heightCm,
       bmi: computeBmi(answers.weightKg, answers.heightCm),
-      factors: qfractureFactorsFor(profile).map(function (factor) {
+      femoralNeckTScore: latest && typeof latest.hipT === 'number' ? latest.hipT : null,
+      factors: FRAX_FACTORS.map(function (factor) {
         return {
           id: factor.id,
           labelKey: factor.labelKey,
-          group: factor.group,
           fromAssessment: !!factor.fromProfile,
-          value: qfractureFactorValue(factor, profile, answers)
+          value: fraxFactorValue(factor, profile, answers)
         };
       }),
       recordedMajorRisk: typeof answers.majorFractureRisk === 'number' ? answers.majorFractureRisk : null,
@@ -1371,8 +1440,112 @@
     };
   }
 
-  function qfractureWorksheetComplete(worksheet) {
+  function fraxWorksheetComplete(worksheet) {
     return !!(worksheet && worksheet.age !== null && worksheet.sex && worksheet.bmi !== null);
+  }
+
+  function roundTo(value, places) {
+    var factor = Math.pow(10, places || 1);
+    return Math.round(value * factor) / factor;
+  }
+
+  /**
+   * The app's own estimate, for when no official FRAX result has been
+   * recorded. Returns the working as well as the numbers, so the card can
+   * show exactly how it was arrived at rather than asking to be trusted.
+   */
+  /**
+   * A published relative risk compares people who have the factor against
+   * people who do not. The baseline is an average of both groups, so applying
+   * the whole figure to it counts the factor twice. This rescales it against
+   * that average.
+   */
+  function rrAboveAverage(rr, prevalence) {
+    return rr / (1 + prevalence * (rr - 1));
+  }
+
+  function estimateFractureRisk(worksheet) {
+    if (!fraxWorksheetComplete(worksheet)) return null;
+
+    var baseline = baselineRiskFor(worksheet.age, worksheet.sex);
+    var steps = [];
+    var majorMultiplier = 1;
+    var hipMultiplier = 1;
+
+    function applyStep(labelKey, majorRr, hipRr, prevalence, extra) {
+      var major = roundTo(rrAboveAverage(majorRr, prevalence), 2);
+      var hip = roundTo(rrAboveAverage(hipRr, prevalence), 2);
+      majorMultiplier *= major;
+      hipMultiplier *= hip;
+      var step = { labelKey: labelKey, majorRr: major, hipRr: hip };
+      if (extra) Object.keys(extra).forEach(function (k) { step[k] = extra[k]; });
+      steps.push(step);
+    }
+
+    FRAX_FACTORS.forEach(function (factor) {
+      var present = worksheet.factors.filter(function (f) { return f.id === factor.id; })[0];
+      if (!present || !present.value) return;
+      applyStep(factor.labelKey, factor.majorRr, factor.hipRr, factor.prevalence);
+    });
+
+    if (worksheet.bmi !== null && worksheet.bmi < LOW_BMI_THRESHOLD) {
+      applyStep('fraxLowBmi', LOW_BMI_RR.major, LOW_BMI_RR.hip, LOW_BMI_RR.prevalence);
+    }
+
+    // Measured against the average score for this age, so a typical scan
+    // changes nothing and a better-than-average one lowers the estimate.
+    if (typeof worksheet.femoralNeckTScore === 'number') {
+      var sdBelowAverage = baseline.meanTScore - worksheet.femoralNeckTScore;
+      if (Math.abs(sdBelowAverage) >= 0.1) {
+        var majorBmdRr = roundTo(Math.pow(T_SCORE_RR_PER_SD.major, sdBelowAverage), 2);
+        var hipBmdRr = roundTo(Math.pow(T_SCORE_RR_PER_SD.hip, sdBelowAverage), 2);
+        majorMultiplier *= majorBmdRr;
+        hipMultiplier *= hipBmdRr;
+        steps.push({ labelKey: 'fraxBmdStep', majorRr: majorBmdRr, hipRr: hipBmdRr, tScore: worksheet.femoralNeckTScore });
+      }
+    }
+
+    var overlapAdjusted = steps.length > 1 && majorMultiplier > 1;
+    majorMultiplier = Math.pow(majorMultiplier, ESTIMATE_STACKING_EXPONENT);
+    hipMultiplier = Math.pow(hipMultiplier, ESTIMATE_STACKING_EXPONENT);
+
+    // A backstop for profiles that stack every factor at once.
+    majorMultiplier = Math.min(majorMultiplier, ESTIMATE_MULTIPLIER_CAP.major);
+    hipMultiplier = Math.min(hipMultiplier, ESTIMATE_MULTIPLIER_CAP.hip);
+
+    var major = Math.min(baseline.major * majorMultiplier, ESTIMATE_RISK_CAP.major);
+    var hip = Math.min(baseline.hip * hipMultiplier, ESTIMATE_RISK_CAP.hip);
+
+    return {
+      isEstimate: true,
+      source: FRAX_ESTIMATE_SOURCE,
+      baseline: { major: baseline.major, hip: baseline.hip },
+      steps: steps,
+      overlapAdjusted: overlapAdjusted,
+      major: roundTo(major, 1),
+      hip: roundTo(hip, 1),
+      majorRange: [roundTo(major * (1 - ESTIMATE_RANGE_SPREAD), 1), roundTo(Math.min(major * (1 + ESTIMATE_RANGE_SPREAD), ESTIMATE_RISK_CAP.major), 1)],
+      hipRange: [roundTo(hip * (1 - ESTIMATE_RANGE_SPREAD), 1), roundTo(Math.min(hip * (1 + ESTIMATE_RANGE_SPREAD), ESTIMATE_RISK_CAP.hip), 1)],
+      usedTScore: typeof worksheet.femoralNeckTScore === 'number'
+    };
+  }
+
+  /**
+   * What the card should show: the official result when there is one, the
+   * app's estimate otherwise, and never both as though they were equal.
+   */
+  function fractureRiskToShow(worksheet) {
+    if (!worksheet) return null;
+    if (worksheet.recordedMajorRisk !== null || worksheet.recordedHipRisk !== null) {
+      return {
+        isOfficial: true,
+        major: worksheet.recordedMajorRisk,
+        hip: worksheet.recordedHipRisk,
+        recordedOn: worksheet.recordedOn
+      };
+    }
+    var estimate = estimateFractureRisk(worksheet);
+    return estimate ? Object.assign({ isOfficial: false }, estimate) : null;
   }
 
   function monthsBetween(fromDateStr, toDateStr) {
@@ -1552,12 +1725,16 @@
     hasBmdData: hasBmdData,
     lowestTScore: lowestTScore,
     latestBmdEntry: latestBmdEntry,
-    QFRACTURE_URL: QFRACTURE_URL,
-    QFRACTURE_FACTORS: QFRACTURE_FACTORS,
-    qfractureFactorsFor: qfractureFactorsFor,
+    FRAX_URL: FRAX_URL,
+    FRAX_FACTORS: FRAX_FACTORS,
+    FRAX_BASELINE_RISK: FRAX_BASELINE_RISK,
+    FRAX_ESTIMATE_SOURCE: FRAX_ESTIMATE_SOURCE,
+    ESTIMATE_STACKING_EXPONENT: ESTIMATE_STACKING_EXPONENT,
     computeBmi: computeBmi,
-    buildQFractureWorksheet: buildQFractureWorksheet,
-    qfractureWorksheetComplete: qfractureWorksheetComplete,
+    buildFraxWorksheet: buildFraxWorksheet,
+    fraxWorksheetComplete: fraxWorksheetComplete,
+    estimateFractureRisk: estimateFractureRisk,
+    fractureRiskToShow: fractureRiskToShow,
     monthsBetween: monthsBetween,
     medicationProgress: medicationProgress,
     archiveMedication: archiveMedication,
