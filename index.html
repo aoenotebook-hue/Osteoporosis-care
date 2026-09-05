@@ -713,7 +713,7 @@
   function renderFooter() {
     return '<footer class="app-footer">' +
       '<div>' + esc(tr('footerDoctorLabel')) + '</div>' +
-      '<div class="doctor">' + esc(C.DOCTOR.name) + '</div>' +
+      '<div class="doctor">' + esc(loc(C.DOCTOR.name)) + '</div>' +
       '<div>' + esc(tr('footerHospitalPhone')) + ' ' +
         '<a href="tel:' + C.ALERT_CONTACTS.hospitalPhone.replace(/\s/g, '') + '">' + esc(C.ALERT_CONTACTS.hospitalPhone) + '</a></div>' +
       '<button type="button" class="reset-link" data-action="open-reset">' + esc(tr('resetButton')) + '</button>' +

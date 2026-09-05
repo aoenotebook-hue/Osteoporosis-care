@@ -150,10 +150,10 @@ Static hosting (e.g. GitHub Pages): `index.html`, `app-core.js`,
    home-screen result on older iOS.
 7. **Exercise media** — no clips ship yet, so no media areas render.
    See `media/osteo-video-clip-list.md`.
-8. **Your name in the footer** is set in `app-core.js` → `DOCTOR`, using
-   the spelling ธรรมยงค์กิจ from the build plan's header. The plan itself
-   listed the ธรรมยงค์กิจ vs. ธำรงค์กิจ spelling as an open decision —
-   confirm it once here, then reuse it across the other apps.
+8. **Your name in the footer** is set in `app-core.js` → `DOCTOR`:
+   นพ.สรวุฒิ ธรรมยงค์กิจ / Dr. Sorawut Thamyongkit. The build plan listed
+   the ธรรมยงค์กิจ vs. ธำรงค์กิจ spelling as an open decision — it is now
+   confirmed as ธรรมยงค์กิจ, so reuse that across the other three apps.
 9. **BMD entry** takes g/cm² plus an optional T-score per site. Confirm
    that copying these off the DXA report is what you want patients doing,
    rather than the values being entered by staff.

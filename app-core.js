@@ -1142,7 +1142,7 @@
   };
 
   var DOCTOR = {
-    name: 'นพ.สรวุฒิ ธรรมยงค์กิจ',
+    name: t('นพ.สรวุฒิ ธรรมยงค์กิจ', 'Dr. Sorawut Thamyongkit'),
     hospitalPhone: ALERT_CONTACTS.hospitalPhone
   };
 
