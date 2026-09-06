@@ -47,6 +47,33 @@
     font-size: 19px; line-height: 1.55; -webkit-tap-highlight-color: transparent;
   }
   body { padding-bottom: 88px; }
+
+  /* --- Copy deterrents -------------------------------------------------
+     Stops casual copying: text selection, right-click and iOS long-press
+     "Save Image", and dragging pictures out. It does NOT protect the
+     content - anyone can read the page source or open the image URL
+     directly, and screenshots cannot be blocked by any web app. See the
+     "What this does and does not do" section in README.md. */
+  body {
+    -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
+    -webkit-touch-callout: none;
+  }
+  /* Patients must still be able to select and correct what they type. */
+  input, textarea, select {
+    -webkit-user-select: text; -moz-user-select: text; -ms-user-select: text; user-select: text;
+    -webkit-touch-callout: default;
+  }
+  img, video, svg { -webkit-user-drag: none; user-drag: none; }
+  img { pointer-events: none; }
+
+  /* Printing to paper or PDF would carry every word straight back out. */
+  @media print {
+    body > * { display: none !important; }
+    body::after {
+      content: 'ดูแลกระดูกพรุน — เนื้อหาในแอปนี้ไม่อนุญาตให้พิมพ์ / This content is not available for printing.';
+      display: block; padding: 40px; font-size: 16px;
+    }
+  }
   h1, h2, h3 { line-height: 1.35; margin: 0 0 8px; }
   h1 { font-size: 1.45rem; }
   h2 { font-size: 1.2rem; }
@@ -1620,8 +1647,8 @@
         var mediaHtml = '';
         if (media) {
           mediaHtml = media.type === 'video'
-            ? '<video class="exercise-media" controls preload="none" playsinline src="' + esc(media.src) + '"' + (media.poster ? ' poster="' + esc(media.poster) + '"' : '') + '></video>'
-            : '<img class="exercise-media" loading="lazy" src="' + esc(media.src) + '" alt="' + esc(loc(ex.name)) + '">';
+            ? '<video class="exercise-media" controls controlsList="nodownload noplaybackrate" disablePictureInPicture oncontextmenu="return false" preload="none" playsinline src="' + esc(media.src) + '"' + (media.poster ? ' poster="' + esc(media.poster) + '"' : '') + '></video>'
+            : '<img class="exercise-media" loading="lazy" draggable="false" src="' + esc(media.src) + '" alt="' + esc(loc(ex.name)) + '">';
         }
         var reqs = ex.requires.length
           ? ex.requires.map(function (r) { return '<span class="tag">' + esc(tr(reqKey[r])) + '</span>'; }).join('')
@@ -2555,6 +2582,25 @@
       navigator.serviceWorker.register('sw.js').catch(function () {});
     });
   }
+
+  /**
+   * Copy deterrents, the JavaScript half. Blocks the routes a patient would
+   * reach by accident or casually - right-click, long-press, drag, Ctrl+C.
+   * A determined copier still has the page source and the image URLs, and no
+   * web app can block a screenshot; this is friction, not protection.
+   * Form fields are exempt so patients can still cut and paste what they type.
+   */
+  (function installCopyDeterrents() {
+    function inFormField(target) {
+      return !!(target && target.closest && target.closest('input, textarea, select'));
+    }
+    ['contextmenu', 'dragstart', 'copy', 'cut'].forEach(function (type) {
+      document.addEventListener(type, function (e) {
+        if (inFormField(e.target)) return;
+        e.preventDefault();
+      });
+    });
+  })();
 
   if (state.registered && state.boneStatus) maybeOpenDoseReminder();
   render();

@@ -146,6 +146,35 @@ So the intended flow stays: fill in the details → open the FRAX site →
 enter them → record the two percentages back in the app, which then
 replaces the estimate with the real thing.
 
+## Copy protection — what this does and does not do
+
+The app blocks the everyday ways content leaves it: text selection, right-click,
+the iOS long-press "Save Image" menu, dragging pictures out, Ctrl+C, the video
+player's Download and picture-in-picture options, and printing to paper or PDF.
+Form fields stay fully selectable so a patient can still fix a mistyped HN.
+
+**This is friction, not protection.** Be clear-eyed about it before relying on it:
+
+- **Screenshots cannot be blocked.** No web app or PWA can stop a screenshot —
+  there is no browser API for it, on any platform. Only a native app can
+  (`FLAG_SECURE` on Android; iOS can detect one after the fact but not prevent
+  it). If blocking screen capture is a real requirement, it means shipping a
+  native app, not a web app.
+- **The page source is readable.** Every Thai string is in `app-core.js`, which
+  the browser must download to run. Anyone can open developer tools and read it.
+- **Images and video are ordinary URLs.** `media/exercises/heel_raises.jpg`
+  fetched directly returns the picture, whatever the app does.
+- **This repository is public.** The entire app, all its text, and every image
+  can be downloaded by anyone from GitHub with no reliance on the app at all.
+  Nothing in the browser changes that. If the content genuinely must not be
+  redistributed, make the repository private first — that is the change that
+  actually matters, and the copy deterrents in the app are cosmetic beside it.
+
+So the deterrents are worth having — they stop a patient casually forwarding a
+medication instruction into a chat app, which is the realistic risk — but they
+are not a licensing or confidentiality control, and should not be described to
+anyone as one.
+
 ## Running the tests
 
 ```
