@@ -127,6 +127,9 @@
   .btn-row .btn { flex: 1 1 45%; }
   .stack > * + * { margin-top: 10px; }
   .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  /* Two number steppers cannot share a row on a 320px phone - the buttons
+     alone take 112px of a 156px column - so stack them there. */
+  @media (max-width: 380px) { .field-row { grid-template-columns: 1fr; } }
 
   label { display: block; font-weight: 600; margin: 14px 0 6px; }
   input[type="text"], input[type="tel"], input[type="number"], input[type="date"], select {
@@ -288,6 +291,92 @@
   .countdown .ring-number { font-size: 30px; font-weight: 800; text-anchor: middle; }
   .countdown .ring-unit { font-size: 12px; text-anchor: middle; fill: var(--muted); }
   .countdown .countdown-detail { flex: 1; }
+
+  /* --- Topic separators -------------------------------------------------
+     Each tab is a stack of topics. Without a break between them an older
+     reader scrolls through one undifferentiated wall of cards. */
+  .section-head {
+    display: flex; align-items: center; gap: 10px;
+    margin: 30px 0 12px; padding-top: 18px; border-top: 3px solid var(--primary-light);
+  }
+  .section-head:first-of-type { margin-top: 4px; padding-top: 0; border-top: 0; }
+  .section-head .sec-ico {
+    flex: 0 0 auto; width: 40px; height: 40px; border-radius: 12px;
+    background: var(--surface-alt); display: flex; align-items: center;
+    justify-content: center; font-size: 22px;
+  }
+  .section-head h2 { margin: 0; font-size: 1.18rem; color: var(--primary-dark); }
+  .section-head .sec-sub { display: block; font-size: 0.82rem; font-weight: 400; color: var(--muted); }
+
+  /* --- Easier number entry --------------------------------------------- */
+  .stepper { display: flex; align-items: stretch; gap: 8px; }
+  .stepper input[type="number"] { flex: 1; min-width: 0; text-align: center; margin: 0; }
+  .stepper button {
+    flex: 0 0 auto; width: 56px; min-height: var(--tap); font-size: 26px; font-weight: 700;
+    padding: 0;
+    line-height: 1; border: 2px solid var(--primary); background: var(--surface);
+    color: var(--primary); border-radius: 12px; cursor: pointer;
+  }
+  .stepper button:active { background: var(--primary-light); }
+
+  .quick-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .quick-chip {
+    min-height: 44px; padding: 8px 14px; border-radius: 999px; cursor: pointer;
+    border: 2px solid var(--border); background: var(--surface); color: var(--text);
+    font-size: 0.92rem; font-weight: 600;
+  }
+  .quick-chip:active, .quick-chip.on { background: var(--primary-light); border-color: var(--primary); color: var(--primary-dark); }
+  .field-hint { font-size: 0.85rem; color: var(--muted); margin: 6px 0 0; }
+
+  /* --- Countdown meter for the text-only due dates ---------------------- */
+  .due-meter { margin: 10px 0 4px; }
+  .due-meter .due-top { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+  .due-meter .due-num { font-size: 2rem; font-weight: 800; line-height: 1; }
+  .due-meter .due-unit { font-size: 0.95rem; color: var(--muted); }
+  .due-meter .due-track {
+    position: relative; height: 16px; border-radius: 999px;
+    background: var(--surface-alt); border: 1px solid var(--border); overflow: hidden;
+  }
+  .due-meter .due-fill { height: 100%; border-radius: 999px; }
+  .due-meter .due-scale { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
+
+  /* --- Food infographic ------------------------------------------------- */
+  .food-graphic { display: flex; flex-direction: column; gap: 10px; margin: 12px 0 4px; }
+  .food-row { display: grid; grid-template-columns: 42px 1fr auto; gap: 10px; align-items: center; }
+  .food-row .f-ico { font-size: 26px; text-align: center; }
+  .food-row .f-name { display: block; font-weight: 600; font-size: 0.98rem; }
+  .food-row .f-serving { display: block; font-size: 0.83rem; color: var(--muted); font-weight: 400; }
+  .food-row .f-bar { display: block; height: 12px; border-radius: 999px; background: var(--series-1); margin-top: 5px; min-width: 8px; }
+  .food-row .f-mg { font-weight: 800; font-size: 1.02rem; white-space: nowrap; color: var(--primary-dark); }
+  .food-row .f-mg small { font-weight: 400; font-size: 0.75rem; color: var(--muted); }
+
+  .day-plan { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+  .day-plan .dp-item {
+    flex: 1 1 90px; background: var(--surface-alt); border-radius: 12px; padding: 10px 8px;
+    text-align: center; border: 1px solid var(--border);
+  }
+  .day-plan .dp-ico { font-size: 26px; display: block; }
+  .day-plan .dp-label { font-size: 0.8rem; display: block; margin-top: 4px; }
+  .day-plan .dp-mg { font-weight: 700; font-size: 0.9rem; color: var(--primary-dark); }
+  .day-plan .dp-plus { align-self: center; font-size: 20px; font-weight: 700; color: var(--muted); flex: 0 0 auto; }
+  .day-total {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    background: var(--primary-light); border-radius: 12px; padding: 12px; font-weight: 700;
+    color: var(--primary-dark); font-size: 1.05rem;
+  }
+
+  .sun-graphic { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin: 12px 0; }
+  .sun-day {
+    border-radius: 10px; padding: 8px 2px; text-align: center; min-width: 0;
+    border: 2px solid var(--border); background: var(--surface);
+  }
+  .sun-day.on { background: #fff6e0; border-color: var(--warning); }
+  .sun-day .sd-name { display: block; font-size: 0.78rem; color: var(--muted); }
+  .sun-day .sd-ico { font-size: 22px; display: block; margin-top: 2px; }
+
+  .icon-list { list-style: none; padding: 0; margin: 10px 0 0; display: flex; flex-direction: column; gap: 10px; }
+  .icon-list li { display: grid; grid-template-columns: 34px 1fr; gap: 10px; align-items: start; }
+  .icon-list .il-ico { font-size: 22px; text-align: center; }
 
   .legend { display: flex; gap: 14px; flex-wrap: wrap; margin: 4px 0 8px; font-size: 0.85rem; }
   .legend span { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); }
@@ -1046,12 +1135,16 @@
     var tip = SAFETY_TIP_KEYS[new Date().getDate() % SAFETY_TIP_KEYS.length];
 
     var html = '<h1>' + esc(tr('homeTodayTitle')) + '</h1>';
-    html += '<div class="card accent"><h2>' + esc(tr('homeStatusTitle')) + '</h2>' +
+    html += sectionHead('🦴', 'secHomeStatus');
+    html += '<div class="card accent"><h3>' + esc(tr('homeStatusTitle')) + '</h3>' +
       renderStatusBlocks(true) +
       '<div class="status-block"><div class="muted">' + esc(tr('balanceLevelLabel')) + '</div>' +
       '<span class="badge level">' + esc(tr('balanceLevel' + state.balance.currentLevel)) + '</span></div>' +
       '</div>';
+    html += sectionHead('📊', 'secHomeRisk');
     html += renderFraxCard();
+
+    if (checkinDue || nutritionDue) html += sectionHead('📋', 'secHomeTodo');
 
     if (checkinDue) {
       html += '<div class="card warn"><div class="card-head"><span class="ico">📋</span><h3>' + esc(tr('homeCheckinDue')) + '</h3></div>' +
@@ -1081,6 +1174,95 @@
 
     html += '<div class="card"><div class="card-head"><span class="ico">💡</span><h3>' + esc(tr('homeSafetyTip')) + '</h3></div><p>' + esc(tr(tip)) + '</p></div>';
     return html;
+  }
+
+  /**
+   * A labelled break between topics inside a tab. Older readers scroll past
+   * an undifferentiated stack of cards; a rule and a heading give each topic
+   * a visible start.
+   */
+  function sectionHead(icon, titleKey, subKey) {
+    return '<div class="section-head"><span class="sec-ico">' + icon + '</span>' +
+      '<h2>' + esc(tr(titleKey)) +
+      (subKey ? '<span class="sec-sub">' + esc(tr(subKey)) + '</span>' : '') +
+      '</h2></div>';
+  }
+
+  /**
+   * A number box with big minus and plus buttons either side, and optional
+   * one-tap values. Typing a decimal on a phone keypad is the hardest thing
+   * we ask of these patients, so nothing here should require it.
+   */
+  function numberField(opts) {
+    var id = opts.id;
+    var step = opts.step || 1;
+    var value = (opts.value === undefined || opts.value === null || opts.value === '') ? '' : opts.value;
+    var html = '';
+    if (opts.labelKey) html += '<label for="' + id + '">' + esc(tr(opts.labelKey)) + '</label>';
+    html += '<div class="stepper">' +
+      '<button type="button" data-action="num-step" data-target="' + id + '" data-step="' + (-step) + '" aria-label="' + esc(tr('stepDown')) + '">−</button>' +
+      '<input type="number" id="' + id + '" inputmode="decimal" step="' + step + '"' +
+        (opts.min !== undefined ? ' min="' + opts.min + '"' : '') +
+        (opts.max !== undefined ? ' max="' + opts.max + '"' : '') +
+        (opts.placeholder ? ' placeholder="' + esc(opts.placeholder) + '"' : '') +
+        ' value="' + esc(value) + '">' +
+      '<button type="button" data-action="num-step" data-target="' + id + '" data-step="' + step + '" aria-label="' + esc(tr('stepUp')) + '">+</button>' +
+      '</div>';
+    if (opts.quick && opts.quick.length) {
+      html += '<div class="quick-row">' + opts.quick.map(function (q) {
+        return '<button type="button" class="quick-chip" data-action="num-set" data-target="' + id + '" data-value="' + q.value + '">' +
+          esc(q.label) + '</button>';
+      }).join('') + '</div>';
+    }
+    if (opts.hintKey) html += '<p class="field-hint">' + esc(tr(opts.hintKey)) + '</p>';
+    return html;
+  }
+
+  /**
+   * A date box with one-tap shortcuts. Almost every date a patient enters here
+   * is today or a day or two back, so the calendar should rarely be needed.
+   */
+  function dateField(opts) {
+    var id = opts.id;
+    var html = '';
+    if (opts.labelKey) html += '<label for="' + id + '">' + esc(tr(opts.labelKey)) + '</label>';
+    html += '<input type="date" id="' + id + '"' + (opts.name ? ' name="' + opts.name + '"' : '') +
+      ' value="' + esc(opts.value || todayStr()) + '"' +
+      (opts.max === undefined ? ' max="' + todayStr() + '"' : (opts.max ? ' max="' + esc(opts.max) + '"' : '')) + '>';
+    var choices = opts.choices || [
+      { days: 0, key: 'dateToday' },
+      { days: -1, key: 'dateYesterday' },
+      { days: -7, key: 'dateLastWeek' }
+    ];
+    html += '<div class="quick-row">' + choices.map(function (c) {
+      return '<button type="button" class="quick-chip" data-action="date-quick" data-target="' + id + '" data-days="' + c.days + '">' +
+        esc(tr(c.key)) + '</button>';
+    }).join('') + '</div>';
+    return html;
+  }
+
+  /**
+   * A countdown that is read as a number and seen as a bar. Used for the due
+   * dates that were text only - a patient should be able to tell at a glance
+   * how close something is without reading a date and doing the arithmetic.
+   */
+  function dueMeter(daysUntil, cycleDays, opts) {
+    opts = opts || {};
+    var overdue = daysUntil < 0;
+    var due = daysUntil === 0;
+    var elapsed = Math.max(0, Math.min(cycleDays, cycleDays - daysUntil));
+    var pct = cycleDays > 0 ? Math.round(elapsed / cycleDays * 100) : 100;
+    var color = overdue ? 'var(--critical)' : (due || daysUntil <= (opts.soonDays || 14) ? 'var(--warning)' : 'var(--series-1)');
+    var num = overdue ? Math.abs(daysUntil) : daysUntil;
+    var unit = overdue ? tr('dueOverdueBy') : (due ? tr('dueToday') : tr('dueInDays'));
+
+    return '<div class="due-meter">' +
+      '<div class="due-top"><span class="due-num" style="color:' + color + ';">' + (due ? '★' : num) + '</span>' +
+      '<span class="due-unit">' + esc(unit) + '</span></div>' +
+      '<div class="due-track"><div class="due-fill" style="width:' + Math.max(2, pct) + '%;background:' + color + ';"></div></div>' +
+      '<div class="due-scale"><span>' + esc(opts.startLabel || tr('dueLastDone')) + '</span>' +
+      '<span>' + esc(opts.endLabel || tr('dueNextDue')) + '</span></div>' +
+      '</div>';
   }
 
   function renderDoseCountdown(med) {
@@ -1232,9 +1414,9 @@
     var html = '<div class="card-head"><span class="ico">📊</span><h2 style="margin:0;">' + esc(tr('fraxFillData')) + '</h2></div>';
     html += '<div class="field-row">' +
       '<div><label for="fraxWeight">' + esc(tr('fraxWeight')) + '</label>' +
-        '<input type="number" id="fraxWeight" step="0.1" inputmode="decimal" value="' + esc(state.frax.weightKg === undefined ? '' : state.frax.weightKg) + '"></div>' +
+        numberField({ id: 'fraxWeight', step: 0.5, min: 25, max: 200, value: state.frax.weightKg === undefined ? '' : state.frax.weightKg }) + '</div>' +
       '<div><label for="fraxHeight">' + esc(tr('fraxHeight')) + '</label>' +
-        '<input type="number" id="fraxHeight" step="0.1" inputmode="decimal" value="' + esc(state.frax.heightCm === undefined ? '' : state.frax.heightCm) + '"></div>' +
+        numberField({ id: 'fraxHeight', step: 0.5, min: 100, max: 210, value: state.frax.heightCm === undefined ? '' : state.frax.heightCm }) + '</div>' +
       '</div>';
 
     html += '<h3 style="margin-top:16px;">' + esc(tr('fraxTapWhatApplies')) + '</h3>';
@@ -1310,7 +1492,7 @@
             '<span class="med-meta">' + esc(loc(med.route)) + ' · ' + esc(loc(med.cadenceLabel)) + '</span></span></button>';
         }).join('') +
         '<label for="medStartDate">' + esc(tr('drugStartDate')) + '</label>' +
-        '<input type="date" id="medStartDate" value="' + todayStr() + '">' +
+        dateField({ id: 'medStartDate' }) +
         '<button type="button" class="btn" style="margin-top:14px;" data-action="save-med-class"' + (pendingMedClassId ? '' : ' disabled') + '>' + esc(tr('drugSave')) + '</button></div>';
       html += '<div class="card"><p class="muted">' + esc(tr('drugSupplementNote')) + '</p></div>';
       return html;
@@ -1319,13 +1501,14 @@
     var med = C.getMedClass(m.classId);
     var status = medStatus();
 
+    html += sectionHead('💊', 'secDrugCurrent');
     html += '<div class="card accent">' +
       '<div class="card-head"><span class="ico" style="font-size:2.2rem;">' + med.icon + '</span>' +
       '<div><h2 style="margin:0;">' + esc(loc(med.name)) + '</h2>' +
       '<span class="med-meta muted">' + esc(loc(med.route)) + ' · ' + esc(loc(med.cadenceLabel)) + '</span></div></div>';
     if (status.needsStartDate) {
       html += '<label for="medStartDate">' + esc(tr('drugStartDate')) + '</label>' +
-        '<input type="date" id="medStartDate" value="' + todayStr() + '">' +
+        dateField({ id: 'medStartDate' }) +
         '<button type="button" class="btn" style="margin-top:12px;" data-action="set-med-start">' + esc(tr('save')) + '</button>';
     } else {
       if (status.overdue) html += '<p class="status-line bad">⚠ ' + esc(tr('homeMedOverdue')) + '</p>';
@@ -1345,6 +1528,7 @@
     }
 
     html += infoCard('💡', 'drugWhatItDoes', med.whatItDoes);
+    html += sectionHead('📋', 'secDrugHowTo');
     html += infoCard('📋', 'drugHowToTake', med.instructions);
     html += infoCard('⏰', 'drugMissedDose', med.missedDose);
     html += infoCard('🩺', 'drugSideEffects', med.sideEffects);
@@ -1365,6 +1549,7 @@
 
     html += '<div class="card"><p class="muted">' + esc(tr('drugSupplementNote')) + '</p>' +
       '<button type="button" class="btn ghost" data-action="clear-med">' + esc(tr('drugChange')) + '</button></div>';
+    html += sectionHead('📜', 'secDrugHistory');
     html += renderMedHistory();
     return html;
   }
@@ -1463,30 +1648,128 @@
 
   /* ---------- bone / nutrition tab ---------- */
 
+  var FOOD_ICONS = {
+    milk: '🥛', soy_milk_fortified: '🥤', yogurt: '🍶', small_dried_fish: '🐟',
+    dried_shrimp: '🦐', sardine: '🥫', tofu: '🧈', dark_greens: '🥬',
+    sesame: '⚫', cheese: '🧀'
+  };
+
   function renderBone() {
     var html = '<h1>' + esc(tr('tabTitleBone')) + '</h1>';
     var due = C.isNutritionReviewDue(state.nutrition.lastAssessedDate, todayStr());
 
+    /* --- topic 1: the yearly review --- */
+    html += sectionHead('📋', 'secFoodReview');
     html += '<div class="card ' + (due ? 'warn' : 'accent') + '">' +
-      '<div class="card-head"><span class="ico">🥛</span><h2>' + esc(tr('boneNutritionTitle')) + '</h2></div>' +
+      '<div class="card-head"><span class="ico">🥛</span><h3>' + esc(tr('boneNutritionTitle')) + '</h3></div>' +
       '<p class="muted">' + esc(tr('boneNutritionIntro')) + '</p>';
     if (state.nutrition.lastAssessedDate) {
-      html += '<p>' + esc(tr('nutritionLastDone')) + ': <strong>' + esc(formatDate(state.nutrition.lastAssessedDate)) + '</strong><br>' +
-        esc(tr('nutritionNextDue')) + ': ' + esc(formatDate(C.addMonthsSafe(state.nutrition.lastAssessedDate, C.NUTRITION_REVIEW_MONTHS))) + '</p>';
+      var nextDue = C.addMonthsSafe(state.nutrition.lastAssessedDate, C.NUTRITION_REVIEW_MONTHS);
+      html += dueMeter(C.daysBetween(todayStr(), nextDue), 365, { soonDays: 30 });
+      html += '<p class="muted">' + esc(tr('nutritionLastDone')) + ' ' + esc(formatDate(state.nutrition.lastAssessedDate)) +
+        ' · ' + esc(tr('nutritionNextDue')) + ' ' + esc(formatDate(nextDue)) + '</p>';
     } else {
       html += '<p class="muted">' + esc(tr('nutritionNeverDone')) + '</p>';
     }
     html += '<button type="button" class="btn" data-action="open-nutrition">' +
       esc(state.nutrition.lastAssessedDate ? tr('nutritionRedo') : tr('nutritionStart')) + '</button></div>';
 
-    if (state.nutrition.result) html += renderNutritionResultCards(state.nutrition.result);
+    /* --- topic 2: this patient's own numbers --- */
+    if (state.nutrition.result) {
+      html += sectionHead('📊', 'secFoodResult');
+      html += renderNutritionResultCards(state.nutrition.result);
+    }
 
-    html += '<div class="card"><div class="card-head"><span class="ico">🥛</span><h3>' + esc(tr('foodCalciumKnowledgeTitle')) + '</h3></div>' +
-      '<p>' + esc(tr('foodCalciumKnowledgeBody')) + '</p>' + bulletList('foodCalcium') + '</div>';
-    html += '<div class="card"><div class="card-head"><span class="ico">☀️</span><h3>' + esc(tr('foodVitDKnowledgeTitle')) + '</h3></div>' +
-      '<p>' + esc(tr('foodVitDKnowledgeBody')) + '</p>' + bulletList('foodVitD') + '</div>';
-    html += '<div class="card warn"><div class="card-head"><span class="ico">🚫</span><h3>' + esc(tr('foodAvoidTitle')) + '</h3></div>' +
-      '<p>' + esc(tr('foodAvoidBody')) + '</p>' + bulletList('foodAvoid') + '</div>';
+    /* --- topic 3: calcium, as a picture --- */
+    html += sectionHead('🥛', 'secFoodCalcium');
+    html += renderCalciumGraphic();
+
+    /* --- topic 4: vitamin D, as a picture --- */
+    html += sectionHead('☀️', 'secFoodVitD');
+    html += renderVitaminDGraphic();
+
+    /* --- topic 5: what to cut down --- */
+    html += sectionHead('🚫', 'secFoodAvoid');
+    html += '<div class="card warn"><p>' + esc(tr('foodAvoidBody')) + '</p><ul class="icon-list">' +
+      C.FOOD_AVOID_ITEMS.map(function (item) {
+        return '<li><span class="il-ico">' + item.icon + '</span><span><strong>' + esc(loc(item.name)) + '</strong>' +
+          '<br><span class="muted" style="font-size:0.88rem;">' + esc(loc(item.why)) + '</span></span></li>';
+      }).join('') + '</ul></div>';
+    return html;
+  }
+
+  /**
+   * Calcium as a picture rather than a paragraph: each food sized by how much
+   * it actually gives, then a worked example of one ordinary day reaching the
+   * target. A patient can compare foods at a glance without reading numbers.
+   */
+  function renderCalciumGraphic() {
+    var target = C.calciumTargetMg(state.profile.age || 70, state.profile.sex || 'female');
+    var foods = C.CALCIUM_FOODS.slice().sort(function (a, b) { return b.mgPerServing - a.mgPerServing; });
+    var max = foods[0].mgPerServing;
+
+    var html = '<div class="card">' +
+      '<p>' + esc(tr('foodCalciumKnowledgeBody')) + '</p>' +
+      '<p class="field-hint">' + esc(tr('foodTargetLabel')) + ': <strong>' + target + ' ' + esc(tr('calciumMgUnit')) + '</strong> · ' +
+      esc(tr('foodBarNote')) + '</p>' +
+      '<div class="food-graphic">' +
+      foods.map(function (f) {
+        return '<div class="food-row">' +
+          '<span class="f-ico">' + (FOOD_ICONS[f.id] || '🍽️') + '</span>' +
+          '<span><span class="f-name">' + esc(loc(f.name)) + '</span>' +
+          '<span class="f-serving">' + esc(loc(f.serving)) + '</span>' +
+          '<span class="f-bar" style="width:' + Math.round(f.mgPerServing / max * 100) + '%;"></span></span>' +
+          '<span class="f-mg">' + f.mgPerServing + '<small> ' + esc(tr('calciumMgUnit')) + '</small></span>' +
+          '</div>';
+      }).join('') +
+      '</div></div>';
+
+    // A curated example day rather than the highest-milligram foods, which
+    // came out as three milk-like items in a row.
+    var byId = {};
+    C.CALCIUM_FOODS.forEach(function (f) { byId[f.id] = f; });
+    var plan = C.CALCIUM_EXAMPLE_DAY.map(function (id) { return byId[id]; }).filter(Boolean);
+    var running = plan.reduce(function (sum, f) { return sum + f.mgPerServing; }, 0) + C.BASELINE_DIET_CALCIUM_MG;
+    html += '<div class="card accent"><div class="card-head"><span class="ico">🍽️</span><h3>' +
+      esc(tr('foodDayPlanTitle')) + '</h3></div><div class="day-plan">' +
+      '<div class="dp-item"><span class="dp-ico">🍚</span>' +
+      '<span class="dp-label">' + esc(tr('foodBaselineDiet')) + '</span>' +
+      '<span class="dp-mg">' + C.BASELINE_DIET_CALCIUM_MG + '</span></div>' +
+      plan.map(function (f) {
+        return '<span class="dp-plus">+</span>' +
+          '<div class="dp-item"><span class="dp-ico">' + (FOOD_ICONS[f.id] || '🍽️') + '</span>' +
+          '<span class="dp-label">' + esc(loc(f.serving)) + '</span>' +
+          '<span class="dp-mg">' + f.mgPerServing + '</span></div>';
+      }).join('') +
+      '</div><div class="day-total">' + esc(tr('foodDayPlanTotal')) + ': ' + running + ' ' +
+      esc(tr('calciumMgUnit')) + ' ' + (running >= target ? '✓' : '') + '</div></div>';
+    return html;
+  }
+
+  /**
+   * Vitamin D is a weekly habit, not a portion, so the picture is a week of
+   * days with the sunny ones marked - what to do, not what to eat.
+   */
+  function renderVitaminDGraphic() {
+    var days = C.DAY_SHORT[state.lang];
+    var sunny = [1, 3, 5];
+    var html = '<div class="card"><div class="card-head"><span class="ico">☀️</span><h3>' +
+      esc(tr('foodSunTitle')) + '</h3></div>' +
+      '<div class="sun-graphic">' +
+      days.map(function (d, i) {
+        var on = sunny.indexOf(i) !== -1;
+        return '<div class="sun-day' + (on ? ' on' : '') + '"><span class="sd-name">' + esc(d) + '</span>' +
+          '<span class="sd-ico">' + (on ? '☀️' : '·') + '</span></div>';
+      }).join('') +
+      '</div>' +
+      '<p>' + esc(tr('foodSunWhen')) + '</p>' +
+      '<ul class="icon-list">' +
+      C.VITD_FOODS.map(function (f) {
+        return '<li><span class="il-ico">' + f.icon + '</span><span>' + esc(loc(f.name)) + '</span></li>';
+      }).join('') +
+      '</ul>' +
+      '<p class="field-hint">' + esc(tr('foodSunWhy')) + '</p>' +
+      '</div>';
     return html;
   }
 
@@ -1548,7 +1831,9 @@
     } else if (stepId === 'vitaminD') {
       html += '<h2>' + esc(tr('nutritionSectionVitD')) + '</h2>';
       html += '<label for="sunMinutes">' + esc(tr('nutritionSunQuestion')) + '</label>' +
-        '<input type="number" id="sunMinutes" inputmode="numeric" value="' + esc(nutrition.draft.sunMinutesPerWeek === null ? '' : nutrition.draft.sunMinutesPerWeek) + '">';
+        numberField({ id: 'sunMinutes', step: 5, min: 0, max: 600,
+          value: nutrition.draft.sunMinutesPerWeek === null ? '' : nutrition.draft.sunMinutesPerWeek,
+          quick: [{ value: 0, label: '0' }, { value: 15, label: '15' }, { value: 30, label: '30' }, { value: 60, label: '60' }, { value: 120, label: '120' }] });
       html += '<p class="muted" style="margin-top:14px;">' + esc(tr('nutritionFoodFrequencyIntro')) + '</p>';
       html += C.VITAMIN_D_FOODS.map(function (f) {
         return freqRow('vd_' + f.id, loc(f.name) + ' — ' + loc(f.serving), nutrition.draft.vitaminD[f.id]);
@@ -1557,7 +1842,8 @@
     } else if (stepId === 'protein') {
       html += '<h2>' + esc(tr('nutritionSectionProtein')) + '</h2>';
       html += '<label for="weightKg">' + esc(tr('nutritionWeightQuestion')) + '</label>' +
-        '<input type="number" id="weightKg" inputmode="decimal" step="0.1" value="' + esc(nutrition.draft.weightKg === null ? '' : nutrition.draft.weightKg) + '">';
+        numberField({ id: 'weightKg', step: 0.5, min: 25, max: 200,
+          value: nutrition.draft.weightKg === null ? '' : nutrition.draft.weightKg });
       html += '<p class="muted" style="margin-top:14px;">' + esc(tr('nutritionServingsPerDay')) + '</p>';
       html += C.PROTEIN_FOODS.map(function (f) {
         return freqRow('pr_' + f.id, loc(f.name) + ' — ' + loc(f.serving), nutrition.draft.protein[f.id]);
@@ -1583,7 +1869,9 @@
 
   function freqRow(id, label, value) {
     return '<div class="freq-row"><span class="name">' + esc(label) + '</span>' +
-      '<input type="number" inputmode="numeric" min="0" id="' + id + '" value="' + (value === undefined || value === null ? '' : esc(value)) + '" placeholder="0"></div>';
+      numberField({ id: id, step: 1, min: 0, max: 21, placeholder: '0',
+        value: (value === undefined || value === null) ? '' : value,
+        quick: [{ value: 0, label: '0' }, { value: 1, label: '1' }, { value: 3, label: '3' }, { value: 7, label: '7' }] }) + '</div>';
   }
 
   function collectNutritionStep() {
@@ -1640,8 +1928,9 @@
       '<p class="muted">🚶 ' + esc(tr('moveWalking')) + '</p></div>';
 
     groups.forEach(function (group) {
-      html += '<div class="card"><div class="card-head"><span class="ico">' + group.icon + '</span><h2>' + esc(tr(group.labelKey)) + '</h2></div>' +
-        '<p class="muted">' + esc(tr('moveHowOften')) + ': ' + esc(tr(group.freqKey)) + '</p>';
+      html += sectionHead(group.icon, group.labelKey);
+      html += '<div class="card"><p class="muted" style="margin:0;">' +
+        esc(tr('moveHowOften')) + ': <strong>' + esc(tr(group.freqKey)) + '</strong></p></div>';
       html += exercises.filter(function (ex) { return ex.group === group.id; }).map(function (ex) {
         var media = C.getExerciseMedia(ex.id);
         var mediaHtml = '';
@@ -1680,7 +1969,8 @@
     ];
 
     var html = '<h1>' + esc(tr('tabTitleSafety')) + '</h1>';
-    html += '<div class="card accent"><h2>' + esc(tr('safetyScoreLabel')) + ': ' + result.score + ' / ' + result.max + '</h2>' +
+    html += sectionHead('🏠', 'secSafetyScore');
+    html += '<div class="card accent"><h3>' + esc(tr('safetyScoreLabel')) + ': ' + result.score + ' / ' + result.max + '</h2>' +
       '<div class="progress-bar"><div style="width:' + Math.round(result.score / result.max * 100) + '%"></div></div>' +
       '<p class="muted">' + esc(tr('safetyIntro')) + '</p>';
     if (result.priorityFixes.length) {
@@ -1697,6 +1987,7 @@
     }
     html += '</div>';
 
+    html += sectionHead('🔍', 'secSafetyRooms');
     rooms.forEach(function (room) {
       html += '<div class="card"><div class="card-head"><span class="ico">' + room.icon + '</span><h3>' + esc(tr(room.labelKey)) + '</h3></div>';
       html += C.SAFETY_ITEMS.filter(function (i) { return i.room === room.id; }).map(function (item) {
@@ -1711,6 +2002,7 @@
     });
 
     html += '<button type="button" class="btn" data-action="save-safety-audit">' + esc(tr('safetySave')) + '</button>';
+    html += sectionHead('💡', 'secSafetyAdvice');
     html += infoCard('👟', 'footwearTitle', C.CONTENT.footwearBody);
     html += infoCard('👓', 'visionTitle', C.CONTENT.visionBody);
     html += infoCard('💊', 'fallRiskMedsTitle', C.CONTENT.fallRiskMedsBody);
@@ -1722,13 +2014,16 @@
 
   function renderTrack() {
     var html = '<h1>' + esc(tr('trackTitle')) + '</h1>';
+    html += sectionHead('🦴', 'secTrackBmd');
     html += renderBmdCard();
+    html += renderBmdHistory();
+    html += sectionHead('📏', 'secTrackBody');
     html += renderHeightCard();
     html += renderChairStandCard();
     html += renderTugCard();
+    html += sectionHead('📋', 'secTrackFalls');
     html += renderFallsCard();
     html += renderAdherenceCard();
-    html += renderBmdHistory();
     return html;
   }
 
@@ -1774,12 +2069,12 @@
     html += '<form id="bmdForm">' +
       '<p class="muted">' + esc(tr('bmdEnterTScores')) + '</p>' +
       '<label for="bmdDate">' + esc(tr('bmdScanDate')) + '</label>' +
-      '<input type="date" id="bmdDate" value="' + todayStr() + '">' +
+      dateField({ id: 'bmdDate', choices: [{ days: 0, key: 'dateToday' }, { days: -30, key: 'dateThisMonth' }] }) +
       '<div class="field-row">' +
         '<div><label for="bmdSpineT">' + esc(tr('bmdSpine')) + '</label>' +
-          '<input type="number" id="bmdSpineT" step="0.1" inputmode="decimal" placeholder="' + esc(tr('bmdTScoreLabel')) + '"></div>' +
+          numberField({ id: 'bmdSpineT', step: 0.1, min: -6, max: 6, placeholder: tr('bmdTScoreLabel') }) + '</div>' +
         '<div><label for="bmdHipT">' + esc(tr('bmdHip')) + '</label>' +
-          '<input type="number" id="bmdHipT" step="0.1" inputmode="decimal" placeholder="' + esc(tr('bmdTScoreLabel')) + '"></div>' +
+          numberField({ id: 'bmdHipT', step: 0.1, min: -6, max: 6, placeholder: tr('bmdTScoreLabel') }) + '</div>' +
       '</div>' +
       '<button type="button" class="btn secondary" style="margin-top:12px;" data-action="save-bmd">' + esc(tr('bmdAdd')) + '</button>' +
       '</form></div>';
@@ -1825,7 +2120,7 @@
     if (flagged) html += '<p class="status-line bad">⚠ ' + esc(tr('heightLossWarning')) + '</p>';
     else if (latest) html += '<p class="status-line good">✓ ' + esc(tr('heightLossOk')) + '</p>';
     html += '<label for="heightInput">' + esc(tr('heightCurrent')) + '</label>' +
-      '<input type="number" id="heightInput" inputmode="decimal" step="0.1" placeholder="cm">' +
+      numberField({ id: 'heightInput', step: 0.5, min: 100, max: 210, placeholder: 'cm' }) +
       '<button type="button" class="btn secondary" style="margin-top:10px;" data-action="save-height">' + esc(tr('save')) + '</button>' +
       '<p class="muted">' + esc(tr('heightEvery6Months')) + '</p></div>';
     return html;
@@ -1854,7 +2149,7 @@
       : '<button type="button" class="btn secondary" data-action="start-chairstand">' + esc(tr('startTimer')) + '</button>';
     if (chairStandTimer.awaitingReps) {
       html += '<label for="chairStandRepsField">' + esc(tr('reps')) + '</label>' +
-        '<input type="number" id="chairStandRepsField" inputmode="numeric">' +
+        numberField({ id: 'chairStandRepsField', step: 1, min: 0, max: 60 }) +
         '<button type="button" class="btn" style="margin-top:10px;" data-action="save-chairstand">' + esc(tr('recordResult')) + '</button>';
     }
     html += '</div>';
@@ -1900,7 +2195,7 @@
       }).join('') + '</ul>';
     }
     html += '<form id="fallForm">' +
-      '<label for="fallDate">' + esc(tr('fallsLogDate')) + '</label><input type="date" id="fallDate" name="date" value="' + todayStr() + '">' +
+      dateField({ id: 'fallDate', name: 'date', labelKey: 'fallsLogDate' }) +
       '<label>' + esc(tr('fallsLogInjured')) + '</label>' +
       '<div class="choice-grid">' +
         '<button type="button" class="choice-btn" data-action="set-fall-injured" data-value="true">' + esc(tr('yes')) + '</button>' +
@@ -1941,6 +2236,7 @@
     if (justFell) html += '<div class="card critical"><p style="margin:0;">🩹 ' + esc(tr('alertAfterFall')) + '</p></div>';
     html += '<p class="muted">' + esc(tr('alertIntro')) + '</p>';
 
+    html += sectionHead('⚠️', 'secAlertSigns');
     html += C.RED_FLAGS.map(function (flag) {
       return '<div class="alert-card ' + flag.severity + '">' +
         '<span class="sev">' + flag.icon + ' ' + esc(tr(flag.severity === 'critical' ? 'alertSeverityCritical' : 'alertSeveritySerious')) + '</span>' +
@@ -1949,6 +2245,7 @@
         '</div>';
     }).join('');
 
+    html += sectionHead('📞', 'secAlertCall');
     html += '<div class="call-bar">' +
       '<a class="btn danger" href="tel:' + C.ALERT_CONTACTS.emsPhone + '">📞 ' + esc(tr('alertCallEms')) + '</a>' +
       '<a class="btn secondary" href="tel:' + C.ALERT_CONTACTS.hospitalPhone.replace(/\s/g, '') + '">🏥 ' + esc(tr('alertCallClinic')) + ' ' + esc(C.ALERT_CONTACTS.hospitalPhone) + '</a>' +
@@ -1960,12 +2257,14 @@
 
   function renderKnowledge() {
     var html = '<h1>' + esc(tr('tabTitleKnowledge')) + '</h1>';
+    html += sectionHead('📖', 'secLearnBasics');
     [['learnWhatIsTitle', 'boneWhatIsBody', '🦴', null], ['learnTScoreTitle', 'learnTScoreBody', '📊', null],
      ['learnScreeningTitle', 'learnScreeningBody', '🩻', 'learnScreening'], ['learnMedMattersTitle', 'learnMedMattersBody', '💊', null],
      ['learnExpectTitle', 'learnExpectBody', '🎯', null]].forEach(function (panel) {
       html += '<div class="card"><div class="card-head"><span class="ico">' + panel[2] + '</span><h3>' + esc(tr(panel[0])) + '</h3></div>' +
         '<p>' + esc(tr(panel[1])) + '</p>' + (panel[3] ? bulletList(panel[3]) : '') + '</div>';
     });
+    html += sectionHead('🔗', 'secLearnMore');
     html += '<div class="card link-list">' + C.RESOURCE_LINKS.map(function (link) {
       var card = C.renderResourceCard(link, state.lang);
       return '<a href="' + esc(link.url) + '" target="_blank" rel="noopener"><span class="title">' + esc(card.title) + '</span><span class="desc">' + esc(card.description) + '</span></a>';
@@ -1997,7 +2296,7 @@
       } else {
         html += '<div id="checkinFallForm" hidden>' +
           '<label for="checkinFallDate">' + esc(tr('fallsLogDate')) + '</label>' +
-          '<input type="date" id="checkinFallDate" value="' + todayStr() + '">' +
+          dateField({ id: 'checkinFallDate' }) +
           '<label>' + esc(tr('fallsLogInjured')) + '</label>' +
           '<div class="choice-grid">' +
             '<button type="button" class="choice-btn" data-action="set-checkin-injured" data-value="true">' + esc(tr('yes')) + '</button>' +
@@ -2022,7 +2321,7 @@
     } else if (stepId === 'height') {
       html += '<h2>' + esc(tr('checkinStepHeight')) + '</h2>';
       html += '<label for="checkinHeight">' + esc(tr('heightCurrent')) + '</label>' +
-        '<input type="number" id="checkinHeight" inputmode="decimal" step="0.1" placeholder="cm">' +
+        numberField({ id: 'checkinHeight', step: 0.5, min: 100, max: 210, placeholder: 'cm' }) +
         '<div class="btn-row" style="margin-top:12px;">' +
           '<button type="button" class="btn secondary" data-action="checkin-next">' + esc(tr('checkinStepHeightSkip')) + '</button>' +
           '<button type="button" class="btn" data-action="checkin-save-height">' + esc(tr('save')) + '</button>' +
@@ -2462,6 +2761,32 @@
         hipFractureRisk: shown && shown.hip !== null ? shown.hip : ''
       });
       render();
+
+    } else if (action === 'num-step') {
+      var stepField = document.getElementById(el.getAttribute('data-target'));
+      if (stepField) {
+        var stepBy = parseFloat(el.getAttribute('data-step')) || 1;
+        var current = parseFloat(stepField.value);
+        if (isNaN(current)) current = parseFloat(stepField.getAttribute('data-start')) || 0;
+        var stepped = Math.round((current + stepBy) * 100) / 100;
+        var lo = stepField.getAttribute('min'), hi = stepField.getAttribute('max');
+        if (lo !== null && lo !== '' && stepped < parseFloat(lo)) stepped = parseFloat(lo);
+        if (hi !== null && hi !== '' && stepped > parseFloat(hi)) stepped = parseFloat(hi);
+        stepField.value = stepped;
+      }
+
+    } else if (action === 'num-set') {
+      var setField = document.getElementById(el.getAttribute('data-target'));
+      if (setField) setField.value = el.getAttribute('data-value');
+
+    } else if (action === 'date-quick') {
+      var dateInput = document.getElementById(el.getAttribute('data-target'));
+      if (dateInput) {
+        var shift = parseInt(el.getAttribute('data-days'), 10) || 0;
+        var when = C.parseYMD(todayStr());
+        when.setDate(when.getDate() + shift);
+        dateInput.value = C.formatYMD(when);
+      }
 
     } else if (action === 'sync-now') {
       el.disabled = true;

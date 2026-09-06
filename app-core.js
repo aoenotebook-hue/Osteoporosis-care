@@ -99,6 +99,49 @@
 
     homeStatusTitle: t('ตอนนี้ท่านเป็นอย่างไร', 'How you are right now'),
     homeWhatThisMeans: t('แปลว่าอะไร', 'What this means'),
+
+    stepDown: t('ลดลง', 'Decrease'),
+    stepUp: t('เพิ่มขึ้น', 'Increase'),
+    dateToday: t('วันนี้', 'Today'),
+    dateYesterday: t('เมื่อวาน', 'Yesterday'),
+    dateLastWeek: t('สัปดาห์ที่แล้ว', 'A week ago'),
+    dateThisMonth: t('เดือนนี้', 'This month'),
+    dueInDays: t('วัน จนถึงกำหนด', 'days until it is due'),
+    dueOverdueBy: t('วัน ที่เลยกำหนดมาแล้ว', 'days past due'),
+    dueToday: t('ถึงกำหนดวันนี้', 'Due today'),
+    dueLastDone: t('ครั้งล่าสุด', 'Last done'),
+    dueNextDue: t('ครั้งต่อไป', 'Next due'),
+
+    secHomeStatus: t('สภาพกระดูกและโอกาสหกล้ม', 'Your bones and your chance of falling'),
+    secHomeRisk: t('โอกาสกระดูกหัก', 'Chance of a broken bone'),
+    secHomeTodo: t('สิ่งที่ต้องทำ', 'Things to do'),
+    secDrugCurrent: t('ยาที่ใช้อยู่', 'The medicine you take now'),
+    secDrugHowTo: t('วิธีใช้ยาให้ถูกต้อง', 'How to take it properly'),
+    secDrugHistory: t('ยาที่เคยใช้', 'Medicines you used before'),
+    secFoodReview: t('ประเมินอาหารประจำปี', 'Your yearly food review'),
+    secFoodResult: t('ผลของท่าน', 'Your results'),
+    secFoodCalcium: t('แคลเซียม กินอะไรได้บ้าง', 'Calcium — what to eat'),
+    secFoodVitD: t('วิตามินดี ได้จากไหน', 'Vitamin D — where to get it'),
+    secFoodAvoid: t('สิ่งที่ควรเลี่ยง', 'What to cut down'),
+    secTrackBmd: t('ผลตรวจความหนาแน่นกระดูก', 'Bone density results'),
+    secTrackBody: t('ส่วนสูงและการทรงตัว', 'Height and balance'),
+    secTrackFalls: t('การหกล้มและการกินยา', 'Falls and taking your medicine'),
+    secLearnBasics: t('ทำความรู้จักโรคกระดูกพรุน', 'Understanding osteoporosis'),
+    secLearnMore: t('อ่านเพิ่มเติม', 'Further reading'),
+    secSafetyScore: t('คะแนนความปลอดภัยในบ้าน', 'How safe your home is'),
+    secSafetyRooms: t('ตรวจบ้านทีละห้อง', 'Check your home room by room'),
+    secSafetyAdvice: t('คำแนะนำเพิ่มเติม', 'More advice'),
+    secAlertSigns: t('อาการที่ต้องรีบพบแพทย์', 'Signs that need a doctor now'),
+    secAlertCall: t('โทรขอความช่วยเหลือ', 'Call for help'),
+
+    foodDayPlanTitle: t('ตัวอย่าง 1 วัน ให้ได้แคลเซียมพอ', 'One day of calcium, as an example'),
+    foodDayPlanTotal: t('รวมทั้งวัน', 'Total for the day'),
+    foodBarNote: t('แท่งยิ่งยาว ยิ่งมีแคลเซียมมาก', 'The longer the bar, the more calcium'),
+    foodSunTitle: t('รับแดด สัปดาห์ละ 2-3 ครั้ง ครั้งละ 10-15 นาที', 'Sunshine: 10 to 15 minutes, 2 or 3 times a week'),
+    foodSunWhen: t('เลือกแดดอ่อน ก่อน 9 โมงเช้า หรือหลัง 4 โมงเย็น', 'Choose gentle sun — before 9am or after 4pm'),
+    foodSunWhy: t('ถ้าขาดวิตามินดี ร่างกายจะดูดซึมแคลเซียมไม่ได้ แม้กินแคลเซียมมากก็ตาม', 'Without vitamin D your body cannot take in calcium, however much you eat'),
+    foodTargetLabel: t('เป้าหมายต่อวันของท่าน', 'Your daily target'),
+    foodBaselineDiet: t('อาหารทั่วไปที่กินอยู่แล้ว', 'Your ordinary meals'),
     homeManagementLabel: t('ควรทำอะไรบ้าง', 'What to do'),
 
     fraxTitle: t('โอกาสกระดูกหักใน 10 ปีข้างหน้า', 'Chance of a broken bone in the next 10 years'),
@@ -408,11 +451,7 @@
     drugHistoryEmpty: t('ยังไม่เคยเปลี่ยนยา', 'You have not changed medicine yet'),
     drugHistoryPeriod: t('รวม {n} เดือน', '{n} months in total'),
 
-    foodCalciumKnowledgeTitle: t('แคลเซียมอยู่ในอาหารอะไรบ้าง', 'Where calcium comes from'),
     foodCalciumKnowledgeBody: t('ร่างกายต้องการแคลเซียมทุกวัน และอาหารไทยหลายอย่างก็มีแคลเซียมสูง', 'Your body needs calcium every day, and many everyday Thai foods are rich in it.'),
-    foodVitDKnowledgeTitle: t('วิตามินดีได้จากไหน', 'Where vitamin D comes from'),
-    foodVitDKnowledgeBody: t('วิตามินดีเป็นตัวช่วยให้ร่างกายดูดซึมแคลเซียมได้ ถ้าขาดวิตามินดี กินแคลเซียมเท่าไรก็ไม่พอ', 'Vitamin D is what lets your body take in calcium. Without it, no amount of calcium is enough.'),
-    foodAvoidTitle: t('อาหารและเครื่องดื่มที่ควรเลี่ยง', 'Food and drinks to cut down'),
     foodAvoidBody: t('ของบางอย่างทำให้กระดูกบางเร็วขึ้น ควรลดหรือเลี่ยง', 'Some things make bone thin out faster. It helps to cut down or avoid them.'),
 
     learnScreeningTitle: t('ใครควรตรวจความหนาแน่นกระดูก (DXA)', 'Who should have a bone density scan'),
@@ -448,28 +487,6 @@
       t('คนที่ส่วนสูงลดลงตั้งแต่ 2 เซนติเมตร หรือหลังค่อมผิดปกติ', 'Anyone who has lost 2 cm or more in height, or whose back has become rounded'),
       t('คนที่มีโรคที่ทำให้กระดูกบาง เช่น ไทรอยด์เป็นพิษ หรือลำไส้ดูดซึมอาหารไม่ดี', 'Anyone with an illness that thins bone, such as an overactive thyroid or a gut that does not absorb food well')
     ],
-    foodCalcium: [
-      t('นมจืด 1 แก้ว หรือโยเกิร์ต 1 ถ้วย ให้แคลเซียมประมาณ 300 มก.', 'A glass of milk or a pot of yoghurt gives about 300 mg'),
-      t('ปลาเล็กปลาน้อยหรือกุ้งแห้ง 2 ช้อนโต๊ะ ให้ประมาณ 220 มก. เพราะกินได้ทั้งก้าง', 'Two tablespoons of small whole fish or dried shrimp gives about 220 mg, because you eat the bones'),
-      t('ปลากระป๋องที่ก้างนิ่ม ครึ่งกระป๋อง ให้ประมาณ 240 มก.', 'Half a tin of fish with soft bones gives about 240 mg'),
-      t('เต้าหู้แข็งครึ่งถ้วย หรืองาดำ 1 ช้อนโต๊ะ ให้ประมาณ 130 มก.', 'Half a cup of firm tofu, or a tablespoon of black sesame, gives about 130 mg'),
-      t('ผักใบเขียวเข้ม เช่น คะน้า ตำลึง ใบยอ 1 ถ้วยสุก ให้ประมาณ 150 มก.', 'A cup of cooked dark greens such as Chinese kale, ivy gourd or noni leaf gives about 150 mg'),
-      t('กินทีละน้อยแต่บ่อยครั้งดีกว่ากินทีเดียวมาก ๆ เพราะร่างกายรับได้ครั้งละไม่เกิน 500 มก.', 'Little and often works better than all at once, because the body takes in only about 500 mg at a time')
-    ],
-    foodVitD: [
-      t('แสงแดดสำคัญที่สุด ให้แขนหรือขาโดนแดด 10-15 นาที สัปดาห์ละ 2-3 ครั้ง', 'Sunlight matters most: let the sun reach your arms or legs for 10 to 15 minutes, 2 or 3 times a week'),
-      t('เลือกแดดอ่อน ก่อน 9 โมงเช้า หรือหลัง 4 โมงเย็น', 'Choose gentle sun, before 9 in the morning or after 4 in the afternoon'),
-      t('อาหารที่มีวิตามินดี ได้แก่ ปลาทะเลตัวใหญ่อย่างแซลมอนและปลาทู ไข่แดง และเห็ดตากแดด', 'Foods with vitamin D include oily sea fish such as salmon and mackerel, egg yolk, and sun-dried mushrooms'),
-      t('ถ้าโดนแดดน้อย ควรกินวิตามินดีเสริมตามที่แพทย์แนะนำ', 'If you get little sun, take a vitamin D supplement as your doctor advises'),
-      t('ถ้าขาดวิตามินดี ร่างกายจะดูดซึมแคลเซียมไม่ได้ แม้กินแคลเซียมมากก็ไม่พอ', 'Without vitamin D the body cannot take in calcium, however much calcium you eat')
-    ],
-    foodAvoid: [
-      t('อาหารเค็มจัด เช่น น้ำปลา ซีอิ๊ว ของหมักดอง บะหมี่ซอง เพราะเกลือทำให้แคลเซียมหลุดออกทางปัสสาวะ', 'Very salty food such as fish sauce, soy sauce, pickles and instant noodles — salt washes calcium out in your urine'),
-      t('กาแฟ ไม่ควรเกินวันละ 2 แก้ว', 'Coffee — no more than 2 cups a day'),
-      t('เหล้าเบียร์ ไม่ควรเกินวันละ 2 แก้ว เพราะทำให้กระดูกบางและเสี่ยงล้ม', 'Alcohol — no more than 2 drinks a day, as it thins bone and makes falls more likely'),
-      t('น้ำอัดลม เพราะมักดื่มแทนนม และมีฟอสเฟตสูง', 'Fizzy drinks — people often drink them instead of milk, and they are high in phosphate'),
-      t('บุหรี่ ควรงดให้ได้ เพราะทำให้กระดูกบางลงโดยตรง', 'Cigarettes — worth stopping altogether, as they thin bone directly')
-    ]
   };
 
   function parseYMD(s) {
@@ -768,6 +785,27 @@
     return Math.max(0, Math.min(1, elapsed / total));
   }
 
+  var DAY_SHORT = {
+    th: ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'],
+    en: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+  };
+
+  /** Vitamin D foods, for the Food tab picture rather than a bullet list. */
+  var VITD_FOODS = [
+    { icon: '🐟', name: t('ปลาทะเลตัวใหญ่ เช่น แซลมอน ปลาทู', 'Oily sea fish such as salmon or mackerel') },
+    { icon: '🥚', name: t('ไข่แดง', 'Egg yolk') },
+    { icon: '🍄', name: t('เห็ดตากแดด', 'Sun-dried mushrooms') }
+  ];
+
+  /** What to cut down, each with the reason - shown as an icon list. */
+  var FOOD_AVOID_ITEMS = [
+    { icon: '🧂', name: t('อาหารเค็มจัด', 'Very salty food'), why: t('เกลือทำให้แคลเซียมหลุดออกทางปัสสาวะ เช่น น้ำปลา ซีอิ๊ว ของหมักดอง บะหมี่ซอง', 'Salt washes calcium out in your urine — fish sauce, soy sauce, pickles, instant noodles') },
+    { icon: '☕', name: t('กาแฟ ไม่เกินวันละ 2 แก้ว', 'Coffee — no more than 2 cups a day'), why: t('มากกว่านี้รบกวนการดูดซึมแคลเซียม', 'More than that gets in the way of absorbing calcium') },
+    { icon: '🍺', name: t('เหล้าเบียร์ ไม่เกินวันละ 2 แก้ว', 'Alcohol — no more than 2 drinks a day'), why: t('ทำให้กระดูกบางและเสี่ยงหกล้มมากขึ้น', 'It thins bone and makes falls more likely') },
+    { icon: '🥤', name: t('น้ำอัดลม', 'Fizzy drinks'), why: t('มักดื่มแทนนม และมีฟอสเฟตสูง', 'People drink them instead of milk, and they are high in phosphate') },
+    { icon: '🚬', name: t('บุหรี่ ควรงดให้ได้', 'Cigarettes — worth stopping altogether'), why: t('ทำให้กระดูกบางลงโดยตรง', 'They thin bone directly') }
+  ];
+
   var NUTRITION_REVIEW_MONTHS = 12;
 
   function isNutritionReviewDue(lastAssessedDate, todayStr) {
@@ -790,6 +828,15 @@
     { id: 'sesame', name: t('งาดำ', 'Black sesame'), serving: t('1 ช้อนโต๊ะ', '1 tbsp'), mgPerServing: 130 },
     { id: 'cheese', name: t('ชีส', 'Cheese'), serving: t('1 แผ่น', '1 slice'), mgPerServing: 200 }
   ];
+
+  /**
+   * A sensible example day, chosen for variety rather than by picking the
+   * highest-milligram foods, which produced three milk-like items in a row.
+   * One dairy drink, one yoghurt, one fish with bones, one green and one soy:
+   * roughly a thousand milligrams from an ordinary Thai day's eating.
+   * Confirm this matches what you would actually advise.
+   */
+  var CALCIUM_EXAMPLE_DAY = ['milk', 'yogurt', 'sardine', 'dark_greens', 'tofu'];
 
   function estimateDailyCalciumMg(servingsPerWeekById) {
     servingsPerWeekById = servingsPerWeekById || {};
@@ -1683,6 +1730,10 @@
     NUTRITION_REVIEW_MONTHS: NUTRITION_REVIEW_MONTHS,
     isNutritionReviewDue: isNutritionReviewDue,
     CALCIUM_FOODS: CALCIUM_FOODS,
+    CALCIUM_EXAMPLE_DAY: CALCIUM_EXAMPLE_DAY,
+    VITD_FOODS: VITD_FOODS,
+    FOOD_AVOID_ITEMS: FOOD_AVOID_ITEMS,
+    DAY_SHORT: DAY_SHORT,
     BASELINE_DIET_CALCIUM_MG: BASELINE_DIET_CALCIUM_MG,
     estimateDailyCalciumMg: estimateDailyCalciumMg,
     calciumTargetMg: calciumTargetMg,
