@@ -135,6 +135,10 @@ best done once you know which images you actually have.
 Each prompt is self-contained: copy one, paste it into your image tool, done.
 No need to combine them with anything else.
 
+**Video prompts:** [`video-prompts.md`](video-prompts.md) holds 10-second clip
+prompts for the balance and posture exercises (batches 1 and 3), with a note on
+why AI video is a much riskier bet than AI stills for demonstrating a movement.
+
 **Generating them in bulk instead:** [`all-prompts-batch.txt`](all-prompts-batch.txt)
 holds the same 31 prompts arranged as five paste-in-one-go batches, each with
 instructions telling the tool to work in order, hold the style steady, and
