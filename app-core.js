@@ -1010,7 +1010,16 @@
     }
   ];
 
-  var MEDIA_MANIFEST = {};
+  /**
+   * Only exercises listed here with a non-empty src render a media area, so a
+   * half-finished upload never leaves a broken box on the Move tab.
+   * See media/media-asset-list.md for the full asset list.
+   */
+  var MEDIA_MANIFEST = {
+    sit_to_stand_hold: { type: 'image', src: 'media/exercises/sit_to_stand_hold.jpg' },
+    standing_marching: { type: 'image', src: 'media/exercises/standing_marching.jpg' },
+    weight_shifts: { type: 'image', src: 'media/exercises/weight_shifts.jpg' }
+  };
 
   function getExerciseMedia(exerciseId) {
     var entry = MEDIA_MANIFEST[exerciseId];

@@ -161,15 +161,19 @@ Subject: a Thai woman in her mid-70s, short grey hair, wearing a comfortable lon
 
 Scene: a sturdy wooden dining chair with armrests, placed on a plain floor in a simple home room.
 
-Pose - this is the key teaching point: she is halfway through standing up from the chair. She sits at the FRONT edge of the seat, both feet flat on the floor hip-width apart and drawn back under her knees, torso leaning slightly forward from the hips, and BOTH HANDS ARE GRIPPING THE ARMRESTS and pushing. Her back is straight, not rounded.
+Pose - this is the key teaching point: she is caught halfway through standing up, hips just lifting clear of the seat, knees partly straightened, weight already over her feet - not still sitting down.
 
-Camera: three-quarter front view from her left, at seated eye level, full body in frame including both feet.
+FOOT POSITION IS CRITICAL AND MOST IMAGES GET IT WRONG: her feet are pulled BACK towards the chair so that her ankles sit DIRECTLY BENEATH HER KNEES, or even slightly behind them. The shins slope backwards, not forwards. Feet must never be out in front of the knees.
+
+She started from the FRONT edge of the seat, feet flat and hip-width apart, torso leaning forward from the hips, and BOTH HANDS GRIPPING THE ARMRESTS and pushing down. Her back is straight, not rounded.
+
+Camera: three-quarter front view from her left, at seated eye level, full body in frame including both feet, angled so the position of the feet under the knees is unmistakable.
 
 Style: flat vector-style medical illustration with soft cel shading and clean confident outlines. Warm, calm and reassuring - an encouraging patient handout, not a clinical diagram. Muted palette built on medium blue #1c5cab with a very light blue-grey background #eaf1fb. Simple uncluttered background containing only the chair and floor.
 
 Must be clearly visible: both hands on the armrests, the forward lean, the straight back, and both feet flat on the floor.
 
-Do not include: any text, letters, numbers, captions, arrows, watermarks or logos; no gym equipment, exercise mats or yoga clothing; no young or athletic model; no walking frame or walking stick; do not show the movement being done incorrectly.
+Do not include, under any circumstances: ARROWS or motion lines of any kind, and no text, letters, numbers, captions, labels, watermarks or logos anywhere in the picture — the app prints its own instructions beside the image, so an arrow both duplicates them and looks wrong; no gym equipment, exercise mats or yoga clothing; no young or athletic model; no walking frame or walking stick; do not show the movement being done incorrectly.
 
 Aspect ratio 3:4 portrait.
 ```
@@ -181,17 +185,19 @@ Clean medical instructional illustration for an osteoporosis self-care app used 
 
 Subject: a Thai man in his early 70s, short grey hair, wearing a comfortable short-sleeved pale blue polo shirt, loose dark trousers and flat non-slip shoes.
 
-Scene: a sturdy wooden dining chair seen from behind, on a plain floor in a simple home room.
+Scene: an ordinary low wooden dining chair, seen from behind, on a plain floor in a simple home room. The chair is SMALL in the frame and its back reaches only to his waist - it must not tower in front of him or hide his body.
 
-Pose - this is the key teaching point: he stands BEHIND the chair with BOTH HANDS RESTING ON THE CHAIR BACK, and has lifted his right knee up in front of him to roughly hip height, as if marching on the spot. His left foot is flat on the floor. His torso is completely UPRIGHT - he is not leaning forward over the chair or hunching.
+Pose - this is the key teaching point: he stands BEHIND the chair with BOTH HANDS RESTING ON THE CHAIR BACK, and has lifted his right knee forward and up to roughly hip height, thigh close to horizontal, as if marching on the spot. His left foot is flat on the floor. His torso is completely UPRIGHT - not leaning forward over the chair or hunching.
 
-Camera: straight-on front view at chest height, full body in frame including both feet.
+THE RAISED KNEE MUST BE FULLY VISIBLE AND UNOBSTRUCTED. The whole point of the picture is the height of that knee lift, so the chair must not cross in front of the thigh, knee or shin at any point. Draw the raised leg entirely clear of the chair.
+
+Camera: three-quarter view from his front-left, full body in frame including both feet, positioned so the raised thigh and knee read clearly against the plain background rather than against the chair.
 
 Style: flat vector-style medical illustration with soft cel shading and clean confident outlines. Warm, calm and reassuring - an encouraging patient handout, not a clinical diagram. Muted palette built on medium blue #1c5cab with a very light blue-grey background #eaf1fb. Simple uncluttered background containing only the chair and floor.
 
 Must be clearly visible: both hands on the chair back, the raised knee, and the upright posture.
 
-Do not include: any text, letters, numbers, captions, arrows, watermarks or logos; no gym equipment, exercise mats or yoga clothing; no young or athletic model; do not show the movement being done incorrectly.
+Do not include, under any circumstances: ARROWS or motion lines of any kind, and no text, letters, numbers, captions, labels, watermarks or logos anywhere in the picture — the app prints its own instructions beside the image, so an arrow both duplicates them and looks wrong; no gym equipment, exercise mats or yoga clothing; no young or athletic model; do not show the movement being done incorrectly.
 
 Aspect ratio 3:4 portrait.
 ```
@@ -201,19 +207,25 @@ Aspect ratio 3:4 portrait.
 ```
 Clean medical instructional illustration for an osteoporosis self-care app used by Thai adults aged 65-85.
 
-Subject: a Thai woman in her mid-70s, short grey hair, wearing a comfortable long-sleeved pale blue top, loose dark trousers and flat non-slip shoes.
+Subject: a Thai woman in her mid-70s, short grey hair, wearing a comfortable long-sleeved pale blue top, loose dark trousers and flat non-slip shoes. SEEN FROM BEHIND - the back of her head and back of her body face the viewer.
 
 Scene: a sturdy wooden dining chair, on a plain floor in a simple home room.
 
-Pose - this is the key teaching point: she stands behind the chair holding its back with both hands, feet shoulder-width apart. She has shifted her body weight fully onto her LEFT leg, so the left leg is straight and loaded while the RIGHT FOOT IS LIGHT - the right heel just lifting, only the toes still brushing the floor. Her torso stays upright and level; she is not bending sideways at the waist.
+Pose - this is the key teaching point, and it must be visibly happening rather than merely implied: she stands behind the chair holding its back with both hands, feet a clear SHOULDER-WIDTH apart. She has transferred her weight fully onto her LEFT leg. Show this three ways at once, or the picture says nothing:
 
-Camera: straight-on front view at chest height, full body in frame with both feet clearly visible.
+1. Her HIPS AND PELVIS ARE SHIFTED SIDEWAYS to the left, clearly off centre, so her left hip sits out over her left foot.
+2. Her LEFT LEG is straight and vertical and visibly carrying her, the left foot flat and firmly planted.
+3. Her RIGHT FOOT IS LIGHT - the right heel lifted off the floor with only the toes still brushing it, the right leg relaxed and unloaded.
+
+Her shoulders stay level and her torso stays upright - the movement comes from the hips shifting sideways, not from bending sideways at the waist.
+
+Camera: straight-on view from directly BEHIND her at chest height, full body in frame with both feet clearly visible, chosen so the sideways hip shift and the lifted right heel are both obvious.
 
 Style: flat vector-style medical illustration with soft cel shading and clean confident outlines. Warm, calm and reassuring - an encouraging patient handout, not a clinical diagram. Muted palette built on medium blue #1c5cab with a very light blue-grey background #eaf1fb. Simple uncluttered background containing only the chair and floor.
 
-Must be clearly visible: the weight shifted onto one leg, the unweighted foot going light, both hands on the chair, and the level upright torso.
+Must be clearly visible: the pelvis shifted sideways off centre, the loaded straight left leg, the lifted right heel with only the toe down, both hands on the chair back, and the level shoulders.
 
-Do not include: any text, letters, numbers, captions, arrows, watermarks or logos; no gym equipment, exercise mats or yoga clothing; no young or athletic model; do not show the movement being done incorrectly.
+Do not include, under any circumstances: ARROWS or motion lines of any kind, and no text, letters, numbers, captions, labels, watermarks or logos anywhere in the picture — the app prints its own instructions beside the image, so an arrow both duplicates them and looks wrong; no gym equipment, exercise mats or yoga clothing; no young or athletic model; do not show the movement being done incorrectly.
 
 Aspect ratio 3:4 portrait.
 ```
@@ -235,7 +247,7 @@ Style: flat vector-style medical illustration with soft cel shading and clean co
 
 Must be clearly visible: the fingertips-only light touch on the chair, the foot lifted just off the floor, and the chair positioned within easy reach.
 
-Do not include: any text, letters, numbers, captions, arrows, watermarks or logos; no gym equipment, exercise mats or yoga clothing; no young or athletic model; do not show him balancing with no support nearby; do not show the movement being done incorrectly.
+Do not include, under any circumstances: ARROWS or motion lines of any kind, and no text, letters, numbers, captions, labels, watermarks or logos anywhere in the picture — the app prints its own instructions beside the image, so an arrow both duplicates them and looks wrong; no gym equipment, exercise mats or yoga clothing; no young or athletic model; do not show him balancing with no support nearby; do not show the movement being done incorrectly.
 
 Aspect ratio 3:4 portrait.
 ```
@@ -257,7 +269,7 @@ Style: flat vector-style medical illustration with soft cel shading and clean co
 
 Must be clearly visible: the two feet in a single straight heel-to-toe line, the fingertips near the wall, and the arms held slightly out.
 
-Do not include: any text, letters, numbers, captions, arrows, watermarks or logos; no painted floor line or tape; no gym equipment, exercise mats or yoga clothing; no young or athletic model; do not show the movement being done incorrectly.
+Do not include, under any circumstances: ARROWS or motion lines of any kind, and no text, letters, numbers, captions, labels, watermarks or logos anywhere in the picture — the app prints its own instructions beside the image, so an arrow both duplicates them and looks wrong; no painted floor line or tape; no gym equipment, exercise mats or yoga clothing; no young or athletic model; do not show the movement being done incorrectly.
 
 Aspect ratio 3:4 portrait.
 ```
@@ -279,7 +291,7 @@ Style: flat vector-style medical illustration with soft cel shading and clean co
 
 Must be clearly visible: the heel landing just in front of the opposite toes, the eyes looking ahead rather than down, and the wall close enough to touch if needed.
 
-Do not include: any text, letters, numbers, captions, arrows, watermarks or logos; no painted floor line or tape; no rugs, furniture or clutter in the walking path; no gym equipment or yoga clothing; no young or athletic model.
+Do not include, under any circumstances: ARROWS or motion lines of any kind, and no text, letters, numbers, captions, labels, watermarks or logos anywhere in the picture — the app prints its own instructions beside the image, so an arrow both duplicates them and looks wrong; no painted floor line or tape; no rugs, furniture or clutter in the walking path; no gym equipment or yoga clothing; no young or athletic model.
 
 Aspect ratio 3:4 portrait.
 ```
@@ -301,7 +313,7 @@ Style: flat vector-style medical illustration with soft cel shading and clean co
 
 Must be clearly visible: the backward direction of travel, the toe-first foot contact, the short step length, the completely clear floor, and the companion standing ready nearby.
 
-Do not include: any text, letters, numbers, captions, arrows, watermarks or logos; no rugs, furniture, cables or clutter anywhere on the floor; no gym equipment or yoga clothing; no young or athletic model as the patient.
+Do not include, under any circumstances: ARROWS or motion lines of any kind, and no text, letters, numbers, captions, labels, watermarks or logos anywhere in the picture — the app prints its own instructions beside the image, so an arrow both duplicates them and looks wrong; no rugs, furniture, cables or clutter anywhere on the floor; no gym equipment or yoga clothing; no young or athletic model as the patient.
 
 Aspect ratio 3:4 portrait.
 ```
@@ -323,7 +335,7 @@ Style: flat vector-style medical illustration with soft cel shading and clean co
 
 Must be clearly visible: the folded arms, the straight back, the forward lean from the hips, and both feet flat on the floor.
 
-Do not include: any text, letters, numbers, captions, arrows, watermarks or logos; no hands touching the chair or thighs; no gym equipment, exercise mats or yoga clothing; no young or athletic model; do not show a rounded, hunched back.
+Do not include, under any circumstances: ARROWS or motion lines of any kind, and no text, letters, numbers, captions, labels, watermarks or logos anywhere in the picture — the app prints its own instructions beside the image, so an arrow both duplicates them and looks wrong; no hands touching the chair or thighs; no gym equipment, exercise mats or yoga clothing; no young or athletic model; do not show a rounded, hunched back.
 
 Aspect ratio 3:4 portrait.
 ```
@@ -345,7 +357,7 @@ Style: flat vector-style medical illustration with soft cel shading and clean co
 
 Must be clearly visible: both heels lifted high and clear of the floor, both hands on the chair, and the tall straight body line.
 
-Do not include: any text, letters, numbers, captions, arrows, watermarks or logos; no gym equipment, exercise mats or yoga clothing; no young or athletic model; do not show her slumping or hanging her weight on the chair.
+Do not include, under any circumstances: ARROWS or motion lines of any kind, and no text, letters, numbers, captions, labels, watermarks or logos anywhere in the picture — the app prints its own instructions beside the image, so an arrow both duplicates them and looks wrong; no gym equipment, exercise mats or yoga clothing; no young or athletic model; do not show her slumping or hanging her weight on the chair.
 
 Aspect ratio 3:4 portrait.
 ```
@@ -367,7 +379,7 @@ Style: flat vector-style medical illustration with soft cel shading and clean co
 
 Must be clearly visible: the straight line from head to heels, the hands flat on the wall at shoulder height, the bent elbows, and the heels down.
 
-Do not include: any text, letters, numbers, captions, arrows, watermarks or logos; no sagging hips or arched back; no floor push-up position; no gym equipment, exercise mats or yoga clothing; no young or athletic model.
+Do not include, under any circumstances: ARROWS or motion lines of any kind, and no text, letters, numbers, captions, labels, watermarks or logos anywhere in the picture — the app prints its own instructions beside the image, so an arrow both duplicates them and looks wrong; no sagging hips or arched back; no floor push-up position; no gym equipment, exercise mats or yoga clothing; no young or athletic model.
 
 Aspect ratio 3:4 portrait.
 ```
@@ -389,7 +401,7 @@ Style: flat vector-style medical illustration with soft cel shading and clean co
 
 Must be clearly visible: the toes pointing forward on the lifted leg, the straight knee, and the upright torso with no sideways lean.
 
-Do not include: any text, letters, numbers, captions, arrows, watermarks or logos; no leaning of the trunk; no high leg lift; no gym equipment, exercise mats or yoga clothing; no young or athletic model.
+Do not include, under any circumstances: ARROWS or motion lines of any kind, and no text, letters, numbers, captions, labels, watermarks or logos anywhere in the picture — the app prints its own instructions beside the image, so an arrow both duplicates them and looks wrong; no leaning of the trunk; no high leg lift; no gym equipment, exercise mats or yoga clothing; no young or athletic model.
 
 Aspect ratio 3:4 portrait.
 ```
@@ -411,7 +423,7 @@ Style: flat vector-style medical illustration with soft cel shading and clean co
 
 Must be clearly visible: the hand gripping the handrail, that he is on the bottom step only, and his upright posture.
 
-Do not include: any text, letters, numbers, captions, arrows, watermarks or logos; no gym step platform or aerobics box; no climbing high up the staircase; no gym equipment or yoga clothing; no young or athletic model.
+Do not include, under any circumstances: ARROWS or motion lines of any kind, and no text, letters, numbers, captions, labels, watermarks or logos anywhere in the picture — the app prints its own instructions beside the image, so an arrow both duplicates them and looks wrong; no gym step platform or aerobics box; no climbing high up the staircase; no gym equipment or yoga clothing; no young or athletic model.
 
 Aspect ratio 3:4 portrait.
 ```
@@ -433,7 +445,7 @@ Style: flat vector-style medical illustration with soft cel shading and clean co
 
 Must be clearly visible: the ruler-straight flat back, the hips pushed backwards behind the heels, and the softly bent knees.
 
-Do not include: any text, letters, numbers, captions, arrows, watermarks or logos; absolutely no rounded, curved or hunched spine; no deep squat; no touching the toes; no gym equipment, exercise mats or yoga clothing; no young or athletic model.
+Do not include, under any circumstances: ARROWS or motion lines of any kind, and no text, letters, numbers, captions, labels, watermarks or logos anywhere in the picture — the app prints its own instructions beside the image, so an arrow both duplicates them and looks wrong; absolutely no rounded, curved or hunched spine; no deep squat; no touching the toes; no gym equipment, exercise mats or yoga clothing; no young or athletic model.
 
 Aspect ratio 3:4 portrait.
 ```
@@ -455,7 +467,7 @@ Style: flat vector-style medical illustration with soft cel shading and clean co
 
 Must be clearly visible: the chin drawn horizontally back creating a soft double chin, the eyes level and facing forward, the long tall neck, and relaxed shoulders.
 
-Do not include: any text, letters, numbers, captions, arrows, watermarks or logos; no head tilting up or down; no hand pushing the chin; no neck stretching to the side; no young or athletic model.
+Do not include, under any circumstances: ARROWS or motion lines of any kind, and no text, letters, numbers, captions, labels, watermarks or logos anywhere in the picture — the app prints its own instructions beside the image, so an arrow both duplicates them and looks wrong; no head tilting up or down; no hand pushing the chin; no neck stretching to the side; no young or athletic model.
 
 Aspect ratio 1:1 square.
 ```
@@ -477,7 +489,7 @@ Style: flat vector-style medical illustration with soft cel shading and clean co
 
 Must be clearly visible: the shoulder blades drawn together towards the spine, the shoulders held DOWN and not shrugged, and the long relaxed neck.
 
-Do not include: any text, letters, numbers, captions, arrows, watermarks or logos; no shrugged or raised shoulders; no arms lifted or bent up; no resistance band; no young or athletic model.
+Do not include, under any circumstances: ARROWS or motion lines of any kind, and no text, letters, numbers, captions, labels, watermarks or logos anywhere in the picture — the app prints its own instructions beside the image, so an arrow both duplicates them and looks wrong; no shrugged or raised shoulders; no arms lifted or bent up; no resistance band; no young or athletic model.
 
 Aspect ratio 1:1 square.
 ```
@@ -499,7 +511,7 @@ Style: flat vector-style medical illustration with soft cel shading and clean co
 
 Must be clearly visible: kneeling on one knee, the completely straight back, the supporting hand on the thigh, and the object close to her body.
 
-Do not include: any text, letters, numbers, captions, arrows, watermarks or logos; do NOT show the wrong technique anywhere in the image - no bending from the waist with straight legs, no rounded spine, no twisting; no heavy or large object; no gym equipment or yoga clothing; no young or athletic model.
+Do not include, under any circumstances: ARROWS or motion lines of any kind, and no text, letters, numbers, captions, labels, watermarks or logos anywhere in the picture — the app prints its own instructions beside the image, so an arrow both duplicates them and looks wrong; do NOT show the wrong technique anywhere in the image - no bending from the waist with straight legs, no rounded spine, no twisting; no heavy or large object; no gym equipment or yoga clothing; no young or athletic model.
 
 Aspect ratio 3:4 portrait.
 ```
@@ -526,7 +538,7 @@ Style: flat vector-style medical illustration with soft cel shading and clean co
 
 Must be clearly visible: the band anchored at chest height, the elbows drawn back close to the body, the vertical upright torso, and the shoulders down.
 
-Do not include: any text, letters, numbers, captions, arrows, watermarks or logos; no leaning back or rocking; no rowing machine or gym equipment; no yoga clothing; no young or athletic model.
+Do not include, under any circumstances: ARROWS or motion lines of any kind, and no text, letters, numbers, captions, labels, watermarks or logos anywhere in the picture — the app prints its own instructions beside the image, so an arrow both duplicates them and looks wrong; no leaning back or rocking; no rowing machine or gym equipment; no yoga clothing; no young or athletic model.
 
 Aspect ratio 3:4 portrait.
 ```
@@ -552,7 +564,7 @@ Style: flat vector-style medical illustration with soft cel shading and clean co
 
 Must be clearly visible: the chair back against the wall, the folded arms, the straight back, and the companion standing ready nearby with a timer.
 
-Do not include: any text, letters, numbers, captions, arrows, watermarks or logos; no stopwatch face showing digits; no chair with armrests; no chair standing free in the middle of the room; no patient testing alone; no gym equipment or yoga clothing.
+Do not include, under any circumstances: ARROWS or motion lines of any kind, and no text, letters, numbers, captions, labels, watermarks or logos anywhere in the picture — the app prints its own instructions beside the image, so an arrow both duplicates them and looks wrong; no stopwatch face showing digits; no chair with armrests; no chair standing free in the middle of the room; no patient testing alone; no gym equipment or yoga clothing.
 
 Aspect ratio 3:4 portrait.
 ```
@@ -574,7 +586,7 @@ Style: flat vector-style medical illustration with soft cel shading and clean co
 
 Must be clearly visible: the chair against the wall at one end, the turning marker at the other, the completely clear walking path between them, and the companion timing nearby.
 
-Do not include: any text, letters, numbers, captions, arrows, measurements, watermarks or logos; no stopwatch face showing digits; no rugs, cables or furniture in the walking path; no running or hurrying; no gym equipment or yoga clothing.
+Do not include, under any circumstances: ARROWS or motion lines of any kind, and no text, letters, numbers, captions, measurements, labels, watermarks or logos anywhere in the picture — the app prints its own instructions beside the image, so an arrow both duplicates them and looks wrong; no stopwatch face showing digits; no rugs, cables or furniture in the walking path; no running or hurrying; no gym equipment or yoga clothing.
 
 Aspect ratio 4:3 landscape.
 ```
@@ -596,7 +608,7 @@ Style: flat vector-style medical illustration with soft cel shading and clean co
 
 Must be clearly visible: the single tablet, the full glass of plain clear water, her upright seated posture, and the morning light.
 
-Do not include: any text, letters, numbers, captions, arrows, watermarks or logos; absolutely NO coffee cup, tea cup, milk, juice or any other drink; no food or breakfast anywhere in the scene; no bed or lying down; no pill bottles with labels.
+Do not include, under any circumstances: ARROWS or motion lines of any kind, and no text, letters, numbers, captions, labels, watermarks or logos anywhere in the picture — the app prints its own instructions beside the image, so an arrow both duplicates them and looks wrong; absolutely NO coffee cup, tea cup, milk, juice or any other drink; no food or breakfast anywhere in the scene; no bed or lying down; no pill bottles with labels.
 
 Aspect ratio 4:3 landscape.
 ```
@@ -618,7 +630,7 @@ Style: flat vector-style medical illustration with soft cel shading and clean co
 
 Must be clearly visible: the small syringe held at a shallow angle against the upper arm, the nurse's blue scrubs, and the patient's calm, relaxed expression.
 
-Do not include: any text, letters, numbers, captions, arrows, watermarks or logos; no large or frightening needle; no blood; no intravenous drip, tubing or infusion stand; no anxious or pained expression; no hospital bed.
+Do not include, under any circumstances: ARROWS or motion lines of any kind, and no text, letters, numbers, captions, labels, watermarks or logos anywhere in the picture — the app prints its own instructions beside the image, so an arrow both duplicates them and looks wrong; no large or frightening needle; no blood; no intravenous drip, tubing or infusion stand; no anxious or pained expression; no hospital bed.
 
 Aspect ratio 4:3 landscape.
 ```
@@ -640,7 +652,7 @@ Style: flat vector-style medical illustration with soft cel shading and clean co
 
 Must be clearly visible: the drip bag and line, the comfortable reclining chair, the glass of water within reach, and the relaxed unworried patient.
 
-Do not include: any text, letters, numbers, captions, arrows, watermarks or logos; no hospital bed or ward; no monitors, wires or alarming medical machinery; no blood; no anxious or pained expression; no syringe.
+Do not include, under any circumstances: ARROWS or motion lines of any kind, and no text, letters, numbers, captions, labels, watermarks or logos anywhere in the picture — the app prints its own instructions beside the image, so an arrow both duplicates them and looks wrong; no hospital bed or ward; no monitors, wires or alarming medical machinery; no blood; no anxious or pained expression; no syringe.
 
 Aspect ratio 4:3 landscape.
 ```
@@ -662,7 +674,7 @@ Style: flat vector-style medical illustration with soft cel shading and clean co
 
 Must be clearly visible: the pen injector held against the abdomen at a shallow angle, that she is seated, and the fridge in the background.
 
-Do not include: any text, letters, numbers, captions, arrows, watermarks or logos; no visible long needle; no blood; no standing up while injecting; no anxious or pained expression; no hospital setting or nurse - this is done at home, alone.
+Do not include, under any circumstances: ARROWS or motion lines of any kind, and no text, letters, numbers, captions, labels, watermarks or logos anywhere in the picture — the app prints its own instructions beside the image, so an arrow both duplicates them and looks wrong; no visible long needle; no blood; no standing up while injecting; no anxious or pained expression; no hospital setting or nurse - this is done at home, alone.
 
 Aspect ratio 4:3 landscape.
 ```
@@ -684,7 +696,7 @@ Style: flat vector-style medical illustration with soft cel shading and clean co
 
 Must be clearly visible: TWO small syringes, the shallow injection angle, and the patient's calm relaxed expression.
 
-Do not include: any text, letters, numbers, captions, arrows, watermarks or logos; no large or frightening needles; no blood; no intravenous drip or infusion stand; no anxious or pained expression; no hospital bed.
+Do not include, under any circumstances: ARROWS or motion lines of any kind, and no text, letters, numbers, captions, labels, watermarks or logos anywhere in the picture — the app prints its own instructions beside the image, so an arrow both duplicates them and looks wrong; no large or frightening needles; no blood; no intravenous drip or infusion stand; no anxious or pained expression; no hospital bed.
 
 Aspect ratio 4:3 landscape.
 ```
@@ -704,7 +716,7 @@ Style: flat vector-style medical illustration with soft cel shading and clean co
 
 Must be clearly visible: the lit bedside lamp within reach, the completely clear floor path, and the slippers beside the bed.
 
-Do not include: any text, letters, numbers, captions, arrows, watermarks or logos; no loose rugs or mats; no trailing electrical cables; no clutter, boxes or shoes on the floor; no dark or gloomy lighting; no hospital equipment.
+Do not include, under any circumstances: ARROWS or motion lines of any kind, and no text, letters, numbers, captions, labels, watermarks or logos anywhere in the picture — the app prints its own instructions beside the image, so an arrow both duplicates them and looks wrong; no loose rugs or mats; no trailing electrical cables; no clutter, boxes or shoes on the floor; no dark or gloomy lighting; no hospital equipment.
 
 Aspect ratio 4:3 landscape.
 ```
@@ -724,7 +736,7 @@ Style: flat vector-style medical illustration with soft cel shading and clean co
 
 Must be clearly visible: both wall-mounted grab rails, the non-slip mat, the shower stool, and the bright even lighting.
 
-Do not include: any text, letters, numbers, captions, arrows, watermarks or logos; no wet or shiny puddled floor outside the shower; no loose towels or clutter on the floor; no dark corners; no hospital equipment; no bathtub with a high side to climb over.
+Do not include, under any circumstances: ARROWS or motion lines of any kind, and no text, letters, numbers, captions, labels, watermarks or logos anywhere in the picture — the app prints its own instructions beside the image, so an arrow both duplicates them and looks wrong; no wet or shiny puddled floor outside the shower; no loose towels or clutter on the floor; no dark corners; no hospital equipment; no bathtub with a high side to climb over.
 
 Aspect ratio 4:3 landscape.
 ```
@@ -744,7 +756,7 @@ Style: flat vector-style medical illustration with soft cel shading and clean co
 
 Must be clearly visible: the full-length handrail, the contrasting edge marking on every step, the bright lighting, and the completely clear steps.
 
-Do not include: any text, letters, numbers, captions, arrows, watermarks or logos; no objects, boxes or shoes left on any step; no missing or broken handrail; no loose stair carpet; no dark or shadowy stairwell.
+Do not include, under any circumstances: ARROWS or motion lines of any kind, and no text, letters, numbers, captions, labels, watermarks or logos anywhere in the picture — the app prints its own instructions beside the image, so an arrow both duplicates them and looks wrong; no objects, boxes or shoes left on any step; no missing or broken handrail; no loose stair carpet; no dark or shadowy stairwell.
 
 Aspect ratio 3:4 portrait.
 ```
@@ -764,7 +776,7 @@ Style: flat vector-style medical illustration with soft cel shading and clean co
 
 Must be clearly visible: the everyday items stored within easy reach at waist-to-shoulder height, the high shelves left empty, the dry clear floor, and the sturdy seat.
 
-Do not include: any text, letters, numbers, captions, arrows, watermarks or logos; no step stool, ladder or chair used for climbing; no heavy items stored high up; no wet or greasy floor; no trailing cables; no clutter on the floor.
+Do not include, under any circumstances: ARROWS or motion lines of any kind, and no text, letters, numbers, captions, labels, watermarks or logos anywhere in the picture — the app prints its own instructions beside the image, so an arrow both duplicates them and looks wrong; no step stool, ladder or chair used for climbing; no heavy items stored high up; no wet or greasy floor; no trailing cables; no clutter on the floor.
 
 Aspect ratio 4:3 landscape.
 ```
@@ -786,7 +798,7 @@ Style: flat vector-style medical illustration with soft cel shading and clean co
 
 Must be clearly visible: the closed-heel flat non-slip shoes, the handrail at the steps, the even unbroken dry path, and the clear ground.
 
-Do not include: any text, letters, numbers, captions, arrows, watermarks or logos; no loose sandals, flip-flops, slippers or high heels; no wet, mossy or broken paving; no garden hoses, plant pots or tools on the path; no rain or poor light.
+Do not include, under any circumstances: ARROWS or motion lines of any kind, and no text, letters, numbers, captions, labels, watermarks or logos anywhere in the picture — the app prints its own instructions beside the image, so an arrow both duplicates them and looks wrong; no loose sandals, flip-flops, slippers or high heels; no wet, mossy or broken paving; no garden hoses, plant pots or tools on the path; no rain or poor light.
 
 Aspect ratio 4:3 landscape.
 ```
@@ -806,7 +818,7 @@ Style: flat vector-style illustration with soft cel shading and clean confident 
 
 Must be clearly visible: each food item separate and individually recognisable, especially the tofu, the small dried fish and the dark leafy greens.
 
-Do not include: any text, letters, numbers, labels, captions, arrows, watermarks or logos; no supplement pills, tablets, capsules or supplement bottles; no packaged branded products; no cheese-heavy Western spread; no raw meat.
+Do not include, under any circumstances: ARROWS or motion lines of any kind, and no text, letters, numbers, captions, labels, watermarks or logos anywhere in the picture — the app prints its own instructions beside the image, so an arrow both duplicates them and looks wrong; no supplement pills, tablets, capsules or supplement bottles; no packaged branded products; no cheese-heavy Western spread; no raw meat.
 
 Aspect ratio 4:3 landscape.
 ```
@@ -826,7 +838,7 @@ Style: flat vector-style illustration with soft cel shading and clean confident 
 
 Must be clearly visible: the gentle low morning sun, the uncovered forearms and lower legs, the sun hat, and each food item individually recognisable.
 
-Do not include: any text, letters, numbers, labels, captions, arrows, watermarks or logos; no supplement pills, tablets, capsules or supplement bottles; no harsh midday sun or sunburn; no sunbathing in swimwear; no beach scene; no packaged branded products.
+Do not include, under any circumstances: ARROWS or motion lines of any kind, and no text, letters, numbers, captions, labels, watermarks or logos anywhere in the picture — the app prints its own instructions beside the image, so an arrow both duplicates them and looks wrong; no supplement pills, tablets, capsules or supplement bottles; no harsh midday sun or sunburn; no sunbathing in swimwear; no beach scene; no packaged branded products.
 
 Aspect ratio 4:3 landscape.
 ```
