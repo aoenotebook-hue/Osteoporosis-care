@@ -1181,6 +1181,28 @@
    * an undifferentiated stack of cards; a rule and a heading give each topic
    * a visible start.
    */
+  /**
+   * Renders one picture or clip, or nothing at all when the file has not been
+   * uploaded yet. Both the Move tab and the four self-care tabs go through
+   * here, so the copy-protection attributes cannot drift apart between them.
+   */
+  function mediaBlock(media, altText) {
+    if (!media) return '';
+    if (media.type === 'video') {
+      return '<video class="exercise-media" controls controlsList="nodownload noplaybackrate"' +
+        ' disablePictureInPicture oncontextmenu="return false" preload="none" playsinline' +
+        ' src="' + esc(media.src) + '"' +
+        (media.poster ? ' poster="' + esc(media.poster) + '"' : '') + '></video>';
+    }
+    return '<img class="exercise-media" loading="lazy" draggable="false" src="' + esc(media.src) +
+      '" alt="' + esc(altText || '') + '">';
+  }
+
+  /** The self-care half: nothing renders until the file exists. */
+  function selfcareMedia(key, altText) {
+    return mediaBlock(C.getSelfcareMedia(key), altText);
+  }
+
   function sectionHead(icon, titleKey, subKey) {
     return '<div class="section-head"><span class="sec-ico">' + icon + '</span>' +
       '<h2>' + esc(tr(titleKey)) +
@@ -1529,6 +1551,7 @@
 
     html += infoCard('💡', 'drugWhatItDoes', med.whatItDoes);
     html += sectionHead('📋', 'secDrugHowTo');
+    html += selfcareMedia('med_' + med.id, loc(med.name));
     html += infoCard('📋', 'drugHowToTake', med.instructions);
     html += infoCard('⏰', 'drugMissedDose', med.missedDose);
     html += infoCard('🩺', 'drugSideEffects', med.sideEffects);
@@ -1709,6 +1732,7 @@
     var max = foods[0].mgPerServing;
 
     var html = '<div class="card">' +
+      selfcareMedia('food_calcium', tr('secFoodCalcium')) +
       '<p>' + esc(tr('foodCalciumKnowledgeBody')) + '</p>' +
       '<p class="field-hint">' + esc(tr('foodTargetLabel')) + ': <strong>' + target + ' ' + esc(tr('calciumMgUnit')) + '</strong> · ' +
       esc(tr('foodBarNote')) + '</p>' +
@@ -1755,6 +1779,7 @@
     var sunny = [1, 3, 5];
     var html = '<div class="card"><div class="card-head"><span class="ico">☀️</span><h3>' +
       esc(tr('foodSunTitle')) + '</h3></div>' +
+      selfcareMedia('food_vitamin_d', tr('secFoodVitD')) +
       '<div class="sun-graphic">' +
       days.map(function (d, i) {
         var on = sunny.indexOf(i) !== -1;
@@ -1932,13 +1957,7 @@
       html += '<div class="card"><p class="muted" style="margin:0;">' +
         esc(tr('moveHowOften')) + ': <strong>' + esc(tr(group.freqKey)) + '</strong></p></div>';
       html += exercises.filter(function (ex) { return ex.group === group.id; }).map(function (ex) {
-        var media = C.getExerciseMedia(ex.id);
-        var mediaHtml = '';
-        if (media) {
-          mediaHtml = media.type === 'video'
-            ? '<video class="exercise-media" controls controlsList="nodownload noplaybackrate" disablePictureInPicture oncontextmenu="return false" preload="none" playsinline src="' + esc(media.src) + '"' + (media.poster ? ' poster="' + esc(media.poster) + '"' : '') + '></video>'
-            : '<img class="exercise-media" loading="lazy" draggable="false" src="' + esc(media.src) + '" alt="' + esc(loc(ex.name)) + '">';
-        }
+        var mediaHtml = mediaBlock(C.getExerciseMedia(ex.id), loc(ex.name));
         var reqs = ex.requires.length
           ? ex.requires.map(function (r) { return '<span class="tag">' + esc(tr(reqKey[r])) + '</span>'; }).join('')
           : '<span class="tag">' + esc(tr('reqNone')) + '</span>';
@@ -1990,6 +2009,7 @@
     html += sectionHead('🔍', 'secSafetyRooms');
     rooms.forEach(function (room) {
       html += '<div class="card"><div class="card-head"><span class="ico">' + room.icon + '</span><h3>' + esc(tr(room.labelKey)) + '</h3></div>';
+      html += selfcareMedia('safety_' + room.id, tr(room.labelKey));
       html += C.SAFETY_ITEMS.filter(function (i) { return i.room === room.id; }).map(function (item) {
         var isDone = checked.indexOf(item.id) !== -1;
         return '<button type="button" class="safety-item ' + (isDone ? 'done' : 'todo') + '" data-action="toggle-safety" data-item-id="' + item.id + '" aria-pressed="' + isDone + '">' +
@@ -2131,6 +2151,7 @@
     var latest = latestEntry(tests);
     var norm = C.chairStandNorm(state.profile.age || 70, state.profile.sex || 'female');
     var html = '<div class="chart-card"><div class="card-head"><span class="ico">🪑</span><h3>' + esc(tr('chairStandTitle')) + '</h3></div>';
+    html += selfcareMedia('test_chair_stand', tr('chairStandTitle'));
     html += '<p class="muted">' + esc(tr('chairStandInstructions')) + '</p>';
     html += '<div class="card warn" style="margin:10px 0;"><p style="margin:0;">⚠ ' + esc(tr('selfTestSafety')) + '</p></div>';
     if (latest) {
@@ -2160,6 +2181,7 @@
     var tests = state.tracking.tugTests;
     var latest = latestEntry(tests);
     var html = '<div class="chart-card"><div class="card-head"><span class="ico">⏱️</span><h3>' + esc(tr('tugTitle')) + '</h3></div>';
+    html += selfcareMedia('test_tug', tr('tugTitle'));
     html += '<p class="muted">' + esc(tr('tugInstructions')) + '</p>';
     if (latest) {
       html += '<p class="chart-latest">' + latest.seconds + ' <span class="muted" style="font-size:1rem;">' + esc(tr('seconds')) + '</span></p>';

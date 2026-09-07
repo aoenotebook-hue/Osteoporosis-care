@@ -66,7 +66,7 @@ prints the Thai/English instructions itself.
 
 ## Part B — Self-care media (14 items)
 
-Put these in `media/selfcare/`. **These do not display yet** — see below.
+Put these in `media/selfcare/`. **All four tabs render these now** — see below.
 
 ### Self-tests (2) — Track tab
 
@@ -111,22 +111,35 @@ the patient something to compare their own home against.
 
 **14 images, 3 optional videos.**
 
-### Wiring up Part B
+### These are wired up and ready
 
-The Move tab is the only place that calls `getExerciseMedia()`. To show any of
-Part B, each tab needs the same gated media pattern — roughly:
+The Medicine, Track, Safety and Food tabs all render self-care media now, with
+the same gating as the exercises: nothing appears until the file exists, so a
+half-finished upload never leaves a broken box.
+
+Drop the file in `media/selfcare/` and add one line to `SELFCARE_MEDIA` in
+`app-core.js`:
 
 ```js
 var SELFCARE_MEDIA = {
-  med_teriparatide: { type: 'image', src: 'media/selfcare/med_teriparatide.jpg' }
+  med_teriparatide: { type: 'image', src: 'media/selfcare/med_teriparatide.jpg' },
+  safety_bathroom:  { type: 'image', src: 'media/selfcare/safety_bathroom.jpg' }
 };
-// then, wherever the section renders:
-var media = SELFCARE_MEDIA[key];
-if (media) html += '<img class="exercise-media" loading="lazy" src="' + esc(media.src) + '" alt="...">';
 ```
 
-Roughly an hour's work across the four tabs, plus a test. Ask and I'll do it —
-best done once you know which images you actually have.
+The key must be exactly the filename without its extension. `SELFCARE_MEDIA_KEYS`
+lists all 14 valid keys, and `t15_selfcare_media` checks they match the filenames
+in this brief — so a picture cannot be generated under a name nothing looks up.
+
+Where each one appears:
+
+| Key | Where it shows |
+|---|---|
+| `med_<medicine id>` | Medicine tab, at the top of "How to take it properly" |
+| `test_chair_stand`, `test_tug` | Track tab, above each self-test's instructions |
+| `safety_<room>` | Safety tab, at the top of that room's checklist |
+| `food_calcium` | Food tab, heading the calcium chart |
+| `food_vitamin_d` | Food tab, heading the vitamin D card |
 
 ---
 
