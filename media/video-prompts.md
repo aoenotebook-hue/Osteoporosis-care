@@ -3,6 +3,10 @@
 Twelve clips: seven balance exercises, five posture exercises. Companion to
 `media-asset-list.md`, which holds the still-image prompts.
 
+> **Looking for the strength clips, the self-care clips or the app icons?**
+> They are in [`all-media-prompts.md`](all-media-prompts.md), which lists all
+> 53 media files in filename order. This file covers batches 1 and 3 only.
+
 ## Read this before generating anything
 
 **AI video is far less reliable than AI stills for this job.** The images

@@ -20,6 +20,12 @@ review, all built around a **risk-tier + balance-level resolver**.
   sheets.
 - `manifest.webmanifest`, `sw.js`, `icon.svg` — installability (Add to
   Home Screen) and offline app-shell caching.
+- `media/all-media-prompts.md` — every media file the app can use (53:
+  17 exercise stills, 17 exercise clips, 14 self-care stills, 3 self-care
+  clips, 2 app icons) in filename order, each with a generation prompt.
+  `media-asset-list.md` and `video-prompts.md` hold the same prompts
+  grouped by topic; `all-prompts-batch.txt` batches the stills for tools
+  that generate in a loop.
 - `media/osteo-video-clip-list.md` — filming checklist, and how to add a
   clip to the Move tab's media manifest.
 

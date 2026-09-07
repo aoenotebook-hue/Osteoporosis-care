@@ -135,6 +135,11 @@ best done once you know which images you actually have.
 Each prompt is self-contained: copy one, paste it into your image tool, done.
 No need to combine them with anything else.
 
+**Everything in one list:** [`all-media-prompts.md`](all-media-prompts.md) has all
+53 media files — every still, every clip and the two app icons — in filename
+order with a complete prompt each. Use that if you want one place to work
+through; the files below group the same prompts by topic instead.
+
 **Video prompts:** [`video-prompts.md`](video-prompts.md) holds 10-second clip
 prompts for the balance and posture exercises (batches 1 and 3), with a note on
 why AI video is a much riskier bet than AI stills for demonstrating a movement.
