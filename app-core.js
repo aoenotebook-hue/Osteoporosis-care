@@ -1077,6 +1077,26 @@
     return getExerciseMedia(exerciseId) !== null;
   }
 
+  /**
+   * The same gating for the self-care pictures on the Medicine, Track, Safety
+   * and Food tabs. Keys are fixed strings the tabs ask for by name:
+   *
+   *   med_<medication class id>   the five medicines
+   *   test_chair_stand, test_tug  the two self-tests
+   *   safety_<room id>            the five rooms of the home check
+   *   food_calcium, food_vitamin_d
+   *
+   * SELFCARE_MEDIA_KEYS lists every key a tab can ask for, so a test can
+   * check the manifest never carries a key nothing renders - a file that
+   * would be uploaded, forgotten, and never shown.
+   */
+  var SELFCARE_MEDIA = {};
+
+  function getSelfcareMedia(key) {
+    var entry = SELFCARE_MEDIA[key];
+    return entry && entry.src ? entry : null;
+  }
+
   function getExercisesForPatient(level, avoidTags) {
     avoidTags = avoidTags || [];
     return EXERCISE_LIST.filter(function (ex) {
@@ -1697,6 +1717,18 @@
     { id: 'fearOfFalling', field: 'fearOfFalling', type: 'boolean', labelKey: 'qFearFalling' }
   ];
 
+  /**
+   * Every key a tab can ask getSelfcareMedia for. Built from the medication
+   * and safety data rather than typed out, so adding a medicine or a room
+   * cannot leave its picture silently unreachable.
+   */
+  var SELFCARE_MEDIA_KEYS = ['test_chair_stand', 'test_tug', 'food_calcium', 'food_vitamin_d']
+    .concat(MED_CLASSES.map(function (m) { return 'med_' + m.id; }))
+    .concat(SAFETY_ITEMS.reduce(function (rooms, item) {
+      if (rooms.indexOf(item.room) === -1) rooms.push(item.room);
+      return rooms;
+    }, []).map(function (room) { return 'safety_' + room; }));
+
   return {
     SCHEMA_VERSION: SCHEMA_VERSION,
     BONE_STATUS: BONE_STATUS,
@@ -1751,6 +1783,9 @@
     EXERCISE_LIST: EXERCISE_LIST,
     MEDIA_MANIFEST: MEDIA_MANIFEST,
     getExerciseMedia: getExerciseMedia,
+    SELFCARE_MEDIA: SELFCARE_MEDIA,
+    SELFCARE_MEDIA_KEYS: SELFCARE_MEDIA_KEYS,
+    getSelfcareMedia: getSelfcareMedia,
     hasExerciseMedia: hasExerciseMedia,
     getExercisesForPatient: getExercisesForPatient,
     SAFETY_ITEMS: SAFETY_ITEMS,

@@ -9,6 +9,10 @@ review, all built around a **risk-tier + balance-level resolver**.
 
 - `index.html` — the app shell: eight tabs, forms, charts, and state in
   `localStorage` under `OSTEO_STATE`. No build step.
+- Media is gated by two manifests in `app-core.js`: `MEDIA_MANIFEST` for the
+  Move tab's exercises and `SELFCARE_MEDIA` for the Medicine, Track, Safety
+  and Food tabs. Nothing renders until a file is listed there, so a partly
+  finished upload never shows a broken box.
 - `app-core.js` — pure, dependency-free logic and content shared by the
   browser and the Node test suite: the `CONTENT` TH/EN dictionary, the
   tier and balance-level resolvers, medication schedules and care
