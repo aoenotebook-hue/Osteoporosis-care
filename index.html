@@ -70,7 +70,9 @@
   @media print {
     body > * { display: none !important; }
     body::after {
-      content: 'ดูแลกระดูกพรุน — เนื้อหาในแอปนี้ไม่อนุญาตให้พิมพ์ / This content is not available for printing.';
+      /* Set from JS so the notice follows the language the patient chose;
+         CSS cannot read app state on its own. */
+      content: var(--print-notice, '');
       display: block; padding: 40px; font-size: 16px;
     }
   }
@@ -808,8 +810,8 @@
       var hit = s.points.filter(function (p) { return p.label === label; })[0];
       return hit ? String(hit.value) : '—';
     };
-    return '<details class="table-view"><summary>' + esc(state.lang === 'th' ? 'ดูเป็นตาราง' : 'View as table') + '</summary>' +
-      '<table class="data"><thead><tr><th>' + esc(state.lang === 'th' ? 'วันที่' : 'Date') + '</th>' +
+    return '<details class="table-view"><summary>' + esc(tr('chartViewAsTable')) + '</summary>' +
+      '<table class="data"><thead><tr><th>' + esc(tr('chartDateHeader')) + '</th>' +
       series.map(function (s) { return '<th>' + esc(s.name || '') + (unit ? ' (' + esc(unit) + ')' : '') + '</th>'; }).join('') +
       '</tr></thead><tbody>' +
       labels.map(function (label) {
@@ -820,8 +822,8 @@
   }
 
   function tableView(points, unit, valueHeader, labelFormatter) {
-    return '<details class="table-view"><summary>' + esc(state.lang === 'th' ? 'ดูเป็นตาราง' : 'View as table') + '</summary>' +
-      '<table class="data"><thead><tr><th>' + esc(state.lang === 'th' ? 'วันที่' : 'Date') + '</th><th>' + esc(valueHeader || '') + (unit ? ' (' + esc(unit) + ')' : '') + '</th></tr></thead><tbody>' +
+    return '<details class="table-view"><summary>' + esc(tr('chartViewAsTable')) + '</summary>' +
+      '<table class="data"><thead><tr><th>' + esc(tr('chartDateHeader')) + '</th><th>' + esc(valueHeader || '') + (unit ? ' (' + esc(unit) + ')' : '') + '</th></tr></thead><tbody>' +
       points.map(function (p) { return '<tr><td>' + esc(labelFormatter(p.label)) + '</td><td>' + esc(String(p.value)) + '</td></tr>'; }).join('') +
       '</tbody></table></details>';
   }
@@ -838,6 +840,7 @@
       hnEl.hidden = true;
     }
     $('#langToggleBtn').textContent = state.lang === 'th' ? 'EN' : 'ไทย';
+    document.documentElement.style.setProperty('--print-notice', JSON.stringify(tr('printBlocked')));
     document.documentElement.lang = state.lang;
 
     var screen = $('#screen');
@@ -1557,9 +1560,7 @@
     html += infoCard('🩺', 'drugSideEffects', med.sideEffects);
     if (med.dentalCare) {
       html += '<div class="card warn"><div class="card-head"><span class="ico">🦷</span><h3>' + esc(tr('drugDentalNote')) + '</h3></div>' +
-        '<p>' + esc(state.lang === 'th'
-          ? 'แจ้งทันตแพทย์ทุกครั้งว่าท่านใช้ยานี้ ควรตรวจและรักษาฟันที่มีปัญหาให้เรียบร้อยก่อนเริ่มยา และหลีกเลี่ยงการถอนฟันหรือผ่าตัดในช่องปากโดยไม่ปรึกษาแพทย์ผู้สั่งยา เพราะมีโอกาสเกิดภาวะกระดูกขากรรไกรตายได้แม้พบไม่บ่อย'
-          : 'Always tell your dentist you take this medicine. Have any dental problems treated before starting, and avoid tooth extraction or oral surgery without checking with the doctor who prescribed it — jawbone problems are uncommon but possible.') + '</p></div>';
+        '<p>' + esc(tr('drugDentalBody')) + '</p></div>';
     }
     html += infoCard('📞', 'drugTellDoctor', med.tellDoctor);
 
@@ -1831,7 +1832,7 @@
       html += pr.sufficient
         ? '<p class="status-line good">✓ ' + esc(tr('nutritionEnough')) + '</p>'
         : '<p>' + esc(tr('nutritionGap')) + ' ' + pr.gapG + ' ' + esc(tr('nutritionProteinGap')) + '</p>' +
-          '<p class="muted">' + esc(tr('nutritionProteinIdea')) + ' ' + esc(state.lang === 'th' ? ('ไข่ ' + pr.exampleEggs + ' ฟองต่อวัน') : (pr.exampleEggs + ' eggs a day')) + '</p>';
+          '<p class="muted">' + esc(tr('nutritionProteinIdea')) + ' ' + esc(tr('nutritionEggsPerDay').replace('{n}', pr.exampleEggs)) + '</p>';
       html += '</div>';
     }
 
