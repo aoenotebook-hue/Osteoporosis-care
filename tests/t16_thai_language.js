@@ -40,11 +40,32 @@ function run() {
   cases.push({
     name: 'one word for taking medicine and food, not three',
     fn: function () {
-      // กิน / ทาน / รับประทาน all appeared for the same act. The app's rule is
-      // everyday words, so กิน is the one that stays.
-      var bad = offenders(/ทาน|รับประทาน/);
+      // กิน / ทาน / รับประทาน all appeared for the same act. The doctor chose
+      // รับประทาน, the register printed on Thai pharmacy labels.
+      //
+      // Two traps in checking this. "ทาน" is a substring of "รับประทาน", so
+      // the allowed word has to be removed before looking for the banned one.
+      // And "กิน" is a substring of "เกิน" (to exceed), which appears in
+      // "ไม่เกินวันละ 2 แก้ว" and must survive untouched.
+      var bad = allThai().filter(function (x) {
+        var stripped = x.th.split('รับประทาน').join('');
+        return /ทาน/.test(stripped) || /(?:^|[^เ])กิน/.test(x.th);
+      }).map(function (x) { return x.src + ' → "' + x.th.slice(0, 50) + '"'; });
       helpers.assertEqual(bad.length, 0,
-        'ใช้ "กิน" ให้เหมือนกันทั้งแอป พบ ทาน/รับประทาน ที่: ' + bad.join(' | '));
+        'ใช้ "รับประทาน" ให้เหมือนกันทั้งแอป พบ กิน/ทาน ที่: ' + bad.join(' | '));
+    }
+  });
+
+  cases.push({
+    name: 'the formal wording did not swallow เกิน along the way',
+    fn: function () {
+      // A careless find-and-replace of กิน turns "ไม่เกินวันละ 2 แก้ว" into
+      // nonsense, and it is advice about alcohol, so it matters.
+      var kept = allThai().filter(function (x) { return /ไม่เกินวันละ/.test(x.th); });
+      helpers.assert(kept.length >= 2, '"ไม่เกินวันละ" หายไป — น่าจะโดนแทนที่คำผิด');
+      allThai().forEach(function (x) {
+        helpers.assert(!/เรับประทาน/.test(x.th), x.src + ' เพี้ยนจากการแทนที่คำ: ' + x.th.slice(0, 40));
+      });
     }
   });
 
