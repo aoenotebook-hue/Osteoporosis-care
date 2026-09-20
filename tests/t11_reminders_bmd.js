@@ -74,7 +74,10 @@ function run() {
       core.MED_CLASSES.forEach(function (med) {
         helpers.assert(!!med.icon, med.id + ' is missing an icon');
         helpers.assert(med.route && med.route.th && med.route.en, med.id + ' is missing a TH/EN route');
-        helpers.assert(med.cadenceLabel && med.cadenceLabel.th && med.cadenceLabel.en, med.id + ' is missing a TH/EN cadence label');
+        helpers.assert(med.schedules && med.schedules.length, med.id + ' has no schedule');
+        med.schedules.forEach(function (sc) {
+          helpers.assert(sc.label && sc.label.th && sc.label.en, med.id + '/' + sc.id + ' is missing a TH/EN label');
+        });
       });
     }
   });

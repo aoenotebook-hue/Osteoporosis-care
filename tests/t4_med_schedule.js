@@ -8,7 +8,7 @@ function run() {
   cases.push({
     name: 'weekly bisphosphonate adds 7 days across a month boundary',
     fn: function () {
-      helpers.assertEqual(core.computeNextDue('bisphosphonate_weekly', '2026-01-29'), '2026-02-05');
+      helpers.assertEqual(core.computeNextDue('alendronate', '2026-01-29'), '2026-02-05');
     }
   });
 
@@ -96,7 +96,7 @@ function run() {
   cases.push({
     name: 'bisphosphonates and denosumab are flagged for the dental warning',
     fn: function () {
-      ['bisphosphonate_weekly', 'denosumab', 'zoledronate'].forEach(function (id) {
+      ['alendronate', 'risedronate', 'ibandronate', 'denosumab', 'zoledronate'].forEach(function (id) {
         helpers.assertEqual(core.getMedClass(id).dentalCare, true, id + ' should carry the dental note flag');
       });
     }

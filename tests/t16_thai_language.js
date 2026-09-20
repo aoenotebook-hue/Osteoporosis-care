@@ -17,7 +17,7 @@ function allThai() {
       fields.forEach(function (f) { if (o[f] && o[f].th) out.push({ src: name + '.' + (o.id || '') + '.' + f, th: o[f].th }); });
     });
   }
-  walk(core.MED_CLASSES, 'MED', ['name', 'cadenceLabel', 'route', 'whatItDoes', 'instructions', 'missedDose', 'sideEffects', 'tellDoctor']);
+  walk(core.MED_CLASSES, 'MED', ['name', 'route', 'whatItDoes', 'instructions', 'missedDose', 'sideEffects', 'tellDoctor']);
   walk(core.EXERCISE_LIST, 'EX', ['name', 'howTo', 'amount']);
   walk(core.SAFETY_ITEMS, 'SAFETY', ['name']);
   walk(core.CALCIUM_FOODS, 'FOOD', ['name', 'serving']);

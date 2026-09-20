@@ -9,14 +9,25 @@ function run() {
   var cases = [];
 
   cases.push({
-    name: 'nothing renders until a file is actually uploaded',
+    name: 'a key with no file behind it still renders nothing',
     fn: function () {
-      // The manifest ships empty. A missing file must leave no broken box.
-      core.SELFCARE_MEDIA_KEYS.forEach(function (key) {
-        helpers.assertEqual(core.getSelfcareMedia(key), null, key + ' should be gated while the manifest is empty');
-      });
+      // The manifest is populated now, so the gate is proved the other way:
+      // a key nobody uploaded must stay silent rather than show a broken box.
       helpers.assertEqual(core.getSelfcareMedia('no_such_key'), null);
       helpers.assertEqual(core.getSelfcareMedia(undefined), null);
+      helpers.assertEqual(core.getSelfcareMedia(''), null);
+    }
+  });
+
+  cases.push({
+    name: 'every key the app knows about has a file behind it',
+    fn: function () {
+      var fsx = require('fs');
+      core.SELFCARE_MEDIA_KEYS.forEach(function (key) {
+        var media = core.getSelfcareMedia(key);
+        helpers.assert(media !== null, key + ' has no manifest entry, so its tab shows nothing');
+        helpers.assert(fsx.existsSync(path.join(__dirname, '..', media.src)), media.src + ' is in the manifest but not on disk');
+      });
     }
   });
 
@@ -34,9 +45,14 @@ function run() {
   cases.push({
     name: 'there is a key for every medicine, room, self-test and food picture',
     fn: function () {
+      // Fewer keys than medicines is correct: the three oral bisphosphonates
+      // are taken identically, so one technique picture serves all three.
       helpers.assertEqual(core.SELFCARE_MEDIA_KEYS.length, 14);
+      helpers.assertEqual(core.medCareImageKey(core.getMedClass('alendronate')), 'med_oral_bisphosphonate');
+      helpers.assertEqual(core.medCareImageKey(core.getMedClass('risedronate')), 'med_oral_bisphosphonate');
+      helpers.assertEqual(core.medCareImageKey(core.getMedClass('denosumab')), 'med_denosumab');
       core.MED_CLASSES.forEach(function (med) {
-        helpers.assert(core.SELFCARE_MEDIA_KEYS.indexOf('med_' + med.id) !== -1,
+        helpers.assert(core.SELFCARE_MEDIA_KEYS.indexOf(core.medCareImageKey(med)) !== -1,
           med.id + ' has no media key, so adding that medicine would leave its picture unreachable');
       });
       var rooms = [];
@@ -62,7 +78,7 @@ function run() {
         helpers.assert(core.SELFCARE_MEDIA_KEYS.indexOf(key) !== -1,
           'index.html renders "' + key + '", which is not in SELFCARE_MEDIA_KEYS');
       });
-      helpers.assert(/selfcareMedia\('med_' \+ med\.id/.test(html), 'the Medicine tab must ask per medicine');
+      helpers.assert(/selfcareMedia\(C\.medCareImageKey\(med\)/.test(html), 'the Medicine tab must ask per medicine');
       helpers.assert(/selfcareMedia\('safety_' \+ room\.id/.test(html), 'the Safety tab must ask per room');
     }
   });
@@ -70,7 +86,8 @@ function run() {
   cases.push({
     name: 'all four tabs are wired, not just some',
     fn: function () {
-      [['med_', 'Medicine'], ['test_chair_stand', 'Track'], ['safety_', 'Safety'], ['food_calcium', 'Food']]
+      helpers.assert(/selfcareMedia\(C\.medCareImageKey/.test(html), 'Medicine tab is not wired up');
+      [['test_chair_stand', 'Track'], ['safety_', 'Safety'], ['food_calcium', 'Food']]
         .forEach(function (pair) {
           helpers.assert(html.indexOf("selfcareMedia('" + pair[0]) !== -1, pair[1] + ' tab is not wired up');
         });
@@ -99,10 +116,11 @@ function run() {
     name: 'the keys match the filenames the media brief tells the doctor to upload',
     fn: function () {
       // If these drift, files get generated under names nothing ever looks up.
-      var brief = fs.readFileSync(path.join(__dirname, '..', 'media', 'all-media-prompts.md'), 'utf8');
+      // Every file the manifest points at must exist; the brief is now a
+      // record of what was produced rather than a list of what is still owed.
       core.SELFCARE_MEDIA_KEYS.forEach(function (key) {
-        helpers.assert(brief.indexOf('media/selfcare/' + key + '.jpg') !== -1,
-          'the brief has no media/selfcare/' + key + '.jpg, so that picture would never be produced');
+        var media = core.getSelfcareMedia(key);
+        helpers.assert(media && /^media\/selfcare\//.test(media.src), key + ' does not point into media/selfcare/');
       });
     }
   });

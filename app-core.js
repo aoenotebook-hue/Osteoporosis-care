@@ -237,6 +237,7 @@
     drugPickClass: t('เลือกยาที่ท่านใช้อยู่', 'Select the medication you are taking'),
     drugStartDate: t('วันที่เริ่มยา หรือวันที่ได้รับครั้งล่าสุด', 'Start date, or date of your most recent dose'),
     drugSave: t('บันทึกยา', 'Save medication'),
+    drugPickSchedule: t('แพทย์สั่งให้ใช้แบบไหน', 'Which schedule were you given?'),
     drugChange: t('เปลี่ยนยา', 'Change medication'),
     drugNextDue: t('ครั้งถัดไป', 'Next dose due'),
     drugMarkTaken: t('บันทึกว่าได้รับยาแล้ว', 'Record dose taken'),
@@ -671,42 +672,90 @@
     return history.currentLevel;
   }
 
+  /**
+   * Each medicine carries the schedules it is actually prescribed on. The oral
+   * bisphosphonates are why: alendronate is usually weekly but also comes
+   * daily, risedronate comes daily, weekly and monthly, and ibandronate is
+   * monthly only. A patient has to be able to pick the one they were given.
+   *
+   * The first schedule is the default, and a medicine with only one shows no
+   * choice at all.
+   */
   var MED_CLASSES = [
     {
-      id: 'bisphosphonate_weekly',
-      icon: '💊', cadenceLabel: t('สัปดาห์ละครั้ง', 'Once a week'), route: t('ยาเม็ด รับประทานเองที่บ้าน', 'Tablet, taken at home'),
-      name: t('ยาเม็ดบิสฟอสโฟเนต (สัปดาห์ละครั้ง)', 'Oral bisphosphonate (once a week)'),
-      cadenceType: 'days',
-      intervalDays: 7,
+      id: 'alendronate',
+      icon: '💊', photo: 'media/meds/alendronate.jpg', careImage: 'oral_bisphosphonate',
+      name: t('ยาเม็ดอะเลนโดรเนต', 'Alendronate tablet'),
+      route: t('ยาเม็ด รับประทานเองที่บ้าน', 'Tablet, taken at home'),
       dentalCare: true,
+      schedules: [
+        { id: 'weekly', cadenceType: 'days', intervalDays: 7, label: t('สัปดาห์ละครั้ง (70 มก.)', 'Once a week (70mg)') },
+        { id: 'daily', cadenceType: 'days', intervalDays: 1, label: t('ทุกวัน (10 มก.)', 'Every day (10mg)') }
+      ],
       whatItDoes: t('ชะลอการสลายของเนื้อกระดูก ทำให้กระดูกแข็งแรงขึ้นและลดโอกาสกระดูกหัก', 'Slows down the breakdown of bone, making it stronger and less likely to break.'),
       instructions: t('รับประทานตอนเช้าขณะท้องว่างทันทีหลังตื่นนอน พร้อมน้ำเปล่า 1 แก้วเต็ม (ห้ามใช้ชา กาแฟ นม หรือน้ำผลไม้) หลังรับประทานยาให้นั่งหรือยืนตัวตรงอย่างน้อย 30 นาที ห้ามนอนราบ และรออย่างน้อย 30 นาทีก่อนรับประทานอาหาร ยาอื่น หรือแคลเซียม', 'Take it first thing in the morning on an empty stomach with a full glass of plain water — not tea, coffee, milk or juice. Stay sitting or standing upright for at least 30 minutes, do not lie down, and wait at least 30 minutes before food, other medicines or calcium.'),
-      missedDose: t('หากลืม ให้รับประทานในเช้าวันถัดไปเพียง 1 เม็ด แล้วกลับไปรับประทานวันเดิมของสัปดาห์ถัดไป ห้ามรับประทาน 2 เม็ดในวันเดียวกัน', 'If you forget, take one tablet the next morning, then go back to your usual day the following week. Never take two tablets on the same day.'),
+      missedDose: t('ถ้าลืมแบบสัปดาห์ละครั้ง ให้รับประทานในเช้าวันถัดไป 1 เม็ด แล้วกลับไปใช้วันเดิมของสัปดาห์ถัดไป ถ้าลืมแบบทุกวัน ให้ข้ามมื้อนั้นไปเลย ห้ามรับประทาน 2 เม็ดในวันเดียวกัน', 'On the weekly dose, take one tablet the next morning, then go back to your usual day. On the daily dose, skip the one you missed. Never take two tablets on the same day.'),
+      sideEffects: t('อาจแสบร้อนกลางอก กลืนลำบาก หรือปวดท้องได้ มักดีขึ้นเมื่อรับประทานยาถูกวิธีและไม่นอนราบหลังรับประทานยา หากแสบมากหรือกลืนเจ็บ ให้แจ้งแพทย์', 'It can cause heartburn, difficulty swallowing or stomach discomfort. This usually improves if you take it correctly and stay upright. Tell your doctor if it burns badly or hurts to swallow.'),
+      tellDoctor: t('มีปัญหาโรคไต ระดับแคลเซียมในเลือดต่ำ กำลังจะทำฟันหรือผ่าตัดช่องปาก หรือมีอาการปวดต้นขาด้านนอกเรื้อรัง', 'You have kidney problems or low blood calcium, you are about to have dental work or oral surgery, or you develop lasting pain in the outer thigh.')
+    },
+    {
+      id: 'risedronate',
+      icon: '💊', photo: 'media/meds/risedronate.jpg', careImage: 'oral_bisphosphonate',
+      name: t('ยาเม็ดไรซีโดรเนต', 'Risedronate tablet'),
+      route: t('ยาเม็ด รับประทานเองที่บ้าน', 'Tablet, taken at home'),
+      dentalCare: true,
+      schedules: [
+        { id: 'weekly', cadenceType: 'days', intervalDays: 7, label: t('สัปดาห์ละครั้ง (35 มก.)', 'Once a week (35mg)') },
+        { id: 'daily', cadenceType: 'days', intervalDays: 1, label: t('ทุกวัน (5 มก.)', 'Every day (5mg)') },
+        { id: 'monthly', cadenceType: 'months', intervalMonths: 1, label: t('เดือนละครั้ง (150 มก.)', 'Once a month (150mg)') }
+      ],
+      whatItDoes: t('ชะลอการสลายของเนื้อกระดูก ทำให้กระดูกแข็งแรงขึ้นและลดโอกาสกระดูกหัก', 'Slows down the breakdown of bone, making it stronger and less likely to break.'),
+      instructions: t('รับประทานตอนเช้าขณะท้องว่างทันทีหลังตื่นนอน พร้อมน้ำเปล่า 1 แก้วเต็ม (ห้ามใช้ชา กาแฟ นม หรือน้ำผลไม้) หลังรับประทานยาให้นั่งหรือยืนตัวตรงอย่างน้อย 30 นาที ห้ามนอนราบ และรออย่างน้อย 30 นาทีก่อนรับประทานอาหาร ยาอื่น หรือแคลเซียม', 'Take it first thing in the morning on an empty stomach with a full glass of plain water — not tea, coffee, milk or juice. Stay sitting or standing upright for at least 30 minutes, do not lie down, and wait at least 30 minutes before food, other medicines or calcium.'),
+      missedDose: t('ถ้าลืมแบบสัปดาห์ละครั้งหรือเดือนละครั้ง ให้รับประทานในเช้าวันถัดไป แล้วกลับไปใช้กำหนดเดิม ถ้าลืมแบบทุกวัน ให้ข้ามมื้อนั้นไป ห้ามรับประทาน 2 เม็ดในวันเดียวกัน', 'On the weekly or monthly dose, take it the next morning, then go back to your usual schedule. On the daily dose, skip the one you missed. Never take two tablets on the same day.'),
+      sideEffects: t('อาจแสบร้อนกลางอก กลืนลำบาก หรือปวดท้องได้ มักดีขึ้นเมื่อรับประทานยาถูกวิธีและไม่นอนราบหลังรับประทานยา หากแสบมากหรือกลืนเจ็บ ให้แจ้งแพทย์', 'It can cause heartburn, difficulty swallowing or stomach discomfort. This usually improves if you take it correctly and stay upright. Tell your doctor if it burns badly or hurts to swallow.'),
+      tellDoctor: t('มีปัญหาโรคไต ระดับแคลเซียมในเลือดต่ำ กำลังจะทำฟันหรือผ่าตัดช่องปาก หรือมีอาการปวดต้นขาด้านนอกเรื้อรัง', 'You have kidney problems or low blood calcium, you are about to have dental work or oral surgery, or you develop lasting pain in the outer thigh.')
+    },
+    {
+      id: 'ibandronate',
+      icon: '💊', photo: 'media/meds/ibandronate.jpg', careImage: 'oral_bisphosphonate',
+      name: t('ยาเม็ดไอแบนโดรเนต', 'Ibandronate tablet'),
+      route: t('ยาเม็ด รับประทานเองที่บ้าน', 'Tablet, taken at home'),
+      dentalCare: true,
+      schedules: [
+        { id: 'monthly', cadenceType: 'months', intervalMonths: 1, label: t('เดือนละครั้ง (150 มก.)', 'Once a month (150mg)') }
+      ],
+      whatItDoes: t('ชะลอการสลายของเนื้อกระดูก ทำให้กระดูกแข็งแรงขึ้นและลดโอกาสกระดูกหัก', 'Slows down the breakdown of bone, making it stronger and less likely to break.'),
+      instructions: t('รับประทานเดือนละครั้งในวันเดิมของทุกเดือน ตอนเช้าขณะท้องว่างทันทีหลังตื่นนอน พร้อมน้ำเปล่า 1 แก้วเต็ม (ห้ามใช้ชา กาแฟ นม หรือน้ำผลไม้) หลังรับประทานให้นั่งหรือยืนตัวตรงอย่างน้อย 60 นาที ห้ามนอนราบ และรอ 60 นาทีก่อนรับประทานอาหารหรือยาอื่น', 'Take it once a month on the same date each month, first thing in the morning on an empty stomach with a full glass of plain water - not tea, coffee, milk or juice. Stay sitting or standing upright for at least 60 minutes, do not lie down, and wait 60 minutes before food or other medicines.'),
+      missedDose: t('หากลืมและเหลือเวลาถึงกำหนดครั้งถัดไปมากกว่า 7 วัน ให้รับประทานในเช้าวันถัดไป แล้วกลับไปใช้วันเดิมของเดือนถัดไป หากเหลือน้อยกว่า 7 วัน ให้ข้ามไปเลย ห้ามรับประทาน 2 เม็ดในเดือนเดียวกัน', 'If more than 7 days remain before the next dose, take it the next morning and then go back to your usual date. If fewer than 7 days remain, skip it. Never take two tablets in one month.'),
       sideEffects: t('อาจแสบร้อนกลางอก กลืนลำบาก หรือปวดท้องได้ มักดีขึ้นเมื่อรับประทานยาถูกวิธีและไม่นอนราบหลังรับประทานยา หากแสบมากหรือกลืนเจ็บ ให้แจ้งแพทย์', 'It can cause heartburn, difficulty swallowing or stomach discomfort. This usually improves if you take it correctly and stay upright. Tell your doctor if it burns badly or hurts to swallow.'),
       tellDoctor: t('มีปัญหาโรคไต ระดับแคลเซียมในเลือดต่ำ กำลังจะทำฟันหรือผ่าตัดช่องปาก หรือมีอาการปวดต้นขาด้านนอกเรื้อรัง', 'You have kidney problems or low blood calcium, you are about to have dental work or oral surgery, or you develop lasting pain in the outer thigh.')
     },
     {
       id: 'denosumab',
-      icon: '💉', cadenceLabel: t('ทุก 6 เดือน', 'Every 6 months'), route: t('ยาฉีดใต้ผิวหนัง ที่โรงพยาบาล', 'Injection under the skin, at hospital'),
-      name: t('ยาฉีดเดโนซูแมบ (ทุก 6 เดือน)', 'Denosumab injection (every 6 months)'),
-      cadenceType: 'months',
-      intervalMonths: 6,
-      doNotDelay: true,
+      icon: '💉', photo: 'media/meds/denosumab.jpg',
+      name: t('ยาฉีดเดโนซูแมบ', 'Denosumab injection'),
+      route: t('ยาฉีดใต้ผิวหนัง ที่โรงพยาบาล', 'Injection under the skin, at hospital'),
       dentalCare: true,
+      doNotDelay: true,
+      doNotStop: t('ห้ามหยุดยานี้เองโดยเด็ดขาด การหยุดยาเดโนซูแมบโดยไม่มียาอื่นทดแทน อาจทำให้กระดูกสันหลังยุบหลายระดับพร้อมกันภายใน 1-2 ปี หากต้องการหยุดยาต้องวางแผนกับแพทย์เสมอ', 'Never stop this medicine on your own. Stopping denosumab without another medicine to follow it can cause several spinal fractures at once within a year or two. Any plan to stop must be made with your doctor.'),
+      schedules: [
+        { id: 'every6months', cadenceType: 'months', intervalMonths: 6, label: t('ทุก 6 เดือน', 'Every 6 months') }
+      ],
       whatItDoes: t('ยับยั้งเซลล์ที่สลายกระดูก ช่วยเพิ่มความหนาแน่นกระดูกและลดโอกาสกระดูกหัก', 'Blocks the cells that break down bone, increasing bone density and lowering fracture risk.'),
       instructions: t('พยาบาลหรือแพทย์จะฉีดเข้าใต้ผิวหนังที่โรงพยาบาลทุก 6 เดือน ควรนัดครั้งถัดไปทุกครั้งก่อนกลับบ้าน และควรได้รับแคลเซียมกับวิตามินดีเพียงพอร่วมด้วย', 'A nurse or doctor injects it under the skin at the hospital every 6 months. Book your next appointment before you leave, and make sure you also get enough calcium and vitamin D.'),
       missedDose: t('หากไม่สามารถมาตามนัดได้ ต้องโทรแจ้งโรงพยาบาลทันทีเพื่อนัดใหม่โดยเร็วที่สุด ไม่ควรทิ้งช่วงเกินกำหนด', 'If you cannot make your appointment, phone the hospital straight away to rebook as soon as possible. The gap should not be allowed to stretch out.'),
       sideEffects: t('อาจปวดเมื่อยกล้ามเนื้อหรือข้อ และเสี่ยงแคลเซียมในเลือดต่ำ หากมีอาการชารอบปาก ปลายมือปลายเท้า หรือกล้ามเนื้อเกร็งกระตุก ให้แจ้งแพทย์ทันที', 'You may have muscle or joint aches, and blood calcium can drop. Tell your doctor at once if you get numbness around the mouth, tingling hands or feet, or muscle cramps and twitching.'),
-      tellDoctor: t('กำลังจะถอนฟันหรือผ่าตัดช่องปาก มีปัญหาโรคไต หรือมีการติดเชื้อที่ผิวหนัง', 'You are due to have a tooth out or oral surgery, you have kidney problems, or you develop a skin infection.'),
-      doNotStop: t('ห้ามหยุดยานี้เองโดยเด็ดขาด การหยุดยาเดโนซูแมบโดยไม่มียาอื่นทดแทน อาจทำให้กระดูกสันหลังยุบหลายระดับพร้อมกันภายใน 1-2 ปี หากต้องการหยุดยาต้องวางแผนกับแพทย์เสมอ', 'Never stop this medicine on your own. Stopping denosumab without another medicine to follow it can cause several spinal fractures at once within a year or two. Any plan to stop must be made with your doctor.')
+      tellDoctor: t('กำลังจะถอนฟันหรือผ่าตัดช่องปาก มีปัญหาโรคไต หรือมีการติดเชื้อที่ผิวหนัง', 'You are due to have a tooth out or oral surgery, you have kidney problems, or you develop a skin infection.')
     },
     {
       id: 'zoledronate',
-      icon: '🏥', cadenceLabel: t('ปีละครั้ง', 'Once a year'), route: t('ยาฉีดเข้าหลอดเลือดดำ ที่โรงพยาบาล', 'Drip into a vein, at hospital'),
-      name: t('ยาฉีดเข้าหลอดเลือดดำ โซเลโดรเนต (ปีละครั้ง)', 'Zoledronate infusion (once a year)'),
-      cadenceType: 'months',
-      intervalMonths: 12,
+      icon: '🏥', photo: 'media/meds/zoledronate.jpg',
+      name: t('ยาฉีดเข้าหลอดเลือดดำ โซเลโดรเนต', 'Zoledronate infusion'),
+      route: t('ยาฉีดเข้าหลอดเลือดดำ ที่โรงพยาบาล', 'Drip into a vein, at hospital'),
       dentalCare: true,
+      schedules: [
+        { id: 'yearly', cadenceType: 'months', intervalMonths: 12, label: t('ปีละครั้ง', 'Once a year') }
+      ],
       whatItDoes: t('ยาในกลุ่มบิสฟอสโฟเนตชนิดฉีด ออกฤทธิ์นานทั้งปี ช่วยลดการสลายกระดูกและลดโอกาสกระดูกหัก', 'A bisphosphonate given by drip that works for a whole year, reducing bone breakdown and fracture risk.'),
       instructions: t('ให้ยาทางหลอดเลือดดำที่โรงพยาบาล ใช้เวลาประมาณ 15-30 นาที ปีละครั้ง ควรดื่มน้ำให้มากทั้งก่อนและหลังได้รับยา', 'Given through a drip at the hospital, taking about 15-30 minutes, once a year. Drink plenty of water before and after.'),
       missedDose: t('หากเลยกำหนดนัดประจำปี ให้ติดต่อโรงพยาบาลเพื่อนัดใหม่ ไม่ต้องเพิ่มขนาดยาเพื่อชดเชย', 'If your yearly appointment has passed, contact the hospital to rebook. The dose is not increased to make up for it.'),
@@ -715,10 +764,13 @@
     },
     {
       id: 'teriparatide',
-      icon: '🖊️', cadenceLabel: t('ทุกวัน', 'Every day'), route: t('ปากกาฉีดยา ฉีดเองที่บ้าน', 'Injection pen, self-injected at home'),
-      name: t('ยาฉีดเทอริพาราไทด์ (ฉีดเองทุกวัน)', 'Teriparatide (daily self-injection)'),
-      cadenceType: 'days',
-      intervalDays: 1,
+      icon: '🖊️', photo: 'media/meds/teriparatide.jpg',
+      name: t('ยาฉีดเทอริพาราไทด์', 'Teriparatide injection'),
+      route: t('ปากกาฉีดยา ฉีดเองที่บ้าน', 'Injection pen, self-injected at home'),
+      dentalCare: false,
+      schedules: [
+        { id: 'daily', cadenceType: 'days', intervalDays: 1, label: t('ทุกวัน', 'Every day') }
+      ],
       whatItDoes: t('กระตุ้นการสร้างเนื้อกระดูกใหม่ ใช้ในคนที่มีโอกาสกระดูกหักสูงมาก', 'Stimulates the body to build new bone. It is used for people at very high risk of fracture.'),
       instructions: t('ฉีดเข้าใต้ผิวหนังบริเวณหน้าท้องหรือต้นขาวันละครั้ง เวลาใกล้เคียงกันทุกวัน เก็บปากกายาไว้ในตู้เย็น (2-8 องศาเซลเซียส) ห้ามแช่ช่องแข็ง ครั้งแรกควรฉีดขณะนั่งหรือนอน เพราะอาจมีหน้ามืด', 'Inject under the skin of the abdomen or thigh once a day, at about the same time each day. Keep the pen in the fridge (2-8°C) and never freeze it. For the first few doses, sit or lie down in case you feel light-headed.'),
       missedDose: t('หากลืม ให้ฉีดทันทีที่นึกได้ภายในวันเดียวกัน หากข้ามไปทั้งวันแล้ว ให้ฉีดตามปกติในวันถัดไป ห้ามฉีด 2 เข็มในวันเดียว', 'If you forget, inject as soon as you remember on the same day. If a whole day has passed, just take the next dose as usual — never inject twice in one day.'),
@@ -727,11 +779,14 @@
     },
     {
       id: 'romosozumab',
+      icon: '💉', photo: 'media/meds/romosozumab.jpg',
+      name: t('ยาฉีดโรโมโซซูแมบ', 'Romosozumab injection'),
+      route: t('ยาฉีดใต้ผิวหนัง ที่โรงพยาบาล', 'Injection under the skin, at hospital'),
+      dentalCare: false,
       courseTotalDoses: 12,
-      icon: '💉', cadenceLabel: t('เดือนละครั้ง', 'Once a month'), route: t('ยาฉีดใต้ผิวหนัง ที่โรงพยาบาล', 'Injection under the skin, at hospital'),
-      name: t('ยาฉีดโรโมโซซูแมบ (เดือนละครั้ง)', 'Romosozumab injection (once a month)'),
-      cadenceType: 'months',
-      intervalMonths: 1,
+      schedules: [
+        { id: 'monthly', cadenceType: 'months', intervalMonths: 1, label: t('เดือนละครั้ง', 'Once a month') }
+      ],
       whatItDoes: t('ช่วยทั้งสร้างกระดูกใหม่และลดการสลายกระดูกไปพร้อมกัน ใช้เป็นชุดการรักษานาน 12 เดือน', 'Both builds new bone and reduces bone breakdown at the same time. It is given as a 12-month course.'),
       instructions: t('ฉีดใต้ผิวหนังที่โรงพยาบาลเดือนละครั้ง (ครั้งละ 2 เข็ม) ต่อเนื่อง 12 เดือน หลังครบกำหนดแพทย์จะเปลี่ยนเป็นยาชนิดอื่นเพื่อรักษาผลที่ได้ไว้', 'Given as an injection under the skin at the hospital once a month (two injections each time) for 12 months. After the course your doctor will move you to another medicine to keep the benefit.'),
       missedDose: t('หากพลาดนัด ให้ติดต่อโรงพยาบาลเพื่อฉีดโดยเร็วที่สุด แล้วนับรอบเดือนถัดไปจากวันที่ฉีดจริง', 'If you miss an appointment, contact the hospital to have it as soon as possible, then count the next month from the date you actually received it.'),
@@ -747,12 +802,48 @@
     return null;
   }
 
-  function computeNextDue(medClassId, fromDateStr) {
+  /**
+   * Which schedule a patient is on. A medicine with one schedule always
+   * resolves to it, so nothing has to store a choice that was never offered;
+   * an unknown or missing id falls back to the first, which is the default.
+   */
+  function resolveSchedule(med, scheduleId) {
+    if (!med || !med.schedules || !med.schedules.length) return null;
+    var found = null;
+    med.schedules.forEach(function (s) { if (s.id === scheduleId) found = s; });
+    return found || med.schedules[0];
+  }
+
+  /** The words for how often this medicine is taken, for a card or a label. */
+  function medCadenceLabel(med, scheduleId) {
+    var schedule = resolveSchedule(med, scheduleId);
+    return schedule ? schedule.label : null;
+  }
+
+  function computeNextDue(medClassId, fromDateStr, scheduleId) {
     var med = getMedClass(medClassId);
     if (!med) throw new Error('Unknown medication class: ' + medClassId);
-    if (med.cadenceType === 'days') return addDaysSafe(fromDateStr, med.intervalDays);
-    if (med.cadenceType === 'months') return addMonthsSafe(fromDateStr, med.intervalMonths);
+    var schedule = resolveSchedule(med, scheduleId);
+    if (!schedule) throw new Error('No schedule for ' + medClassId);
+    if (schedule.cadenceType === 'days') return addDaysSafe(fromDateStr, schedule.intervalDays);
+    if (schedule.cadenceType === 'months') return addMonthsSafe(fromDateStr, schedule.intervalMonths);
     throw new Error('Unknown cadence type for ' + medClassId);
+  }
+
+  /**
+   * Medicines renamed when the oral bisphosphonates were split into the drugs
+   * they actually are. A patient already on the old generic entry keeps their
+   * dose history by moving to the weekly alendronate it stood for.
+   */
+  var MED_ID_MIGRATION = { bisphosphonate_weekly: { classId: 'alendronate', scheduleId: 'weekly' } };
+
+  function migrateMedicationId(medication) {
+    if (!medication || !medication.classId) return medication;
+    var moved = MED_ID_MIGRATION[medication.classId];
+    if (!moved) return medication;
+    medication.classId = moved.classId;
+    if (!medication.scheduleId) medication.scheduleId = moved.scheduleId;
+    return medication;
   }
 
   var DOSE_REMINDER_LEAD_DAYS = 7;
@@ -780,10 +871,10 @@
    * Fraction of the interval already elapsed, for the countdown ring on Home.
    * Clamped to 0-1 so an overdue dose shows a full ring rather than overflowing.
    */
-  function doseCycleProgress(medClassId, fromDateStr, todayStr) {
+  function doseCycleProgress(medClassId, fromDateStr, todayStr, scheduleId) {
     var med = getMedClass(medClassId);
     if (!med || !fromDateStr) return 0;
-    var nextDue = computeNextDue(medClassId, fromDateStr);
+    var nextDue = computeNextDue(medClassId, fromDateStr, scheduleId);
     var total = daysBetween(fromDateStr, nextDue);
     if (total <= 0) return 1;
     var elapsed = daysBetween(fromDateStr, todayStr || formatYMD(new Date()));
@@ -1067,10 +1158,30 @@
    * half-finished upload never leaves a broken box on the Move tab.
    * See media/media-asset-list.md for the full asset list.
    */
+  /**
+   * Only exercises listed here with a non-empty src render a media area, so a
+   * half-finished upload never leaves a broken box on the Move tab.
+   * Where a clip exists it plays, with the still as its poster frame.
+   * See media/media-asset-list.md for the full asset list.
+   */
   var MEDIA_MANIFEST = {
-    sit_to_stand_hold: { type: 'image', src: 'media/exercises/sit_to_stand_hold.jpg' },
-    standing_marching: { type: 'image', src: 'media/exercises/standing_marching.jpg' },
-    weight_shifts: { type: 'image', src: 'media/exercises/weight_shifts.jpg' }
+    backward_walk: { type: 'image', src: 'media/exercises/backward_walk.jpg' },
+    chin_tuck: { type: 'video', src: 'media/exercises/chin_tuck.mp4', poster: 'media/exercises/chin_tuck.jpg' },
+    heel_raises: { type: 'image', src: 'media/exercises/heel_raises.jpg' },
+    hip_abduction: { type: 'image', src: 'media/exercises/hip_abduction.jpg' },
+    hip_hinge: { type: 'video', src: 'media/exercises/hip_hinge.mp4', poster: 'media/exercises/hip_hinge.jpg' },
+    safe_pickup: { type: 'video', src: 'media/exercises/safe_pickup.mp4', poster: 'media/exercises/safe_pickup.jpg' },
+    scapular_squeeze: { type: 'video', src: 'media/exercises/scapular_squeeze.mp4', poster: 'media/exercises/scapular_squeeze.jpg' },
+    seated_row_band: { type: 'video', src: 'media/exercises/seated_row_band.mp4', poster: 'media/exercises/seated_row_band.jpg' },
+    single_leg_stand_chair: { type: 'video', src: 'media/exercises/single_leg_stand_chair.mp4', poster: 'media/exercises/single_leg_stand_chair.jpg' },
+    sit_to_stand: { type: 'image', src: 'media/exercises/sit_to_stand.jpg' },
+    sit_to_stand_hold: { type: 'video', src: 'media/exercises/sit_to_stand_hold.mp4', poster: 'media/exercises/sit_to_stand_hold.jpg' },
+    standing_marching: { type: 'video', src: 'media/exercises/standing_marching.mp4', poster: 'media/exercises/standing_marching.jpg' },
+    step_ups: { type: 'image', src: 'media/exercises/step_ups.jpg' },
+    tandem_stand: { type: 'image', src: 'media/exercises/tandem_stand.jpg' },
+    tandem_walk: { type: 'video', src: 'media/exercises/tandem_walk.mp4', poster: 'media/exercises/tandem_walk.jpg' },
+    wall_pushups: { type: 'image', src: 'media/exercises/wall_pushups.jpg' },
+    weight_shifts: { type: 'video', src: 'media/exercises/weight_shifts.mp4', poster: 'media/exercises/weight_shifts.jpg' }
   };
 
   function getExerciseMedia(exerciseId) {
@@ -1095,7 +1206,22 @@
    * check the manifest never carries a key nothing renders - a file that
    * would be uploaded, forgotten, and never shown.
    */
-  var SELFCARE_MEDIA = {};
+  var SELFCARE_MEDIA = {
+    food_calcium: { type: 'image', src: 'media/selfcare/food_calcium.jpg' },
+    food_vitamin_d: { type: 'image', src: 'media/selfcare/food_vitamin_d.jpg' },
+    med_denosumab: { type: 'image', src: 'media/selfcare/med_denosumab.jpg' },
+    med_oral_bisphosphonate: { type: 'image', src: 'media/selfcare/med_oral_bisphosphonate.jpg' },
+    med_romosozumab: { type: 'image', src: 'media/selfcare/med_romosozumab.jpg' },
+    med_teriparatide: { type: 'image', src: 'media/selfcare/med_teriparatide.jpg' },
+    med_zoledronate: { type: 'image', src: 'media/selfcare/med_zoledronate.jpg' },
+    safety_bathroom: { type: 'image', src: 'media/selfcare/safety_bathroom.jpg' },
+    safety_bedroom: { type: 'image', src: 'media/selfcare/safety_bedroom.jpg' },
+    safety_kitchen: { type: 'image', src: 'media/selfcare/safety_kitchen.jpg' },
+    safety_outdoors: { type: 'image', src: 'media/selfcare/safety_outdoors.jpg' },
+    safety_stairs: { type: 'image', src: 'media/selfcare/safety_stairs.jpg' },
+    test_chair_stand: { type: 'image', src: 'media/selfcare/test_chair_stand.jpg' },
+    test_tug: { type: 'image', src: 'media/selfcare/test_tug.jpg' }
+  };
 
   function getSelfcareMedia(key) {
     var entry = SELFCARE_MEDIA[key];
@@ -1653,7 +1779,7 @@
       med: med,
       months: monthsBetween(medication.startDate, todayStr),
       doses: doses,
-      isInjection: med.cadenceType === 'months' || med.id === 'teriparatide',
+      isInjection: med.route.en.indexOf('njection') !== -1 || med.route.en.indexOf('rip into') !== -1,
       courseTotalDoses: med.courseTotalDoses || null,
       nextDoseNumber: med.courseTotalDoses ? Math.min(doses + 1, med.courseTotalDoses) : null,
       courseComplete: med.courseTotalDoses ? doses >= med.courseTotalDoses : false
@@ -1727,8 +1853,11 @@
    * and safety data rather than typed out, so adding a medicine or a room
    * cannot leave its picture silently unreachable.
    */
+  /** The three oral bisphosphonates share one "how to take it" picture. */
+  function medCareImageKey(med) { return 'med_' + (med.careImage || med.id); }
+
   var SELFCARE_MEDIA_KEYS = ['test_chair_stand', 'test_tug', 'food_calcium', 'food_vitamin_d']
-    .concat(MED_CLASSES.map(function (m) { return 'med_' + m.id; }))
+    .concat(MED_CLASSES.map(medCareImageKey).filter(function (k, i, all) { return all.indexOf(k) === i; }))
     .concat(SAFETY_ITEMS.reduce(function (rooms, item) {
       if (rooms.indexOf(item.room) === -1) rooms.push(item.room);
       return rooms;
@@ -1764,6 +1893,10 @@
     MED_CLASSES: MED_CLASSES,
     getMedClass: getMedClass,
     computeNextDue: computeNextDue,
+    resolveSchedule: resolveSchedule,
+    medCadenceLabel: medCadenceLabel,
+    migrateMedicationId: migrateMedicationId,
+    MED_ID_MIGRATION: MED_ID_MIGRATION,
     NUTRITION_REVIEW_MONTHS: NUTRITION_REVIEW_MONTHS,
     isNutritionReviewDue: isNutritionReviewDue,
     CALCIUM_FOODS: CALCIUM_FOODS,
@@ -1791,6 +1924,7 @@
     SELFCARE_MEDIA: SELFCARE_MEDIA,
     SELFCARE_MEDIA_KEYS: SELFCARE_MEDIA_KEYS,
     getSelfcareMedia: getSelfcareMedia,
+    medCareImageKey: medCareImageKey,
     hasExerciseMedia: hasExerciseMedia,
     getExercisesForPatient: getExercisesForPatient,
     SAFETY_ITEMS: SAFETY_ITEMS,
