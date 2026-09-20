@@ -369,10 +369,10 @@ function run() {
     name: 'changing drug archives the old one with its duration and dose count',
     fn: function () {
       var archived = core.archiveMedication({
-        classId: 'bisphosphonate_weekly', startDate: '2024-03-01',
+        classId: 'alendronate', startDate: '2024-03-01',
         adherenceLog: [{ date: '2024-03-01' }, { date: '2024-03-08' }]
       }, '2026-03-01');
-      helpers.assertEqual(archived.classId, 'bisphosphonate_weekly');
+      helpers.assertEqual(archived.classId, 'alendronate');
       helpers.assertEqual(archived.months, 24);
       helpers.assertEqual(archived.doses, 2);
       helpers.assertEqual(archived.endDate, '2026-03-01');

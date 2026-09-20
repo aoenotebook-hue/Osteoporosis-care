@@ -1,9 +1,9 @@
 # Every Media File in the App
 
 All 53 media files the app can use, **in filename order**, each with a
-complete prompt to paste into an AI tool. This is the single consolidated
-list — `media-asset-list.md` and `video-prompts.md` cover the same prompts
-grouped by topic instead, if you prefer working that way.
+complete prompt to paste into an AI tool. Every one of these has now been
+produced and wired into the app; the file is kept so any of them can be
+regenerated in the same style.
 
 | | Files |
 |---|---|

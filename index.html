@@ -41,6 +41,9 @@
     --tap: 48px;
   }
   * { box-sizing: border-box; }
+  /* A class that sets display beats the browser's [hidden] rule on
+     specificity, which left the install banner showing as an empty strip. */
+  [hidden] { display: none !important; }
   html, body {
     margin: 0; padding: 0; background: var(--bg); color: var(--text);
     font-family: 'Noto Sans Thai UI', 'Noto Sans Thai', 'Sarabun', -apple-system, 'Segoe UI', system-ui, sans-serif;
@@ -222,6 +225,23 @@
 
   .exercise { border-top: 1px solid var(--border); padding-top: 14px; margin-top: 14px; }
   .exercise:first-of-type { border-top: none; padding-top: 0; margin-top: 0; }
+  .freq-row .name { display: flex; align-items: flex-start; gap: 10px; }
+  .freq-ico { font-size: 26px; line-height: 1.2; flex: 0 0 34px; text-align: center; }
+  .freq-text { min-width: 0; }
+  .freq-food { display: block; font-weight: 600; }
+  .freq-serving { display: block; font-size: 0.85rem; color: var(--muted); }
+  /* Desktop and large tablet: keep the header row and the tab bar aligned with
+     the content column instead of letting them stretch across the window. */
+  @media (min-width: 760px) {
+    header.app-header,
+    nav.tab-bar {
+      padding-left: calc((100% - 680px) / 2);
+      padding-right: calc((100% - 680px) / 2);
+    }
+    header.app-header { padding-top: calc(12px + env(safe-area-inset-top)); padding-bottom: 12px; }
+  }
+  .med-photo { width: 64px; height: 64px; object-fit: cover; border-radius: 12px; flex-shrink: 0; }
+  .med-photo-wide { width: 100%; max-height: 180px; object-fit: cover; border-radius: 12px; display: block; margin-bottom: 10px; }
   .exercise-media { width: 100%; border-radius: 12px; margin-bottom: 10px; display: block; background: var(--surface-alt); }
 
   .safety-item {
@@ -460,6 +480,7 @@
   var checkin = { open: false, steps: [], index: 0, fallLogged: false, missedDoses: false };
   var nutrition = { open: false, step: 0, draft: null, result: null };
   var pendingMedClassId = null;
+  var pendingScheduleId = null;
   var reminderOpen = false;
   var resetConfirmOpen = false;
   var fraxFormOpen = false;
@@ -506,7 +527,12 @@
       if (!raw) return defaultState();
       var parsed = JSON.parse(raw);
       if (!parsed || parsed.schemaVersion !== C.SCHEMA_VERSION) return defaultState();
-      return Object.assign(defaultState(), parsed);
+      var restored = Object.assign(defaultState(), parsed);
+      // A patient already on the old generic bisphosphonate entry keeps their
+      // dose history by moving to the drug it actually stood for.
+      C.migrateMedicationId(restored.medication);
+      (restored.medicationHistory || []).forEach(C.migrateMedicationId);
+      return restored;
     } catch (e) {
       return defaultState();
     }
@@ -1119,7 +1145,7 @@
     var med = C.getMedClass(m.classId);
     var base = m.lastTakenDate || m.startDate;
     if (!base) return { med: med, nextDue: null, needsStartDate: true };
-    var nextDue = C.computeNextDue(m.classId, base);
+    var nextDue = C.computeNextDue(m.classId, base, m.scheduleId);
     var days = C.daysBetween(todayStr(), nextDue);
     return {
       med: med,
@@ -1292,7 +1318,7 @@
 
   function renderDoseCountdown(med) {
     var reminder = C.doseReminderState(med.nextDue, todayStr());
-    var progress = C.doseCycleProgress(state.medication.classId, state.medication.lastTakenDate || state.medication.startDate, todayStr());
+    var progress = C.doseCycleProgress(state.medication.classId, state.medication.lastTakenDate || state.medication.startDate, todayStr(), state.medication.scheduleId);
     var radius = 46;
     var circumference = 2 * Math.PI * radius;
     var color = reminder.overdue ? 'var(--critical)' : (reminder.shouldRemind ? 'var(--warning)' : 'var(--series-1)');
@@ -1511,11 +1537,14 @@
         '<p class="muted">' + esc(tr('drugPickClass')) + '</p>' +
         C.MED_CLASSES.map(function (med) {
           var selected = pendingMedClassId === med.id ? ' selected' : '';
+          var cadences = med.schedules.map(function (sc) { return loc(sc.label); }).join(' / ');
           return '<button type="button" class="med-card' + selected + '" data-action="pick-med" data-med-id="' + med.id + '" aria-pressed="' + (selected ? 'true' : 'false') + '">' +
-            '<span class="med-icon" aria-hidden="true">' + med.icon + '</span>' +
+            (med.photo ? '<img class="med-photo" src="' + esc(med.photo) + '" alt="" loading="lazy" draggable="false">'
+                       : '<span class="med-icon" aria-hidden="true">' + med.icon + '</span>') +
             '<span class="med-body"><span class="med-name">' + esc(loc(med.name)) + '</span>' +
-            '<span class="med-meta">' + esc(loc(med.route)) + ' · ' + esc(loc(med.cadenceLabel)) + '</span></span></button>';
+            '<span class="med-meta">' + esc(loc(med.route)) + ' · ' + esc(cadences) + '</span></span></button>';
         }).join('') +
+        renderSchedulePicker() +
         '<label for="medStartDate">' + esc(tr('drugStartDate')) + '</label>' +
         dateField({ id: 'medStartDate' }) +
         '<button type="button" class="btn" style="margin-top:14px;" data-action="save-med-class"' + (pendingMedClassId ? '' : ' disabled') + '>' + esc(tr('drugSave')) + '</button></div>';
@@ -1528,9 +1557,10 @@
 
     html += sectionHead('💊', 'secDrugCurrent');
     html += '<div class="card accent">' +
+      (med.photo ? '<img class="med-photo-wide" src="' + esc(med.photo) + '" alt="' + esc(loc(med.name)) + '" loading="lazy" draggable="false">' : '') +
       '<div class="card-head"><span class="ico" style="font-size:2.2rem;">' + med.icon + '</span>' +
       '<div><h2 style="margin:0;">' + esc(loc(med.name)) + '</h2>' +
-      '<span class="med-meta muted">' + esc(loc(med.route)) + ' · ' + esc(loc(med.cadenceLabel)) + '</span></div></div>';
+      '<span class="med-meta muted">' + esc(loc(med.route)) + ' · ' + esc(loc(C.medCadenceLabel(med, state.medication.scheduleId))) + '</span></div></div>';
     if (status.needsStartDate) {
       html += '<label for="medStartDate">' + esc(tr('drugStartDate')) + '</label>' +
         dateField({ id: 'medStartDate' }) +
@@ -1554,7 +1584,7 @@
 
     html += infoCard('💡', 'drugWhatItDoes', med.whatItDoes);
     html += sectionHead('📋', 'secDrugHowTo');
-    html += selfcareMedia('med_' + med.id, loc(med.name));
+    html += selfcareMedia(C.medCareImageKey(med), loc(med.name));
     html += infoCard('📋', 'drugHowToTake', med.instructions);
     html += infoCard('⏰', 'drugMissedDose', med.missedDose);
     html += infoCard('🩺', 'drugSideEffects', med.sideEffects);
@@ -1602,6 +1632,26 @@
             Math.round(progress.doses / progress.courseTotalDoses * 100) + '%"></div></div>';
     }
     return html + '</div>';
+  }
+
+  /**
+   * Which schedule the patient was prescribed. Only shown once a drug is
+   * picked and only when that drug has more than one - alendronate weekly or
+   * daily, risedronate daily, weekly or monthly. Asking on a drug with a
+   * single schedule would be a question with one answer.
+   */
+  function renderSchedulePicker() {
+    if (!pendingMedClassId) return '';
+    var med = C.getMedClass(pendingMedClassId);
+    if (!med || med.schedules.length < 2) return '';
+    return '<h3 style="margin-top:16px;">' + esc(tr('drugPickSchedule')) + '</h3>' +
+      med.schedules.map(function (sc) {
+        var on = (pendingScheduleId || med.schedules[0].id) === sc.id;
+        return '<button type="button" class="safety-item ' + (on ? 'done' : 'todo') +
+          '" data-action="pick-schedule" data-schedule-id="' + sc.id + '" aria-pressed="' + on + '">' +
+          '<span class="txt">' + esc(loc(sc.label)) + '</span>' +
+          '<span class="state">' + (on ? '✓' : '') + '</span></button>';
+      }).join('');
   }
 
   function renderMedHistory() {
@@ -1673,6 +1723,8 @@
   /* ---------- bone / nutrition tab ---------- */
 
   var FOOD_ICONS = {
+    oily_fish: '🐟', egg_yolk: '🥚', fortified_milk: '🥛', sun_mushroom: '🍄',
+    meat_fish: '🍗', egg: '🥚', tofu_soy: '🧈', milk_protein: '🥛', beans: '🫘',
     milk: '🥛', soy_milk_fortified: '🥤', yogurt: '🍶', small_dried_fish: '🐟',
     dried_shrimp: '🦐', sardine: '🥫', tofu: '🧈', dark_greens: '🥬',
     sesame: '⚫', cheese: '🧀'
@@ -1851,7 +1903,7 @@
     if (stepId === 'calcium') {
       html += '<h2>' + esc(tr('nutritionSectionCalcium')) + '</h2><p class="muted">' + esc(tr('nutritionFoodFrequencyIntro')) + '</p>';
       html += C.CALCIUM_FOODS.map(function (f) {
-        return freqRow('ca_' + f.id, loc(f.name) + ' — ' + loc(f.serving), nutrition.draft.calcium[f.id]);
+        return freqRow('ca_' + f.id, loc(f.name), nutrition.draft.calcium[f.id], f.id, loc(f.serving));
       }).join('');
       html += '<p class="muted">' + esc(tr('nutritionServingsPerWeek')) + '</p>';
     } else if (stepId === 'vitaminD') {
@@ -1862,7 +1914,7 @@
           quick: [{ value: 0, label: '0' }, { value: 15, label: '15' }, { value: 30, label: '30' }, { value: 60, label: '60' }, { value: 120, label: '120' }] });
       html += '<p class="muted" style="margin-top:14px;">' + esc(tr('nutritionFoodFrequencyIntro')) + '</p>';
       html += C.VITAMIN_D_FOODS.map(function (f) {
-        return freqRow('vd_' + f.id, loc(f.name) + ' — ' + loc(f.serving), nutrition.draft.vitaminD[f.id]);
+        return freqRow('vd_' + f.id, loc(f.name), nutrition.draft.vitaminD[f.id], f.id, loc(f.serving));
       }).join('');
       html += '<p class="muted">' + esc(tr('nutritionServingsPerWeek')) + '</p>';
     } else if (stepId === 'protein') {
@@ -1872,7 +1924,7 @@
           value: nutrition.draft.weightKg === null ? '' : nutrition.draft.weightKg });
       html += '<p class="muted" style="margin-top:14px;">' + esc(tr('nutritionServingsPerDay')) + '</p>';
       html += C.PROTEIN_FOODS.map(function (f) {
-        return freqRow('pr_' + f.id, loc(f.name) + ' — ' + loc(f.serving), nutrition.draft.protein[f.id]);
+        return freqRow('pr_' + f.id, loc(f.name), nutrition.draft.protein[f.id], f.id, loc(f.serving));
       }).join('');
     } else {
       html += '<h2>' + esc(tr('nutritionResultTitle')) + '</h2>';
@@ -1893,8 +1945,12 @@
     return html;
   }
 
-  function freqRow(id, label, value) {
-    return '<div class="freq-row"><span class="name">' + esc(label) + '</span>' +
+  function freqRow(id, label, value, foodId, serving) {
+    var icon = FOOD_ICONS[foodId] || '🍽️';
+    return '<div class="freq-row"><span class="name">' +
+      '<span class="freq-ico" aria-hidden="true">' + icon + '</span>' +
+      '<span class="freq-text"><span class="freq-food">' + esc(label) + '</span>' +
+      (serving ? '<span class="freq-serving">' + esc(serving) + '</span>' : '') + '</span></span>' +
       numberField({ id: id, step: 1, min: 0, max: 21, placeholder: '0',
         value: (value === undefined || value === null) ? '' : value,
         quick: [{ value: 0, label: '0' }, { value: 1, label: '1' }, { value: 3, label: '3' }, { value: 7, label: '7' }] }) + '</div>';
@@ -2606,14 +2662,22 @@
 
     } else if (action === 'pick-med') {
       pendingMedClassId = el.getAttribute('data-med-id');
+      pendingScheduleId = null;
+      render();
+
+    } else if (action === 'pick-schedule') {
+      pendingScheduleId = el.getAttribute('data-schedule-id');
       render();
 
     } else if (action === 'save-med-class') {
       var startDate = $('#medStartDate').value;
       if (pendingMedClassId && startDate) {
+        var picked = C.getMedClass(pendingMedClassId);
         state.medication.classId = pendingMedClassId;
+        state.medication.scheduleId = pendingScheduleId || picked.schedules[0].id;
         state.medication.startDate = startDate;
         pendingMedClassId = null;
+        pendingScheduleId = null;
         saveState(); render();
       }
 
