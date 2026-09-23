@@ -141,6 +141,17 @@ function run() {
     }
   });
 
+  cases.push({
+    name: 'English tab labels fit a 40px tab on a 320px phone',
+    fn: function () {
+      // Eight tabs share the bar; "Medicine" ran into its neighbours even at 390px.
+      Object.keys(core.CONTENT).filter(function (k) { return /^nav[A-Z]/.test(k); }).forEach(function (k) {
+        var label = core.CONTENT[k].en;
+        helpers.assert(label.length <= 6, k + ' "' + label + '" is too long for the tab bar');
+      });
+    }
+  });
+
   return helpers.runSuite('t18_media_display', cases);
 }
 

@@ -14,7 +14,7 @@
     appName: t('ดูแลกระดูกพรุน', 'Osteoporosis Care'),
 
     navHome: t('หน้าหลัก', 'Home'),
-    navDrug: t('ยา', 'Medicine'),
+    navDrug: t('ยา', 'Meds'),
     navBone: t('อาหาร', 'Food'),
     navMove: t('ออกกำลัง', 'Move'),
     navSafety: t('กันล้ม', 'Safety'),
@@ -1477,7 +1477,7 @@
   };
 
   var DOCTOR = {
-    name: t('นพ.สรวุฒิ ธรรมยงค์กิจ', 'Dr. Sorawut Thamyongkit'),
+    name: t('รศ.นพ.สรวุฒิ ธรรมยงค์กิจ', 'Assoc. Prof. Sorawut Thamyongkit, M.D.'),
     hospitalPhone: ALERT_CONTACTS.hospitalPhone
   };
 

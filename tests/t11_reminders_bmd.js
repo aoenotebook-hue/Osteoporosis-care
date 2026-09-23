@@ -133,8 +133,8 @@ function run() {
     name: 'the doctor shown in the footer is configured centrally, in both languages',
     fn: function () {
       helpers.assert(core.DOCTOR.name && core.DOCTOR.name.th && core.DOCTOR.name.en, 'the doctor name needs a TH/EN pair');
-      helpers.assertEqual(core.DOCTOR.name.th, 'นพ.สรวุฒิ ธรรมยงค์กิจ');
-      helpers.assertEqual(core.DOCTOR.name.en, 'Dr. Sorawut Thamyongkit');
+      helpers.assertEqual(core.DOCTOR.name.th, 'รศ.นพ.สรวุฒิ ธรรมยงค์กิจ');
+      helpers.assertEqual(core.DOCTOR.name.en, 'Assoc. Prof. Sorawut Thamyongkit, M.D.');
       helpers.assertEqual(core.DOCTOR.hospitalPhone, core.ALERT_CONTACTS.hospitalPhone);
     }
   });
