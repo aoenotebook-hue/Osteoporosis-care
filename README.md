@@ -260,10 +260,13 @@ Static hosting (e.g. GitHub Pages): `index.html`, `app-core.js`,
 6. **Icons are PNG-free** — the app ships an SVG icon. Add real
    192×192 and 512×512 PNGs before a production deploy for the best
    home-screen result on older iOS.
-7. **Exercise media** — no clips ship yet, so no media areas render.
-   See `media/osteo-video-clip-list.md`.
+7. **Media** — all 17 exercises have a picture and 10 have a clip; the
+   Medicine, Food, Safety and Track tabs carry 14 self-care pictures and
+   7 drug photos. `media/all-media-prompts.md` has the prompt behind each
+   file.
 8. **Your name in the footer** is set in `app-core.js` → `DOCTOR`:
-   นพ.สรวุฒิ ธรรมยงค์กิจ / Dr. Sorawut Thamyongkit. The build plan listed
+   รศ.นพ.สรวุฒิ ธรรมยงค์กิจ / Assoc. Prof. Sorawut Thamyongkit, M.D.,
+   matching rueortho.vercel.app. The build plan listed
    the ธรรมยงค์กิจ vs. ธำรงค์กิจ spelling as an open decision — it is now
    confirmed as ธรรมยงค์กิจ, so reuse that across the other three apps.
 9. **BMD entry** takes the spine and hip T-scores off the DXA report, and
