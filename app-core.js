@@ -128,6 +128,13 @@
     secTrackFalls: t('การหกล้มและการรับประทานยา', 'Falls and taking your medicine'),
     secLearnBasics: t('ทำความรู้จักโรคกระดูกพรุน', 'Understanding osteoporosis'),
     secLearnMore: t('อ่านเพิ่มเติม', 'Further reading'),
+    secDoctorSite: t('เว็บไซต์ความรู้จากแพทย์ของท่าน', "Your doctor's website"),
+    doctorSiteTagline: t('ความรู้เรื่องกระดูกและข้อที่เข้าใจง่าย เขียนและตรวจสอบโดยแพทย์ผู้ดูแลท่าน', 'Plain-language bone and joint information, written and reviewed by the doctor who looks after you'),
+    doctorSiteOpen: t('เปิดเว็บไซต์', 'Open the website'),
+    doctorSiteArticles: t('บทความที่เกี่ยวกับการดูแลของท่าน', 'Articles about your care'),
+    clipWatch: t('ดูคลิปสาธิตท่านี้', 'Watch the clip'),
+    clipBackToPicture: t('กลับไปดูรูปภาพ', 'Back to the picture'),
+    exerciseNumber: t('ท่าที่', 'Exercise'),
     secSafetyScore: t('คะแนนความปลอดภัยในบ้าน', 'How safe your home is'),
     secSafetyRooms: t('ตรวจบ้านทีละห้อง', 'Check your home room by room'),
     secSafetyAdvice: t('คำแนะนำเพิ่มเติม', 'More advice'),
@@ -1156,32 +1163,29 @@
   /**
    * Only exercises listed here with a non-empty src render a media area, so a
    * half-finished upload never leaves a broken box on the Move tab.
-   * See media/media-asset-list.md for the full asset list.
-   */
-  /**
-   * Only exercises listed here with a non-empty src render a media area, so a
-   * half-finished upload never leaves a broken box on the Move tab.
-   * Where a clip exists it plays, with the still as its poster frame.
-   * See media/media-asset-list.md for the full asset list.
+   * Where a clip exists the still shows first and a button swaps the clip in.
+   * w/h are the still's pixel size and clipW/clipH the clip's, so the page can
+   * reserve the right frame before the file arrives instead of jumping.
+   * media/all-media-prompts.md has the prompt behind every file.
    */
   var MEDIA_MANIFEST = {
-    backward_walk: { type: 'image', src: 'media/exercises/backward_walk.jpg' },
-    chin_tuck: { type: 'video', src: 'media/exercises/chin_tuck.mp4', poster: 'media/exercises/chin_tuck.jpg' },
-    heel_raises: { type: 'image', src: 'media/exercises/heel_raises.jpg' },
-    hip_abduction: { type: 'image', src: 'media/exercises/hip_abduction.jpg' },
-    hip_hinge: { type: 'video', src: 'media/exercises/hip_hinge.mp4', poster: 'media/exercises/hip_hinge.jpg' },
-    safe_pickup: { type: 'video', src: 'media/exercises/safe_pickup.mp4', poster: 'media/exercises/safe_pickup.jpg' },
-    scapular_squeeze: { type: 'video', src: 'media/exercises/scapular_squeeze.mp4', poster: 'media/exercises/scapular_squeeze.jpg' },
-    seated_row_band: { type: 'video', src: 'media/exercises/seated_row_band.mp4', poster: 'media/exercises/seated_row_band.jpg' },
-    single_leg_stand_chair: { type: 'video', src: 'media/exercises/single_leg_stand_chair.mp4', poster: 'media/exercises/single_leg_stand_chair.jpg' },
-    sit_to_stand: { type: 'image', src: 'media/exercises/sit_to_stand.jpg' },
-    sit_to_stand_hold: { type: 'video', src: 'media/exercises/sit_to_stand_hold.mp4', poster: 'media/exercises/sit_to_stand_hold.jpg' },
-    standing_marching: { type: 'video', src: 'media/exercises/standing_marching.mp4', poster: 'media/exercises/standing_marching.jpg' },
-    step_ups: { type: 'image', src: 'media/exercises/step_ups.jpg' },
-    tandem_stand: { type: 'image', src: 'media/exercises/tandem_stand.jpg' },
-    tandem_walk: { type: 'video', src: 'media/exercises/tandem_walk.mp4', poster: 'media/exercises/tandem_walk.jpg' },
-    wall_pushups: { type: 'image', src: 'media/exercises/wall_pushups.jpg' },
-    weight_shifts: { type: 'video', src: 'media/exercises/weight_shifts.mp4', poster: 'media/exercises/weight_shifts.jpg' }
+    backward_walk: { type: 'image', src: 'media/exercises/backward_walk.jpg', w: 1050, h: 1400 },
+    chin_tuck: { type: 'video', src: 'media/exercises/chin_tuck.mp4', poster: 'media/exercises/chin_tuck.jpg', w: 1254, h: 1254, clipW: 960, clipH: 1706 },
+    heel_raises: { type: 'image', src: 'media/exercises/heel_raises.jpg', w: 1050, h: 1400 },
+    hip_abduction: { type: 'image', src: 'media/exercises/hip_abduction.jpg', w: 1050, h: 1400 },
+    hip_hinge: { type: 'video', src: 'media/exercises/hip_hinge.mp4', poster: 'media/exercises/hip_hinge.jpg', w: 1050, h: 1400, clipW: 960, clipH: 540 },
+    safe_pickup: { type: 'video', src: 'media/exercises/safe_pickup.mp4', poster: 'media/exercises/safe_pickup.jpg', w: 1050, h: 1400, clipW: 960, clipH: 1706 },
+    scapular_squeeze: { type: 'video', src: 'media/exercises/scapular_squeeze.mp4', poster: 'media/exercises/scapular_squeeze.jpg', w: 1254, h: 1254, clipW: 960, clipH: 1706 },
+    seated_row_band: { type: 'video', src: 'media/exercises/seated_row_band.mp4', poster: 'media/exercises/seated_row_band.jpg', w: 1050, h: 1400, clipW: 960, clipH: 1706 },
+    single_leg_stand_chair: { type: 'video', src: 'media/exercises/single_leg_stand_chair.mp4', poster: 'media/exercises/single_leg_stand_chair.jpg', w: 1050, h: 1400, clipW: 960, clipH: 540 },
+    sit_to_stand: { type: 'image', src: 'media/exercises/sit_to_stand.jpg', w: 1050, h: 1400 },
+    sit_to_stand_hold: { type: 'video', src: 'media/exercises/sit_to_stand_hold.mp4', poster: 'media/exercises/sit_to_stand_hold.jpg', w: 1050, h: 1400, clipW: 960, clipH: 540 },
+    standing_marching: { type: 'video', src: 'media/exercises/standing_marching.mp4', poster: 'media/exercises/standing_marching.jpg', w: 1050, h: 1400, clipW: 960, clipH: 540 },
+    step_ups: { type: 'image', src: 'media/exercises/step_ups.jpg', w: 1050, h: 1400 },
+    tandem_stand: { type: 'image', src: 'media/exercises/tandem_stand.jpg', w: 1050, h: 1400 },
+    tandem_walk: { type: 'video', src: 'media/exercises/tandem_walk.mp4', poster: 'media/exercises/tandem_walk.jpg', w: 1050, h: 1400, clipW: 960, clipH: 540 },
+    wall_pushups: { type: 'image', src: 'media/exercises/wall_pushups.jpg', w: 1050, h: 1400 },
+    weight_shifts: { type: 'video', src: 'media/exercises/weight_shifts.mp4', poster: 'media/exercises/weight_shifts.jpg', w: 1050, h: 1400, clipW: 960, clipH: 540 }
   };
 
   function getExerciseMedia(exerciseId) {
@@ -1197,7 +1201,8 @@
    * The same gating for the self-care pictures on the Medicine, Track, Safety
    * and Food tabs. Keys are fixed strings the tabs ask for by name:
    *
-   *   med_<medication class id>   the five medicines
+   *   med_<careImage or id>       one per medicine; the three oral
+   *                               bisphosphonates share med_oral_bisphosphonate
    *   test_chair_stand, test_tug  the two self-tests
    *   safety_<room id>            the five rooms of the home check
    *   food_calcium, food_vitamin_d
@@ -1207,20 +1212,20 @@
    * would be uploaded, forgotten, and never shown.
    */
   var SELFCARE_MEDIA = {
-    food_calcium: { type: 'image', src: 'media/selfcare/food_calcium.jpg' },
-    food_vitamin_d: { type: 'image', src: 'media/selfcare/food_vitamin_d.jpg' },
-    med_denosumab: { type: 'image', src: 'media/selfcare/med_denosumab.jpg' },
-    med_oral_bisphosphonate: { type: 'image', src: 'media/selfcare/med_oral_bisphosphonate.jpg' },
-    med_romosozumab: { type: 'image', src: 'media/selfcare/med_romosozumab.jpg' },
-    med_teriparatide: { type: 'image', src: 'media/selfcare/med_teriparatide.jpg' },
-    med_zoledronate: { type: 'image', src: 'media/selfcare/med_zoledronate.jpg' },
-    safety_bathroom: { type: 'image', src: 'media/selfcare/safety_bathroom.jpg' },
-    safety_bedroom: { type: 'image', src: 'media/selfcare/safety_bedroom.jpg' },
-    safety_kitchen: { type: 'image', src: 'media/selfcare/safety_kitchen.jpg' },
-    safety_outdoors: { type: 'image', src: 'media/selfcare/safety_outdoors.jpg' },
-    safety_stairs: { type: 'image', src: 'media/selfcare/safety_stairs.jpg' },
-    test_chair_stand: { type: 'image', src: 'media/selfcare/test_chair_stand.jpg' },
-    test_tug: { type: 'image', src: 'media/selfcare/test_tug.jpg' }
+    food_calcium: { type: 'image', src: 'media/selfcare/food_calcium.jpg', w: 1400, h: 1050 },
+    food_vitamin_d: { type: 'image', src: 'media/selfcare/food_vitamin_d.jpg', w: 1400, h: 1050 },
+    med_denosumab: { type: 'image', src: 'media/selfcare/med_denosumab.jpg', w: 1400, h: 1050 },
+    med_oral_bisphosphonate: { type: 'image', src: 'media/selfcare/med_oral_bisphosphonate.jpg', w: 1400, h: 1050 },
+    med_romosozumab: { type: 'image', src: 'media/selfcare/med_romosozumab.jpg', w: 1400, h: 1050 },
+    med_teriparatide: { type: 'image', src: 'media/selfcare/med_teriparatide.jpg', w: 1400, h: 1050 },
+    med_zoledronate: { type: 'image', src: 'media/selfcare/med_zoledronate.jpg', w: 1400, h: 1050 },
+    safety_bathroom: { type: 'image', src: 'media/selfcare/safety_bathroom.jpg', w: 1400, h: 1050 },
+    safety_bedroom: { type: 'image', src: 'media/selfcare/safety_bedroom.jpg', w: 1400, h: 1050 },
+    safety_kitchen: { type: 'image', src: 'media/selfcare/safety_kitchen.jpg', w: 1400, h: 1050 },
+    safety_outdoors: { type: 'image', src: 'media/selfcare/safety_outdoors.jpg', w: 1400, h: 1050 },
+    safety_stairs: { type: 'image', src: 'media/selfcare/safety_stairs.jpg', w: 1050, h: 1400 },
+    test_chair_stand: { type: 'image', src: 'media/selfcare/test_chair_stand.jpg', w: 1050, h: 1400 },
+    test_tug: { type: 'image', src: 'media/selfcare/test_tug.jpg', w: 1400, h: 1050 }
   };
 
   function getSelfcareMedia(key) {
@@ -1439,6 +1444,25 @@
     { id: 'steadi', titleKey: 'resSteadiTitle', descKey: 'resSteadiDesc', url: 'https://www.cdc.gov/steadi' },
     { id: 'who_falls', titleKey: 'resWhoTitle', descKey: 'resWhoDesc', url: 'https://www.who.int' }
   ];
+
+  /**
+   * Dr. Sorawut's own patient-education site. The app links the home page and
+   * the three articles that match what the app covers; the English pages live
+   * under /en with the same paths.
+   */
+  var DOCTOR_SITE = {
+    base: 'https://rueortho.vercel.app',
+    name: t('รู้เรื่องกระดูกและข้อ', 'Easyortho'),
+    pages: [
+      { id: 'osteoporosis', icon: '🦴', path: '/conditions/osteoporosis', title: t('โรคกระดูกพรุน', 'Osteoporosis') },
+      { id: 'dxa', icon: '🩻', path: '/examinations/bone-density-scan', title: t('การตรวจความหนาแน่นกระดูก (DXA)', 'Bone density scan (DXA)') },
+      { id: 'balance', icon: '⚖️', path: '/rehabilitation/balance-and-fall-prevention', title: t('การฝึกการทรงตัวและการป้องกันการล้ม', 'Balance training and preventing falls') }
+    ]
+  };
+
+  function doctorSiteUrl(path, lang) {
+    return DOCTOR_SITE.base + (lang === 'en' ? '/en' : '') + (path || (lang === 'en' ? '' : '/'));
+  }
 
   var RED_FLAGS = [
     { id: 'hip_pain', severity: 'critical', icon: '🦴', key: 'alertHipPain', actionKey: 'alertHipPainAction', call: 'ems' },
@@ -1947,6 +1971,8 @@
     MERGEABLE_RECORD_TYPES: MERGEABLE_RECORD_TYPES,
     queueRecord: queueRecord,
     RESOURCE_LINKS: RESOURCE_LINKS,
+    DOCTOR_SITE: DOCTOR_SITE,
+    doctorSiteUrl: doctorSiteUrl,
     RED_FLAGS: RED_FLAGS,
     ALERT_CONTACTS: ALERT_CONTACTS,
     DOCTOR: DOCTOR,

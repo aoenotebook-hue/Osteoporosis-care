@@ -1,4 +1,4 @@
-var CACHE_NAME = 'osteo-care-v2';
+var CACHE_NAME = 'osteo-care-v3';
 var SHELL_FILES = [
   './',
   './index.html',
@@ -32,6 +32,9 @@ self.addEventListener('activate', function (event) {
 
 self.addEventListener('fetch', function (event) {
   if (event.request.method !== 'GET') return;
+  // Clips stream in byte ranges. Safari will not play a clip answered from a
+  // cached whole-file copy, so ranges and clips always go to the network.
+  if (event.request.headers.has('range') || /\.mp4(\?|$)/.test(event.request.url)) return;
   event.respondWith(
     caches.match(event.request).then(function (cached) {
       if (cached) return cached;

@@ -223,8 +223,6 @@
   .a2hs-actions .install { background: #fff; color: var(--primary-dark); }
   .a2hs-actions .dismiss { background: transparent; color: #fff; text-decoration: underline; }
 
-  .exercise { border-top: 1px solid var(--border); padding-top: 14px; margin-top: 14px; }
-  .exercise:first-of-type { border-top: none; padding-top: 0; margin-top: 0; }
   .freq-row .name { display: flex; align-items: flex-start; gap: 10px; }
   .freq-ico { font-size: 26px; line-height: 1.2; flex: 0 0 34px; text-align: center; }
   .freq-text { min-width: 0; }
@@ -240,9 +238,49 @@
     }
     header.app-header { padding-top: calc(12px + env(safe-area-inset-top)); padding-bottom: 12px; }
   }
-  .med-photo { width: 64px; height: 64px; object-fit: cover; border-radius: 12px; flex-shrink: 0; }
-  .med-photo-wide { width: 100%; max-height: 180px; object-fit: cover; border-radius: 12px; display: block; margin-bottom: 10px; }
-  .exercise-media { width: 100%; border-radius: 12px; margin-bottom: 10px; display: block; background: var(--surface-alt); }
+  /* Product photos show whole on white: a cropped box hides the drug name. */
+  .med-photo { width: 64px; height: 64px; object-fit: contain; background: #fff; border-radius: 12px; flex-shrink: 0; border: 1px solid var(--border); }
+  .med-photo-wide { width: 100%; height: 180px; object-fit: contain; background: #fff; border-radius: 12px; display: block; margin-bottom: 10px; border: 1px solid var(--border); }
+  /*
+   * One frame for every picture and clip. It takes the file's own shape but
+   * never grows past --media-max, so a portrait picture on a wide screen shows
+   * whole in the middle instead of filling the page.
+   */
+  :root { --media-max: min(440px, 62vh); }
+  .media-frame {
+    position: relative; width: 100%; max-height: var(--media-max); margin-bottom: 10px;
+    background: var(--surface-alt); border-radius: 12px; overflow: hidden;
+  }
+  .media-frame .media-el { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; }
+  .clip-toggle { width: 100%; margin-bottom: 12px; }
+  .clip-toggle .when-clip, .clip-toggle[aria-pressed="true"] .when-still { display: none; }
+  .clip-toggle[aria-pressed="true"] .when-clip { display: inline; }
+
+  .exercise-card { padding: 0; overflow: hidden; }
+  .exercise-head {
+    display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+    background: var(--surface-alt); border-bottom: 1px solid var(--border);
+  }
+  .exercise-head .ex-num {
+    flex: 0 0 36px; height: 36px; border-radius: 50%; background: var(--primary); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.05rem;
+  }
+  .exercise-head .ex-count { display: block; font-size: 0.8rem; color: var(--muted); }
+  .exercise-head h3 { margin: 0; }
+  .exercise-body { padding: 14px 16px 6px; }
+  .exercise-text p { margin: 0 0 10px; }
+  .exercise-text .howto-label { font-weight: 700; color: var(--primary-dark); margin-bottom: 4px; }
+  @media (min-width: 700px) {
+    .exercise-body.has-media { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 18px; align-items: start; }
+    .exercise-body.has-media { --media-max: 420px; }
+  }
+
+  .site-card { border-color: var(--primary); border-width: 2px; }
+  .site-card .site-name { font-size: 1.15rem; font-weight: 800; color: var(--primary-dark); margin: 0; }
+  .site-card .site-url { font-size: 0.85rem; color: var(--muted); word-break: break-all; }
+  .site-card .btn { width: 100%; margin: 12px 0 4px; }
+  .site-card .link-list a { display: flex; align-items: center; gap: 10px; }
+  .site-card .link-list .ico { font-size: 1.3rem; flex: 0 0 28px; text-align: center; }
 
   .safety-item {
     display: flex; align-items: flex-start; gap: 12px; width: 100%; text-align: left;
@@ -1217,15 +1255,51 @@
    */
   function mediaBlock(media, altText) {
     if (!media) return '';
-    if (media.type === 'video') {
-      return '<video class="exercise-media" controls controlsList="nodownload noplaybackrate"' +
-        ' disablePictureInPicture oncontextmenu="return false" preload="none" playsinline' +
-        ' src="' + esc(media.src) + '"' +
-        (media.poster ? ' poster="' + esc(media.poster) + '"' : '') + '></video>';
+    var isClip = media.type === 'video';
+    var still = isClip ? media.poster : media.src;
+    if (!still) return '';
+    var html = '<div class="media-frame"' + frameRatio(media.w, media.h) +
+      (isClip ? ' data-still-ratio="' + ratioText(media.w, media.h) + '" data-clip-ratio="' + ratioText(media.clipW, media.clipH) + '"' : '') + '>' +
+      '<img class="media-el" loading="lazy" draggable="false" src="' + esc(still) + '" alt="' + esc(altText || '') + '">';
+    if (isClip) {
+      html += '<video class="media-el" hidden controls controlsList="nodownload noplaybackrate"' +
+        ' disablePictureInPicture oncontextmenu="return false" preload="none" playsinline muted loop' +
+        ' src="' + esc(media.src) + '" poster="' + esc(media.poster) + '"></video>';
     }
-    return '<img class="exercise-media" loading="lazy" draggable="false" src="' + esc(media.src) +
-      '" alt="' + esc(altText || '') + '">';
+    html += '</div>';
+    if (isClip) {
+      html += '<button type="button" class="btn secondary clip-toggle" data-action="toggle-clip" aria-pressed="false">' +
+        '<span class="when-still">▶ ' + esc(tr('clipWatch')) + '</span>' +
+        '<span class="when-clip">🖼️ ' + esc(tr('clipBackToPicture')) + '</span></button>';
+    }
+    return html;
   }
+
+  /**
+   * Swaps the still for its clip in the same frame and back, without a
+   * re-render, so the rest of the tab keeps its scroll position.
+   */
+  function toggleClip(button) {
+    var frame = button.previousElementSibling;
+    var img = frame.querySelector('img');
+    var video = frame.querySelector('video');
+    var toClip = button.getAttribute('aria-pressed') !== 'true';
+    frame.style.aspectRatio = frame.getAttribute(toClip ? 'data-clip-ratio' : 'data-still-ratio');
+    img.hidden = toClip;
+    video.hidden = !toClip;
+    button.setAttribute('aria-pressed', String(toClip));
+    if (toClip) {
+      var playing = video.play();
+      if (playing && playing.catch) playing.catch(function () {});
+    } else {
+      video.pause();
+    }
+  }
+
+  function ratioText(w, h) { return w && h ? w + ' / ' + h : '4 / 3'; }
+
+  /** Reserves the frame at the file's own shape, so nothing jumps as it loads. */
+  function frameRatio(w, h) { return ' style="aspect-ratio: ' + ratioText(w, h) + ';"'; }
 
   /** The self-care half: nothing renders until the file exists. */
   function selfcareMedia(key, altText) {
@@ -2013,18 +2087,23 @@
       html += sectionHead(group.icon, group.labelKey);
       html += '<div class="card"><p class="muted" style="margin:0;">' +
         esc(tr('moveHowOften')) + ': <strong>' + esc(tr(group.freqKey)) + '</strong></p></div>';
-      html += exercises.filter(function (ex) { return ex.group === group.id; }).map(function (ex) {
+      var inGroup = exercises.filter(function (ex) { return ex.group === group.id; });
+      html += inGroup.map(function (ex, i) {
         var mediaHtml = mediaBlock(C.getExerciseMedia(ex.id), loc(ex.name));
         var reqs = ex.requires.length
           ? ex.requires.map(function (r) { return '<span class="tag">' + esc(tr(reqKey[r])) + '</span>'; }).join('')
           : '<span class="tag">' + esc(tr('reqNone')) + '</span>';
-        return '<div class="exercise">' + mediaHtml +
-          '<h3>' + esc(loc(ex.name)) + '</h3>' +
-          '<p><strong>' + esc(tr('moveHowTo')) + ':</strong> ' + esc(loc(ex.howTo)) + '</p>' +
+        return '<div class="card exercise-card">' +
+          '<div class="exercise-head"><span class="ex-num" aria-hidden="true">' + (i + 1) + '</span><div>' +
+          '<span class="ex-count">' + esc(tr('exerciseNumber')) + ' ' + (i + 1) + ' ' + esc(tr('of')) + ' ' + inGroup.length + '</span>' +
+          '<h3>' + esc(loc(ex.name)) + '</h3></div></div>' +
+          '<div class="exercise-body' + (mediaHtml ? ' has-media' : '') + '">' +
+          (mediaHtml ? '<div class="exercise-visual">' + mediaHtml + '</div>' : '') +
+          '<div class="exercise-text">' +
+          '<p class="howto-label">' + esc(tr('moveHowTo')) + '</p><p>' + esc(loc(ex.howTo)) + '</p>' +
           '<p><span class="tag">' + esc(tr('exerciseAmount')) + ': ' + esc(loc(ex.amount)) + '</span>' + reqs + '</p>' +
-          '</div>';
+          '</div></div></div>';
       }).join('');
-      html += '</div>';
     });
 
     html += '<div class="card critical"><div class="card-head"><span class="ico">⛔</span><h3>' + esc(tr('moveNeverDo')) + '</h3></div><p>' + esc(tr('moveNeverDoBody')) + '</p></div>';
@@ -2334,8 +2413,26 @@
 
   /* ---------- resources ---------- */
 
+  /** Dr. Sorawut's own site leads the tab: home page first, then the three matching articles. */
+  function doctorSiteCard() {
+    var site = C.DOCTOR_SITE;
+    var home = C.doctorSiteUrl('', state.lang);
+    return sectionHead('🩺', 'secDoctorSite') +
+      '<div class="card site-card">' +
+      '<p class="site-name">' + esc(loc(site.name)) + '</p>' +
+      '<p class="muted" style="margin:4px 0 2px;">' + esc(tr('doctorSiteTagline')) + '</p>' +
+      '<span class="site-url">' + esc(home.replace(/^https:\/\//, '').replace(/\/$/, '')) + '</span>' +
+      '<a class="btn" href="' + esc(home) + '" target="_blank" rel="noopener">🌐 ' + esc(tr('doctorSiteOpen')) + '</a>' +
+      '<h4 style="margin:14px 0 2px;">' + esc(tr('doctorSiteArticles')) + '</h4>' +
+      '<div class="link-list">' + site.pages.map(function (page) {
+        return '<a href="' + esc(C.doctorSiteUrl(page.path, state.lang)) + '" target="_blank" rel="noopener">' +
+          '<span class="ico" aria-hidden="true">' + page.icon + '</span><span class="title">' + esc(loc(page.title)) + '</span></a>';
+      }).join('') + '</div></div>';
+  }
+
   function renderKnowledge() {
     var html = '<h1>' + esc(tr('tabTitleKnowledge')) + '</h1>';
+    html += doctorSiteCard();
     html += sectionHead('📖', 'secLearnBasics');
     [['learnWhatIsTitle', 'boneWhatIsBody', '🦴', null], ['learnTScoreTitle', 'learnTScoreBody', '📊', null],
      ['learnScreeningTitle', 'learnScreeningBody', '🩻', 'learnScreening'], ['learnMedMattersTitle', 'learnMedMattersBody', '💊', null],
@@ -2625,6 +2722,9 @@
     if (action === 'toggle-lang') {
       state.lang = state.lang === 'th' ? 'en' : 'th';
       saveState(); render();
+
+    } else if (action === 'toggle-clip') {
+      toggleClip(el);
 
     } else if (action === 'go-tab') {
       state.activeTab = el.getAttribute('data-tab');
