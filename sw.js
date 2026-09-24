@@ -1,4 +1,8 @@
-var CACHE_NAME = 'osteo-care-v5';
+// Every cache this app has ever made starts with CACHE_PREFIX. The origin can
+// be shared with other apps (GitHub Pages serves all of an account's sites
+// from one origin), so a new version deletes only its own old caches.
+var CACHE_PREFIX = 'osteo-care-';
+var CACHE_NAME = CACHE_PREFIX + 'v6';
 var SHELL_FILES = [
   './',
   './index.html',
@@ -28,7 +32,7 @@ self.addEventListener('activate', function (event) {
   event.waitUntil(
     caches.keys().then(function (keys) {
       return Promise.all(
-        keys.filter(function (key) { return key !== CACHE_NAME; })
+        keys.filter(function (key) { return key.indexOf(CACHE_PREFIX) === 0 && key !== CACHE_NAME; })
           .map(function (key) { return caches.delete(key); })
       );
     }).then(function () {

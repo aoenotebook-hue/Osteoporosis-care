@@ -6,6 +6,20 @@
  */
 (function () {
   var C = window.OsteoCore;
+
+  /*
+   * Clickjacking guard. A host that can send headers says the same with
+   * X-Frame-Options and frame-ancestors (vercel.json); GitHub Pages cannot,
+   * so inside a frame the app draws nothing to be tricked into tapping, only
+   * a link that opens it in its own window.
+   */
+  if (window.top !== window.self) {
+    document.body.innerHTML = '<main class="framed-notice"><p lang="th">' + esc(C.CONTENT['framedNotice'].th) + '</p>' +
+      '<p lang="en">' + esc(C.CONTENT['framedNotice'].en) + '</p>' +
+      '<p><a href="' + esc(location.href) + '" target="_blank" rel="noopener">' + esc(C.CONTENT['framedOpen'].th) + ' / ' +
+      esc(C.CONTENT['framedOpen'].en) + '</a></p></main>';
+    return;
+  }
   var STORAGE_KEY = 'OSTEO_STATE';
   var WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbx_OKyqH-djTXzBJST5nP92vXLJu1L2WC7aAPLtxihT4ogDUtgWZkLAOOQmHVuvCJ3R/exec';
   var SHARED_TOKEN = 'mQ6tfi1HQa0fBNbhzt2AoVk_YKMfmX5v';
@@ -30,6 +44,7 @@
   var pendingScheduleId = null;
   var reminderOpen = false;
   var resetConfirmOpen = false;
+  var consentPromptOpen = true;
   var fraxFormOpen = false;
   var registrationSex = null;
   var bmdJustSaved = false;
@@ -60,6 +75,12 @@
       monthlyCheckin: { lastDate: null },
       syncQueue: [],
       syncRejected: [],
+      // The phone's registration key (see makeDeviceKey), and the consent
+      // evidence sent with the registration: which notice, when, in which
+      // language. needsConsent: registered before either existed.
+      deviceKey: null,
+      consent: null,
+      needsConsent: false,
       sync: {},
       reminderShownDate: null,
       notificationSentDate: null,
@@ -68,6 +89,49 @@
   }
 
   var state = loadState();
+  upgradeLocalData();
+
+  /**
+   * The phone's key: 32 random bytes, made once at registration and sent
+   * with every upload. The Apps Script stores only its hash, bound to the
+   * HN, and writes nothing for an HN whose key does not match — the shared
+   * token alone no longer lets anyone write to another patient's rows.
+   */
+  function makeDeviceKey() {
+    var bytes = new Uint8Array(32);
+    window.crypto.getRandomValues(bytes);
+    return C.encodeDeviceKey(bytes);
+  }
+
+  function consentEvidence() {
+    return { version: C.PDPA_NOTICE_VERSION, at: new Date().toISOString(), lang: state.lang };
+  }
+
+  /** The registration goes first: nothing else is accepted until it is. Built when sent. */
+  function queueRegistration() {
+    var queued = state.syncQueue.some(function (item) { return item.kind === 'registration'; });
+    if (!queued) state.syncQueue.unshift({ kind: 'registration' });
+  }
+
+  /**
+   * A phone registered before 2026-09-24.2 has no key and no consent
+   * evidence. It gets a key now, is asked to confirm consent once (see
+   * renderConsentRefresh), and then registers again with both. Its records
+   * wait in the queue meanwhile; nothing is lost.
+   */
+  function upgradeLocalData() {
+    // The shared token has no business in the stored profile.
+    if (state.patient && state.patient.token) {
+      delete state.patient.token;
+      delete state.patient.schemaVersion;
+    }
+    if (!state.registered || (state.deviceKey && state.consent)) return;
+    if (!state.deviceKey) state.deviceKey = makeDeviceKey();
+    state.syncQueue = state.syncQueue.filter(function (item) { return item.kind !== 'registration'; });
+    state.needsConsent = !state.consent;
+    if (!state.needsConsent) queueRegistration();
+    saveState();
+  }
 
   function loadState() {
     try {
@@ -164,14 +228,46 @@
     }
   }
 
+  /** Why the Apps Script would refuse this record, or null. The same rules run there. */
+  function recordProblem(record) {
+    var check = C.validateRecord(Object.assign({}, record, {
+      token: SHARED_TOKEN,
+      schemaVersion: C.PROTOCOL_VERSION,
+      deviceKey: state.deviceKey || C.encodeDeviceKey(new Uint8Array(32))
+    }), todayStr());
+    return check.valid ? null : check.errors[0];
+  }
+
   function enqueueSyncRecord(type, data) {
-    C.queueRecord(state.syncQueue, Object.assign({
+    var record = Object.assign({
       patientId: state.patient ? state.patient.patientId : 'unknown',
       date: todayStr(),
       type: type
-    }, data));
+    }, data);
+    var problem = recordProblem(record);
+    if (problem) {
+      // The input checks stop this for anything a patient types; a value that
+      // still breaks the rules is kept on the phone, shown, and not sent.
+      setAsideRejected({ kind: 'record', payload: record }, 'not sent: ' + problem);
+      saveState();
+      refreshFooter();
+      return;
+    }
+    C.queueRecord(state.syncQueue, record);
     saveState();
     flushSyncQueue();
+  }
+
+  /**
+   * An input the rules refuse: the browser's own bubble says so beside the
+   * field, in the app's language, and nothing is saved.
+   */
+  function flagOutOfRange(fieldId) {
+    var field = document.getElementById(fieldId);
+    if (!field) return;
+    field.setCustomValidity(tr('valueOutOfRange'));
+    field.reportValidity();
+    field.addEventListener('input', function () { field.setCustomValidity(''); }, { once: true });
   }
 
   var syncInFlight = false;
@@ -192,11 +288,13 @@
    * it is sent: something wrong in the record itself (apps-script/Code.gs
    * validate()). Everything else — offline, a busy lock, a token mismatch, an
    * old script — may clear up, so it stays first in the queue and is retried.
-   * "unknown record type" is one of those: the app updates itself but the
-   * script is redeployed by hand, so a record type newer than the deployed
-   * script is refused only until the script catches up.
+   * "unknown record type" and "app update required" are among those: the app
+   * updates itself but the script is redeployed by hand, so either side can
+   * be a version ahead for a while. So are "device not registered for this
+   * patient", "hn registered on another device" and "device revoked for
+   * this patient", which staff resolve.
    */
-  var PERMANENT_REJECTION = /^(invalid (patientId|hn|date)|request too large)$/;
+  var PERMANENT_REJECTION = /^(invalid [A-Za-z]+|missing [A-Za-z]+|unexpected field [A-Za-z]+|request too large|too many changes for this date)$/;
 
   /**
    * A record the backend refuses for good is set aside, not deleted, and the
@@ -221,16 +319,30 @@
     if (footer) footer.outerHTML = renderFooter();
   }
 
+  /** What is sent for a queued item, built at send time so the key and consent are current. */
+  function requestBody(item) {
+    if (item.kind === 'registration') {
+      var p = state.patient || {};
+      return C.buildRegistrationPayload({ hn: p.hn, yearOfBirth: p.yearOfBirth, sex: p.sex, consent: state.consent },
+        SHARED_TOKEN, state.deviceKey);
+    }
+    return Object.assign({}, item.payload, { token: SHARED_TOKEN, schemaVersion: C.PROTOCOL_VERSION, deviceKey: state.deviceKey });
+  }
+
   function flushSyncQueue(onDone) {
     if (syncInFlight || !state.syncQueue.length) { if (onDone) onDone(); return; }
     if (!WEBHOOK_URL) { noteSync({ lastError: 'no webhook configured' }); if (onDone) onDone(); return; }
     if (!navigator.onLine) { noteSync({ lastError: 'offline' }); if (onDone) onDone(); return; }
 
+    if (!state.deviceKey || state.needsConsent || !state.consent) {
+      noteSync({ lastError: 'consent needed' });
+      if (onDone) onDone();
+      return;
+    }
+
     syncInFlight = true;
     var item = state.syncQueue[0];
-    var body = item.kind === 'registration'
-      ? item.payload
-      : Object.assign({ token: SHARED_TOKEN, schemaVersion: C.SCHEMA_VERSION }, item.payload);
+    var body = requestBody(item);
 
     noteSync({ lastAttemptAt: new Date().toISOString() });
 
@@ -248,7 +360,7 @@
 
         if (res.status >= 400) throw new Error('HTTP ' + res.status);
         if (!parsed) throw new Error('unexpected reply from the server');
-        if (!parsed.ok && PERMANENT_REJECTION.test(String(parsed.error))) {
+        if (parsed.ok !== true && PERMANENT_REJECTION.test(String(parsed.error))) {
           setAsideRejected(state.syncQueue.shift(), String(parsed.error));
           syncInFlight = false;
           noteSync({ lastError: null });
@@ -256,7 +368,14 @@
           flushSyncQueue(onDone);
           return;
         }
-        if (!parsed.ok) throw new Error(parsed.error || 'rejected by the server');
+        if (parsed.ok !== true) {
+          // The script no longer knows this phone (a fresh sheet, or staff
+          // revoked it): register again, first, and the queue follows.
+          if (parsed.error === 'device not registered for this patient') queueRegistration();
+          throw new Error(parsed.error || 'rejected by the server');
+        }
+        // Only an explicit acknowledgement takes a record off the queue.
+        if (!parsed.result || typeof parsed.result.action !== 'string') throw new Error('unexpected reply from the server');
 
         state.syncQueue.shift();
         syncInFlight = false;
@@ -482,6 +601,9 @@
       else if (resetConfirmOpen) overlay.innerHTML = '<div class="overlay"><div class="modal">' + renderResetConfirm() + '</div></div>';
       else if (reminderOpen) overlay.innerHTML = '<div class="overlay"><div class="modal">' + renderDoseReminder() + '</div></div>';
     }
+    if (state.registered && state.needsConsent && consentPromptOpen) {
+      overlay.innerHTML = '<div class="overlay"><div class="modal">' + renderConsentRefresh() + '</div></div>';
+    }
     renderA2hs();
     wireWidgets();
   }
@@ -489,8 +611,14 @@
   function renderFooter() {
     var pending = state.syncQueue.length;
     var html = '<footer class="app-footer">';
-    if (pending) {
+    if (state.needsConsent) {
+      html += '<div class="footer-sync">' + esc(tr('syncFooterNeedsConsent')) +
+        ' <button type="button" class="reset-link" data-action="open-consent">' + esc(tr('syncFooterConsentButton')) + '</button></div>';
+    } else if (pending) {
       var reason = state.sync && state.sync.lastError;
+      // The two reasons only staff can clear get words a patient can act on.
+      if (reason === 'hn registered on another device') reason = tr('syncFooterOtherDevice');
+      else if (reason === 'device revoked for this patient') reason = tr('syncFooterRevoked');
       html += '<div class="footer-sync">' + esc(tr('syncFooterPending').replace('{n}', pending)) +
         (reason ? '<br><span class="sync-reason">' + esc(reason) + '</span>' : '') +
         ' <button type="button" class="reset-link" data-action="sync-now">' + esc(tr('syncFooterRetry')) + '</button></div>';
@@ -513,6 +641,8 @@
     return '<div class="card-head"><span class="ico">⚠️</span><h2 style="margin:0;">' + esc(tr('resetTitle')) + '</h2></div>' +
       '<p>' + esc(tr('resetBody')) + '</p>' +
       (pending ? '<div class="card warn"><p style="margin:0;">' + esc(tr('resetWarnUnsent')) + ' (' + pending + ' ' + esc(tr('syncItems')) + ')</p></div>' : '') +
+      // The phone's key goes with the reset, so the HN stays bound to it on the sheet.
+      (state.registered ? '<p class="muted">' + esc(tr('resetWarnDevice')) + '</p>' : '') +
       '<p><strong>' + esc(tr('resetConfirmQuestion')) + '</strong></p>' +
       '<div class="stack">' +
         '<button type="button" class="btn danger" data-action="confirm-reset">' + esc(tr('resetConfirmYes')) + '</button>' +
@@ -540,6 +670,25 @@
       case 'alert': return renderAlert();
       default: return renderHome();
     }
+  }
+
+  /**
+   * Asked once of a phone registered before consent evidence existed. The
+   * notice is the one shown at registration, word for word.
+   */
+  function renderConsentRefresh() {
+    return '<div class="card-head"><span class="ico">🔒</span><h2 style="margin:0;">' + esc(tr('reconsentTitle')) + '</h2></div>' +
+      '<p>' + esc(tr('reconsentBody')) + '</p>' +
+      '<div class="card">' +
+        '<h3>' + esc(tr('pdpaTitle')) + '</h3>' +
+        '<p class="muted">' + esc(tr('pdpaBody')) + '</p>' +
+        '<div class="checkbox-row"><input type="checkbox" id="reconsentBox"><label for="reconsentBox">' + esc(tr('pdpaCheckbox')) + '</label></div>' +
+      '</div>' +
+      '<div id="reconsentError" class="error-text" hidden></div>' +
+      '<div class="stack">' +
+        '<button type="button" class="btn" data-action="confirm-consent">' + esc(tr('reconsentConfirm')) + '</button>' +
+        '<button type="button" class="btn secondary" data-action="close-consent">' + esc(tr('reconsentLater')) + '</button>' +
+      '</div>';
   }
 
   /* ---------- registration ---------- */
@@ -594,12 +743,14 @@
     if (!yearRaw || yearRaw < 2400 || yearRaw > 2600 || C.deriveAge(yearRaw) === null) {
       return fail('registerYearInvalidBE');
     }
+    var age = C.deriveAge(yearRaw);
+    if (age < C.PATIENT_AGE.min || age > C.PATIENT_AGE.max) return fail('registerAgeRange');
     if (!sex) return fail('registerSexRequired');
     if (!fd.get('consent')) return fail('registerConsentRequired');
 
-    var payload = C.buildRegistrationPayload({
-      hn: hn, yearOfBirth: yearRaw, sex: sex, consent: true
-    }, SHARED_TOKEN);
+    var consent = consentEvidence();
+    var deviceKey = makeDeviceKey();
+    var payload = C.buildRegistrationPayload({ hn: hn, yearOfBirth: yearRaw, sex: sex, consent: consent }, SHARED_TOKEN, deviceKey);
 
     var validation = C.validateRegistrationPayload(payload);
     if (!validation.valid) {
@@ -609,11 +760,15 @@
     }
 
     errorBox.hidden = true;
-    state.patient = payload;
+    // The profile keeps who the patient is; the token and key are not part of it.
+    state.patient = { patientId: payload.patientId, hn: payload.hn, yearOfBirth: payload.yearOfBirth, age: payload.age, sex: payload.sex };
     state.profile.age = payload.age;
     state.profile.sex = payload.sex;
     state.registered = true;
-    state.syncQueue.push({ kind: 'registration', payload: payload });
+    state.deviceKey = deviceKey;
+    state.consent = consent;
+    state.needsConsent = false;
+    queueRegistration();
     saveState();
     flushSyncQueue();
     render();
@@ -1125,9 +1280,9 @@
     html += '<h3 style="margin-top:16px;">' + esc(tr('fraxRecordResult')) + '</h3>';
     html += '<div class="field-row">' +
       '<div><label for="fraxMajor">' + esc(tr('fraxMajorRisk')) + ' (%)</label>' +
-        '<input type="number" id="fraxMajor" step="0.1" inputmode="decimal" value="' + esc(state.frax.majorFractureRisk === undefined ? '' : state.frax.majorFractureRisk) + '"></div>' +
+        '<input type="number" id="fraxMajor" step="0.1" min="0" max="100" inputmode="decimal" value="' + esc(state.frax.majorFractureRisk === undefined ? '' : state.frax.majorFractureRisk) + '"></div>' +
       '<div><label for="fraxHip">' + esc(tr('fraxHipRisk')) + ' (%)</label>' +
-        '<input type="number" id="fraxHip" step="0.1" inputmode="decimal" value="' + esc(state.frax.hipFractureRisk === undefined ? '' : state.frax.hipFractureRisk) + '"></div>' +
+        '<input type="number" id="fraxHip" step="0.1" min="0" max="100" inputmode="decimal" value="' + esc(state.frax.hipFractureRisk === undefined ? '' : state.frax.hipFractureRisk) + '"></div>' +
       '</div>';
 
     html += '<div class="btn-row" style="margin-top:16px;">' +
@@ -2436,7 +2591,9 @@
 
     } else if (action === 'save-height') {
       var cm = parseFloat($('#heightInput').value);
-      if (!isNaN(cm) && cm > 0) {
+      if (!isNaN(cm) && recordProblem({ patientId: 'X', date: todayStr(), type: 'checkin', heightCm: cm })) {
+        flagOutOfRange('heightInput');
+      } else if (!isNaN(cm) && cm > 0) {
         if (!state.tracking.heightBaseline) state.tracking.heightBaseline = cm;
         state.tracking.heightLogs.push({ date: todayStr(), cm: cm });
         saveState();
@@ -2450,7 +2607,9 @@
       stopChairStandTimer();
     } else if (action === 'save-chairstand') {
       var reps = parseInt($('#chairStandRepsField').value, 10);
-      if (!isNaN(reps) && reps >= 0) {
+      if (!isNaN(reps) && recordProblem({ patientId: 'X', date: todayStr(), type: 'checkin', chairStandReps: reps })) {
+        flagOutOfRange('chairStandRepsField');
+      } else if (!isNaN(reps) && reps >= 0) {
         state.tracking.chairStandTests.push({ date: todayStr(), reps: reps });
         chairStandTimer.awaitingReps = false;
         chairStandTimer.remaining = 30;
@@ -2471,8 +2630,16 @@
         hipT: parseFloat($('#bmdHipT').value)
       };
       ['spineT', 'hipT'].forEach(function (k) { if (isNaN(bmdEntry[k])) delete bmdEntry[k]; });
+      var bmdProblem = C.lowestTScore(bmdEntry) === null ? null : recordProblem({
+        patientId: 'X', date: todayStr(), type: 'bmd', scanDate: bmdEntry.date,
+        spineT: bmdEntry.spineT === undefined ? '' : bmdEntry.spineT,
+        hipT: bmdEntry.hipT === undefined ? '' : bmdEntry.hipT,
+        lowestT: C.lowestTScore(bmdEntry)
+      });
 
-      if (C.lowestTScore(bmdEntry) !== null) {
+      if (bmdProblem) {
+        flagOutOfRange({ 'invalid spineT': 'bmdSpineT', 'invalid hipT': 'bmdHipT', 'invalid scanDate': 'bmdDate' }[bmdProblem] || 'bmdSpineT');
+      } else if (C.lowestTScore(bmdEntry) !== null) {
         if (!state.tracking.bmdLogs) state.tracking.bmdLogs = [];
         state.tracking.bmdLogs.push(bmdEntry);
         state.tracking.bmdLogs.sort(function (a, b) { return a.date < b.date ? -1 : 1; });
@@ -2506,19 +2673,28 @@
 
     } else if (action === 'save-frax') {
       collectFraxInputs();
-      fraxFormOpen = false;
-      saveState();
       // The tool column says which of the two the figures are, so an estimate
       // is never read back off the sheet as though a clinician had run FRAX.
       var shown = C.fractureRiskToShow(C.buildFraxWorksheet(state.profile, state.frax, state.tracking.bmdLogs));
-      enqueueSyncRecord('frax', {
+      var fraxRecord = {
         weightKg: state.frax.weightKg === undefined ? '' : state.frax.weightKg,
         heightCm: state.frax.heightCm === undefined ? '' : state.frax.heightCm,
         bmi: C.computeBmi(state.frax.weightKg, state.frax.heightCm) || '',
         tool: !shown ? 'incomplete' : (shown.isOfficial ? 'FRAX-official' : 'app-estimate'),
         majorFractureRisk: shown && shown.major !== null ? shown.major : '',
         hipFractureRisk: shown && shown.hip !== null ? shown.hip : ''
-      });
+      };
+      var fraxProblem = recordProblem(Object.assign({ patientId: 'X', date: todayStr(), type: 'frax' }, fraxRecord));
+      if (fraxProblem) {
+        flagOutOfRange({
+          'invalid weightKg': 'fraxWeight', 'invalid bmi': 'fraxWeight', 'invalid heightCm': 'fraxHeight',
+          'invalid majorFractureRisk': 'fraxMajor', 'invalid hipFractureRisk': 'fraxHip'
+        }[fraxProblem] || 'fraxWeight');
+        return;
+      }
+      fraxFormOpen = false;
+      saveState();
+      enqueueSyncRecord('frax', fraxRecord);
       render();
 
     } else if (action === 'num-step') {
@@ -2567,6 +2743,28 @@
 
     } else if (action === 'open-reset') {
       resetConfirmOpen = true;
+      render();
+
+    } else if (action === 'confirm-consent') {
+      if (!$('#reconsentBox').checked) {
+        $('#reconsentError').hidden = false;
+        $('#reconsentError').textContent = tr('registerConsentRequired');
+        return;
+      }
+      state.consent = consentEvidence();
+      state.needsConsent = false;
+      consentPromptOpen = false;
+      queueRegistration();
+      saveState();
+      render();
+      flushSyncQueue();
+
+    } else if (action === 'close-consent') {
+      consentPromptOpen = false;
+      render();
+
+    } else if (action === 'open-consent') {
+      consentPromptOpen = true;
       render();
 
     } else if (action === 'close-reset') {
@@ -2628,6 +2826,10 @@
 
     } else if (action === 'checkin-save-height') {
       var checkinCm = parseFloat($('#checkinHeight').value);
+      if (!isNaN(checkinCm) && recordProblem({ patientId: 'X', date: todayStr(), type: 'checkin', heightCm: checkinCm })) {
+        flagOutOfRange('checkinHeight');
+        return;
+      }
       if (!isNaN(checkinCm) && checkinCm > 0) {
         if (!state.tracking.heightBaseline) state.tracking.heightBaseline = checkinCm;
         state.tracking.heightLogs.push({ date: todayStr(), cm: checkinCm });
