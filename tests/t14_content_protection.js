@@ -2,7 +2,10 @@ var fs = require('fs');
 var path = require('path');
 var helpers = require('./helpers');
 
-var html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+// The page and its interface script, read as one: the script moved out of
+// index.html on 2026-09-24 so the page could carry a strict CSP.
+var html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8') +
+  fs.readFileSync(path.join(__dirname, '..', 'app-ui.js'), 'utf8');
 
 function run() {
   var cases = [];

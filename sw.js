@@ -3,6 +3,7 @@ var SHELL_FILES = [
   './',
   './index.html',
   './app-core.js',
+  './app-ui.js',
   './manifest.webmanifest',
   './icon.svg'
 ];

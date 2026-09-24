@@ -4,7 +4,10 @@ var core = require(path.join(__dirname, '..', 'app-core.js'));
 var helpers = require('./helpers');
 
 var root = path.join(__dirname, '..');
-var html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+// The page and its interface script, read as one: the script moved out of
+// index.html on 2026-09-24 so the page could carry a strict CSP.
+var html = fs.readFileSync(path.join(root, 'index.html'), 'utf8') +
+  fs.readFileSync(path.join(root, 'app-ui.js'), 'utf8');
 
 function walk(dir, out) {
   fs.readdirSync(dir).forEach(function (f) {

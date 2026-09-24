@@ -473,6 +473,7 @@
     registerYearBEHint: t('กรอกเป็น พ.ศ. เช่น 2495', 'Enter the Buddhist-era year, for example 2495'),
     registerYearInvalidBE: t('กรุณากรอกปีเกิดเป็น พ.ศ. เช่น 2495', 'Please enter the year of birth in the Buddhist era, for example 2495'),
     registerHNRequiredOnly: t('กรุณากรอกเลขประจำตัวผู้ป่วย (HN)', 'Please enter your hospital number (HN)'),
+    registerHNInvalid: t('เลข HN ใช้ได้เฉพาะตัวเลข ตัวอักษรภาษาอังกฤษ และเครื่องหมาย - หรือ / ไม่เกิน 20 ตัว', 'An HN may only contain digits, English letters, "-" and "/", up to 20 characters'),
     headerHnLabel: t('HN', 'HN'),
 
     bmdPreviousResults: t('ผลตรวจที่ผ่านมา', 'Previous results'),
@@ -1374,11 +1375,23 @@
     };
   }
 
+  /**
+   * An HN is the patient's key in the doctor's Google Sheet. Letters, digits,
+   * '-' and '/', starting with a letter or digit, at most 20 characters — so it
+   * can never begin with '=', '+', '-' or '@', which a spreadsheet would read
+   * as the start of a formula. The Apps Script checks the same rule, because
+   * anyone can post to it directly.
+   */
+  function isValidHn(hn) {
+    return typeof hn === 'string' && /^[A-Za-z0-9][A-Za-z0-9\/-]{0,19}$/.test(hn);
+  }
+
   function validateRegistrationPayload(payload) {
     var errors = [];
     if (!payload || typeof payload !== 'object') return { valid: false, errors: ['payload must be an object'] };
     if (!payload.token) errors.push('missing token');
     if (!payload.patientId) errors.push('missing HN');
+    else if (!isValidHn(payload.patientId)) errors.push('invalid HN');
     if (!payload.yearOfBirth) errors.push('missing yearOfBirth');
     if (!payload.sex) errors.push('missing sex');
     if (!payload.consent) errors.push('consent must be true');
@@ -1965,6 +1978,7 @@
     buildTimeSeries: buildTimeSeries,
     buildRegistrationPayload: buildRegistrationPayload,
     validateRegistrationPayload: validateRegistrationPayload,
+    isValidHn: isValidHn,
     renderResourceCard: renderResourceCard,
     buildDedupKey: buildDedupKey,
     dedupeRecords: dedupeRecords,
