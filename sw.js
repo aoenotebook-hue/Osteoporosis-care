@@ -1,4 +1,4 @@
-var CACHE_NAME = 'osteo-care-v4';
+var CACHE_NAME = 'osteo-care-v5';
 var SHELL_FILES = [
   './',
   './index.html',
@@ -11,7 +11,13 @@ var SHELL_FILES = [
 self.addEventListener('install', function (event) {
   event.waitUntil(
     caches.open(CACHE_NAME).then(function (cache) {
-      return cache.addAll(SHELL_FILES);
+      // cache: 'reload' goes past the browser's HTTP cache. GitHub Pages lets a
+      // file be reused for 10 minutes, and without this a new version's
+      // install could store the previous version's page and scripts - and
+      // keep serving them, cache-first, until the next version came out.
+      return cache.addAll(SHELL_FILES.map(function (url) {
+        return new Request(url, { cache: 'reload' });
+      }));
     }).then(function () {
       return self.skipWaiting();
     })

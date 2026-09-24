@@ -482,6 +482,7 @@
     bmdUpdatedStatus: t('บันทึกแล้ว และปรับสถานะกระดูกให้ตามผลล่าสุด', 'Saved, and your bone status has been updated from this result'),
 
     syncFooterPending: t('มีข้อมูล {n} รายการรอส่งให้โรงพยาบาล', '{n} records are waiting to reach the hospital'),
+    syncFooterRejected: t('มีข้อมูล {n} รายการที่ระบบของโรงพยาบาลไม่รับ ข้อมูลยังเก็บไว้ในเครื่อง กรุณาแจ้งเจ้าหน้าที่', '{n} records were not accepted by the hospital system. They are kept on this phone; please tell the hospital staff'),
     syncFooterRetry: t('ลองส่งเดี๋ยวนี้', 'Try sending now'),
 
     save: t('บันทึก', 'Save'),

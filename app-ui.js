@@ -59,6 +59,7 @@
       },
       monthlyCheckin: { lastDate: null },
       syncQueue: [],
+      syncRejected: [],
       sync: {},
       reminderShownDate: null,
       notificationSentDate: null,
@@ -186,6 +187,37 @@
    * the queue once the backend confirms it stored it. Anything else leaves
    * it queued and records why, for the sync panel on the Home tab.
    */
+  /**
+   * Replies the backend gives for a record it will never accept, however often
+   * it is sent (apps-script/Code.gs validate()). Everything else — offline, a
+   * busy lock, a token mismatch, an old script — may clear up, so it stays
+   * first in the queue and is retried.
+   */
+  var PERMANENT_REJECTION = /^(invalid (patientId|hn|date)|unknown record type|request too large)$/;
+
+  /**
+   * A record the backend refuses for good is set aside, not deleted, and the
+   * queue moves on. It used to stay first in line and be sent again forever,
+   * and because the queue goes in order nothing recorded after it ever
+   * reached the hospital either.
+   */
+  function setAsideRejected(item, reason) {
+    if (!state.syncRejected) state.syncRejected = [];
+    state.syncRejected.push({ item: item, reason: reason, at: new Date().toISOString() });
+    if (state.syncRejected.length > 50) state.syncRejected.shift();
+  }
+
+  /**
+   * The footer's "N records waiting" line, redrawn on its own when an upload
+   * finishes. The sync runs after the screen was drawn, so the line used to
+   * keep saying a record was waiting after it had arrived. Only the footer is
+   * replaced: a full render would wipe whatever the patient is typing.
+   */
+  function refreshFooter() {
+    var footer = document.querySelector('#screen footer.app-footer');
+    if (footer) footer.outerHTML = renderFooter();
+  }
+
   function flushSyncQueue(onDone) {
     if (syncInFlight || !state.syncQueue.length) { if (onDone) onDone(); return; }
     if (!WEBHOOK_URL) { noteSync({ lastError: 'no webhook configured' }); if (onDone) onDone(); return; }
@@ -213,16 +245,26 @@
 
         if (res.status >= 400) throw new Error('HTTP ' + res.status);
         if (!parsed) throw new Error('unexpected reply from the server');
+        if (!parsed.ok && PERMANENT_REJECTION.test(String(parsed.error))) {
+          setAsideRejected(state.syncQueue.shift(), String(parsed.error));
+          syncInFlight = false;
+          noteSync({ lastError: null });
+          refreshFooter();
+          flushSyncQueue(onDone);
+          return;
+        }
         if (!parsed.ok) throw new Error(parsed.error || 'rejected by the server');
 
         state.syncQueue.shift();
         syncInFlight = false;
         noteSync({ lastOkAt: new Date().toISOString(), lastError: null });
+        refreshFooter();
         flushSyncQueue(onDone);
       })
       .catch(function (err) {
         syncInFlight = false;
         noteSync({ lastError: String(err && err.message ? err.message : err) });
+        refreshFooter();
         if (onDone) onDone();
       });
   }
@@ -449,6 +491,11 @@
       html += '<div class="footer-sync">' + esc(tr('syncFooterPending').replace('{n}', pending)) +
         (reason ? '<br><span class="sync-reason">' + esc(reason) + '</span>' : '') +
         ' <button type="button" class="reset-link" data-action="sync-now">' + esc(tr('syncFooterRetry')) + '</button></div>';
+    }
+    var rejected = state.syncRejected || [];
+    if (rejected.length) {
+      html += '<div class="footer-sync">' + esc(tr('syncFooterRejected').replace('{n}', rejected.length)) +
+        '<br><span class="sync-reason">' + esc(rejected[rejected.length - 1].reason) + '</span></div>';
     }
     html += '<div>' + esc(tr('footerDoctorLabel')) + '</div>' +
       '<div class="doctor">' + esc(loc(C.DOCTOR.name)) + '</div>' +

@@ -1,3 +1,4 @@
+var fs = require('fs');
 var path = require('path');
 var core = require(path.join(__dirname, '..', 'app-core.js'));
 var helpers = require('./helpers');
@@ -98,6 +99,59 @@ function run() {
       var key1 = core.buildDedupKey('HN1', '2026-05-10', 'adherence');
       var key2 = core.buildDedupKey('HN1', '2026-05-10', 'adherence');
       helpers.assertEqual(key1, key2);
+    }
+  });
+
+  cases.push({
+    name: 'a record the backend refuses for good is set aside, and the rest still go',
+    fn: function () {
+      // The queue goes in order. A record Code.gs will never accept used to
+      // stay first in line forever, so nothing recorded after it arrived.
+      var root = path.join(__dirname, '..');
+      var ui = fs.readFileSync(path.join(root, 'app-ui.js'), 'utf8');
+      var gs = fs.readFileSync(path.join(root, 'apps-script', 'Code.gs'), 'utf8');
+      var src = (ui.match(/var PERMANENT_REJECTION = \/(.+)\/;/) || [])[1];
+      helpers.assert(src, 'app-ui.js has no PERMANENT_REJECTION list');
+      var permanent = new RegExp(src);
+
+      var validateBody = (gs.match(/function validate\(payload\) \{([\s\S]*?)\n\}/) || [])[1] || '';
+      var refusals = (validateBody.match(/return '[^']+'/g) || []).map(function (r) { return r.slice(8, -1); });
+      helpers.assert(refusals.length >= 4, 'could not read the refusals in Code.gs validate()');
+      refusals.concat(['request too large']).forEach(function (reason) {
+        helpers.assert(permanent.test(reason), '"' + reason + '" from Code.gs would block the queue forever');
+      });
+
+      // These can clear up (a redeploy, a quieter moment, a signal), so the
+      // record must stay queued and be tried again.
+      ['busy, try again', 'invalid token — the app and this script are using different SHARED_TOKEN values',
+        'no request body', 'offline', 'HTTP 500', 'Exception: Service Spreadsheets timed out'].forEach(function (reason) {
+        helpers.assert(!permanent.test(reason), '"' + reason + '" would throw away a record that could still arrive');
+      });
+
+      helpers.assert(/setAsideRejected\(state\.syncQueue\.shift\(\)/.test(ui), 'a refused record should be kept aside, not deleted');
+      helpers.assert(/tr\('syncFooterRejected'\)/.test(ui) && core.CONTENT.syncFooterRejected, 'the patient is not told a record was refused');
+      helpers.assert(/syncRejected: \[\]/.test(ui), 'syncRejected is missing from the saved state');
+    }
+  });
+
+  cases.push({
+    name: 'the "records waiting" line updates when an upload finishes',
+    fn: function () {
+      var ui = fs.readFileSync(path.join(__dirname, '..', 'app-ui.js'), 'utf8');
+      var flush = (ui.match(/function flushSyncQueue\(onDone\) \{([\s\S]*?)\n  \}\n/) || [])[1] || '';
+      helpers.assert(flush, 'flushSyncQueue not found');
+      helpers.assert((flush.match(/refreshFooter\(\)/g) || []).length >= 3, 'the footer is not redrawn after every upload outcome');
+    }
+  });
+
+  cases.push({
+    name: 'a new version installs fresh files, not ones the browser kept from the last visit',
+    fn: function () {
+      // GitHub Pages lets a file be reused for 10 minutes. Without cache:
+      // 'reload' the new service worker stored the old page and served it,
+      // cache-first, until the version after.
+      var sw = fs.readFileSync(path.join(__dirname, '..', 'sw.js'), 'utf8');
+      helpers.assert(/new Request\(url, \{ cache: 'reload' \}\)/.test(sw), 'the install step can pick up stale files from the HTTP cache');
     }
   });
 
