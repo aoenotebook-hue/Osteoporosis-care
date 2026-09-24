@@ -130,11 +130,11 @@ function run() {
   cases.push({
     name: "the doctor's website opens in the patient's language",
     fn: function () {
-      helpers.assertEqual(core.doctorSiteUrl('', 'th'), 'https://rueortho.vercel.app/', 'Thai home page');
-      helpers.assertEqual(core.doctorSiteUrl('', 'en'), 'https://rueortho.vercel.app/en', 'English home page');
+      helpers.assertEqual(core.doctorSiteUrl('', 'th'), 'https://easybone.org/', 'Thai home page');
+      helpers.assertEqual(core.doctorSiteUrl('', 'en'), 'https://easybone.org/en', 'English home page');
       core.DOCTOR_SITE.pages.forEach(function (p) {
         helpers.assert(/^\/[a-z-]+\/[a-z-]+$/.test(p.path), p.id + ' has an odd path: ' + p.path);
-        helpers.assertEqual(core.doctorSiteUrl(p.path, 'en'), 'https://rueortho.vercel.app/en' + p.path, p.id + ' English');
+        helpers.assertEqual(core.doctorSiteUrl(p.path, 'en'), 'https://easybone.org/en' + p.path, p.id + ' English');
         helpers.assert(p.title.th && p.title.en, p.id + ' needs a Thai and an English title');
       });
       helpers.assert(/html \+= doctorSiteCard\(\);/.test(html), 'the Learn tab does not show the website card');

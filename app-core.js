@@ -1451,7 +1451,7 @@
    * under /en with the same paths.
    */
   var DOCTOR_SITE = {
-    base: 'https://rueortho.vercel.app',
+    base: 'https://easybone.org',
     name: t('รู้เรื่องกระดูกและข้อ', 'Easyortho'),
     pages: [
       { id: 'osteoporosis', icon: '🦴', path: '/conditions/osteoporosis', title: t('โรคกระดูกพรุน', 'Osteoporosis') },
