@@ -437,6 +437,7 @@
     syncPending: t('ข้อมูลที่รอส่ง', 'Waiting to send'),
     syncItems: t('รายการ', 'records'),
     syncAllSent: t('ส่งข้อมูลครบแล้ว', 'Everything has been sent'),
+    syncRejectedLabel: t('ข้อมูลที่ระบบไม่รับ', 'Not accepted by the hospital system'),
     syncLastOk: t('ส่งสำเร็จล่าสุด', 'Last sent successfully'),
     syncLastError: t('ปัญหาล่าสุด', 'Last problem'),
     syncNever: t('ยังไม่เคยส่งสำเร็จ', 'Nothing has been sent yet'),
@@ -482,6 +483,7 @@
     bmdUpdatedStatus: t('บันทึกแล้ว และปรับสถานะกระดูกให้ตามผลล่าสุด', 'Saved, and your bone status has been updated from this result'),
 
     syncFooterPending: t('มีข้อมูล {n} รายการรอส่งให้โรงพยาบาล', '{n} records are waiting to reach the hospital'),
+    syncFooterRejected: t('มีข้อมูล {n} รายการที่ระบบของโรงพยาบาลไม่รับ ข้อมูลยังเก็บไว้ในเครื่อง กรุณาแจ้งเจ้าหน้าที่', '{n} records were not accepted by the hospital system. They are kept on this phone; please tell the hospital staff'),
     syncFooterRetry: t('ลองส่งเดี๋ยวนี้', 'Try sending now'),
 
     save: t('บันทึก', 'Save'),
