@@ -3,7 +3,10 @@ var path = require('path');
 var core = require(path.join(__dirname, '..', 'app-core.js'));
 var helpers = require('./helpers');
 
-var html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+// The page and its interface script, read as one: the script moved out of
+// index.html on 2026-09-24 so the page could carry a strict CSP.
+var html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8') +
+  fs.readFileSync(path.join(__dirname, '..', 'app-ui.js'), 'utf8');
 
 /**
  * Keys the UI builds at runtime rather than writing out literally

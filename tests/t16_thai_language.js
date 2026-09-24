@@ -3,7 +3,10 @@ var path = require('path');
 var core = require(path.join(__dirname, '..', 'app-core.js'));
 var helpers = require('./helpers');
 
-var html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+// The page and its interface script, read as one: the script moved out of
+// index.html on 2026-09-24 so the page could carry a strict CSP.
+var html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8') +
+  fs.readFileSync(path.join(__dirname, '..', 'app-ui.js'), 'utf8');
 
 /** Every Thai string the patient can see, with where it came from. */
 function allThai() {
@@ -121,7 +124,10 @@ function run() {
     fn: function () {
       // Thai hardcoded in index.html escapes both the clinical review and the
       // i18n tests - that is how a dental warning sat unchecked for months.
-      var literals = html.match(/'[^']*[฀-๿][^']*'/g) || [];
+      // Only the script: the page head now carries a CSP whose 'self' and
+      // 'none' keywords would pair up with quotes in the markup around them.
+      var ui = fs.readFileSync(path.join(__dirname, '..', 'app-ui.js'), 'utf8');
+      var literals = ui.match(/'[^']*[฀-๿][^']*'/g) || [];
       var allowed = /^'(?:[฀-๿]{1,4}\.|ไทย|[\s·×−–—\/]+|\s*)'$/;
       var stray = literals.filter(function (lit) {
         if (allowed.test(lit)) return false;
