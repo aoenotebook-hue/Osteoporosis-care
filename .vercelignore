@@ -1,0 +1,7 @@
+# Only the app itself is served. The script, tests and tools stay in the repo.
+apps-script
+tests
+tools
+docs
+README.md
+LICENSE

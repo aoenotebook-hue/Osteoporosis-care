@@ -19,9 +19,16 @@ review, all built around a **risk-tier + balance-level resolver**.
   information, the nutrition estimators, exercise/safety data, tracking
   helpers and sync queueing.
 - `tests/t*.js` — regression suites, run with `node tests/run_all.js`.
-- `apps-script/Code.gs` — Google Apps Script backend (`doPost`) writing
-  to the Registrations / CheckIns / Falls / Adherence / Nutrition / Bmd
-  sheets.
+  `tests/fake_backend.js` runs the real `Code.gs` against a stand-in Sheet.
+- `apps-script/Code.gs` — Google Apps Script backend (`doPost`): binds each
+  phone to its HN, checks every record, and appends to the Devices /
+  Registrations / CheckIns / Falls / Adherence / Nutrition / Bmd /
+  FractureRisk / Audit tabs. It never overwrites a row.
+- `docs/SECURITY.md` — identity, audit trail, limits, hosting, moving and
+  keeping patients' local data, and the clinic decisions still open.
+- `tools/verify-backend.js` — checks the deployed script after a redeploy.
+- `vercel.json` — security headers for the app's own origin
+  (`osteoporosis-care.vercel.app`).
 - `manifest.webmanifest`, `sw.js`, `icon.svg` — installability (Add to
   Home Screen) and offline app-shell caching.
 - `media/all-media-prompts.md` — the prompt behind every media file, kept so
@@ -201,6 +208,7 @@ replacing anything already there.
 
 1. Open your Google Sheet → **Extensions → Apps Script**.
 2. Select everything in the editor, delete it, paste in `Code.gs`, save.
+   In **Project Settings**, set the time zone to (GMT+07:00) Bangkok.
 3. **Deploy → Manage deployments → pencil icon → Version: New version →
    Deploy.** This step is the one that matters: saving alone does **not**
    change what the live `/exec` URL runs, so an older copy of the script
@@ -208,39 +216,56 @@ replacing anything already there.
 4. Confirm it took: open the `/exec` URL in a browser. It answers
 
    ```json
-   {"ok":true,"service":"osteoporosis-care","version":"2026-09-24","tokenConfigured":true,"sheets":[...]}
+   {"ok":true,"service":"osteoporosis-care","protocol":3,"tokenConfigured":true,"sheets":[...],"version":"2026-09-24.2"}
    ```
 
-   If `version` is not the one in the file you just pasted, step 3 did
-   not take effect.
+5. **Check the deployed backend**, from any computer with Node 18 or later:
+
+   ```
+   node tools/verify-backend.js https://script.google.com/macros/s/…/exec
+   ```
+
+   Every probe must pass. They send requests the script must refuse, so they
+   write nothing (and they stop at once if the version is wrong, before an
+   older script could accept anything). `--write` adds a round trip with two
+   made-up `ZZTEST-` patients and prints the rows to delete. **Until this
+   passes, the fixes are not live.**
 
 Access must be **Anyone**, not "Anyone with a Google account" — the
 latter answers with a login page the app cannot follow. `SHARED_TOKEN`
 must be identical in `Code.gs` and `app-ui.js`.
 
-Sheets are created on first write: Registrations, CheckIns, Falls,
-Adherence, Nutrition, Bmd, FractureRisk. Same-day check-in, nutrition, BMD and
-FRAX records merge into one row; a second fall on the same day is kept
-as a separate event; an exact repeat is skipped.
+The first request after deploying moves any tab from an earlier version
+aside as "<Name> (before 2026-09-24.2)" — intact — and starts a fresh one.
+Phones register again on their own; a phone registered before this version
+first asks its patient to confirm consent once.
+
+The tabs are append-only. A change to a day's check-in, nutrition, BMD or
+FRAX record is a new row with the next `version`, naming the row it
+supersedes; the highest version is current. A second fall on one day is a
+second event; an exact repeat is skipped. The Audit tab logs every accepted
+change, conflict and refusal from a registered phone.
 
 ### Security — read before the pilot
 
-- **`SHARED_TOKEN` is not a password.** It ships inside the app and the
-  code is public, so anyone can read it and post to the `/exec` URL. The
-  Sheet is patient-reported data from an open endpoint; treat it as
-  unverified.
-- **The script therefore trusts nothing it receives** (version
-  2026-09-24): the HN must be letters, digits, `-` or `/`; dates must be
-  `YYYY-MM-DD`; text is capped at 200 characters; and anything starting
-  with `=`, `+`, `-` or `@` is stored as text, never as a formula. Before
-  that version a "fall cause" such as `=IMAGE("https://…"&B2:B)` would have
-  become a live formula able to send other patients' HNs out of the Sheet
-  when it was opened. `tests/t19_security.js` runs the script against a
-  stand-in Sheet to hold this.
-- **A registration is never overwritten.** A different registration for an
-  HN already in the Sheet is added as a new row, so someone typing another
-  patient's HN cannot replace that patient's details. More than one row for
-  an HN is worth checking.
+The short version; `docs/SECURITY.md` has the detail.
+
+- **`SHARED_TOKEN` is not a password.** It ships inside the app and the code
+  is public. What protects a patient's rows is the phone's own key: made at
+  registration, stored only as a hash in the Devices tab, and required for
+  every record. Knowing someone's HN is not enough to write to their rows,
+  and the script has no way to read rows back out.
+- **Identity is still first-come.** The key proves the phone, not the
+  person. How patients prove who they are — an enrollment code handed out
+  at the clinic is the recommendation — is a clinic decision;
+  `docs/SECURITY.md` sets out the options.
+- **Nothing is overwritten, and everything is checked** against the same
+  rules the app uses: required fields, types, real dates, clinical ranges,
+  consent evidence. Text starting with `=`, `+`, `-` or `@` is stored as
+  text, never as a formula. Submissions are rate-limited per phone and
+  per day.
+- **Moving a patient to a new phone:** in Devices, set the old phone's
+  status to `revoked`.
 - **Share the Google Sheet only with the care team** — it holds HNs and
   health data. The app keeps its own copy on the phone in `localStorage`;
   "ล้างข้อมูลและเริ่มใหม่" in the footer erases it on a shared phone.
@@ -251,19 +276,32 @@ Records that are not accepted stay queued and a line appears in the page
 footer with a retry button — nothing is silently dropped. The likely
 causes, in order:
 
-1. **The script was never redeployed** (step 3). Check the version with
-   the `/exec` URL as above. This is the most common one.
-2. **Token mismatch** — the script answers `invalid token` with HTTP 200.
-3. **Access set to "Anyone with a Google account"**.
+1. **The script was never redeployed** (step 3) — `tools/verify-backend.js`
+   says so in its first line.
+2. **"registered on another phone"** — the HN is bound to a different
+   phone; see "Moving a patient to a new phone".
+3. **"consent needed"** — a phone from before this version is waiting for
+   its patient to confirm consent (a button in the footer).
+4. **Token mismatch** — the script answers `invalid token` with HTTP 200.
+5. **Access set to "Anyone with a Google account"**.
 
 This sandbox blocks `script.google.com`, so the live endpoint cannot be
-called from here. The client sync path is verified against a stand-in
-backend covering both the accepted and rejected cases.
+called from here. The client sync path is verified end to end in a browser
+against the real `Code.gs` running on a stand-in Sheet.
 
 ## Deploying the app
 
-Static hosting (e.g. GitHub Pages): `index.html`, `app-core.js`, `app-ui.js`,
-`manifest.webmanifest`, `sw.js`, `icon.svg` and `media/`.
+Static hosting: `index.html`, `app-core.js`, `app-ui.js`,
+`manifest.webmanifest`, `sw.js`, `icon*` and `media/`. Every push to `main`
+deploys to both GitHub Pages and Vercel.
+
+**Use `https://osteoporosis-care.vercel.app`** as the address patients get.
+It is an origin of its own, and `vercel.json` sends the anti-framing and
+other security headers. GitHub Pages shares one origin, and so one
+`localStorage`, with every other Pages site on the account, and it cannot
+send headers; there the app only protects itself by refusing to draw inside
+a frame. `docs/SECURITY.md` has the plan for moving existing patients' data
+across, and for how long it is kept.
 
 ## Before a real pilot (do not skip)
 

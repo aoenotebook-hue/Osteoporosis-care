@@ -135,21 +135,40 @@ function run() {
       helpers.assert(src, 'app-ui.js has no PERMANENT_REJECTION list');
       var permanent = new RegExp(src);
 
-      var validateBody = (gs.match(/function validate\(payload\) \{([\s\S]*?)\n\}/) || [])[1] || '';
-      var refusals = (validateBody.match(/return '[^']+'/g) || []).map(function (r) { return r.slice(8, -1); });
-      helpers.assert(refusals.length >= 4, 'could not read the refusals in Code.gs validate()');
-      // A record type the deployed script does not know yet is refused only
-      // until the script is redeployed; everything else validate() refuses is
-      // wrong in the record itself.
-      refusals.filter(function (r) { return r !== 'unknown record type'; }).concat(['request too large']).forEach(function (reason) {
-        helpers.assert(permanent.test(reason), '"' + reason + '" from Code.gs would block the queue forever');
+      // Everything the shared rules can say about a record or registration
+      // is wrong in the request itself, so resending cannot help. Collect
+      // them by running the real rules over broken requests.
+      var key = core.encodeDeviceKey(new Uint8Array(32));
+      var base = { token: 't', schemaVersion: core.PROTOCOL_VERSION, patientId: 'TEST-1', deviceKey: key, date: '2026-09-01' };
+      var reasons = {};
+      [
+        { type: 'checkin', heightCm: 999 }, { type: 'checkin' }, { type: 'checkin', heightCm: 160, extra: 1 },
+        { type: 'falls' }, { type: 'bmd', scanDate: '2026-09-01', spineT: -2, hipT: -3, lowestT: -2 },
+        { type: 'frax', tool: 'FRAX-official' }, { type: 'checkin', heightCm: 160, date: '2026-02-30' },
+        { type: 'checkin', heightCm: 160, patientId: '=1' }
+      ].forEach(function (r) {
+        core.checkRecord(Object.assign({}, base, r), '2026-09-02').forEach(function (e) { reasons[e] = true; });
+      });
+      core.checkRegistration({ token: 't', schemaVersion: core.PROTOCOL_VERSION, deviceKey: key, patientId: 'X', consent: true, role: 1 }, Date.now())
+        .forEach(function (e) { reasons[e] = true; });
+      var permanentOnes = Object.keys(reasons).concat(['request too large', 'too many changes for this date']);
+      helpers.assert(permanentOnes.length >= 12, 'too few refusals collected: ' + permanentOnes.join());
+      permanentOnes.forEach(function (reason) {
+        helpers.assert(permanent.test(reason), '"' + reason + '" would block the queue forever');
       });
 
-      // These can clear up (a redeploy, a quieter moment, a signal), so the
-      // record must stay queued and be tried again.
-      ['unknown record type', 'busy, try again', 'invalid token — the app and this script are using different SHARED_TOKEN values',
+      // These can clear up (an app or script update, staff action, a quieter
+      // moment, a signal), so the record must stay queued and be tried again.
+      var gs = fs.readFileSync(path.join(root, 'apps-script', 'Code.gs'), 'utf8');
+      ['unknown record type', 'app update required', 'device not registered for this patient',
+        'hn registered on another device', 'device revoked for this patient', 'busy, try again', 'rate limited, try later', 'consent needed',
+        'invalid token — the app and this script are using different SHARED_TOKEN values',
         'no request body', 'offline', 'HTTP 500', 'Exception: Service Spreadsheets timed out'].forEach(function (reason) {
         helpers.assert(!permanent.test(reason), '"' + reason + '" would throw away a record that could still arrive');
+      });
+      ['app update required', 'device not registered for this patient', 'hn registered on another device',
+        'device revoked for this patient', 'busy, try again', 'rate limited, try later', 'too many changes for this date'].forEach(function (reason) {
+        helpers.assert(gs.indexOf("'" + reason + "'") !== -1, 'the script no longer says "' + reason + '"; update the app to match');
       });
 
       helpers.assert(/setAsideRejected\(state\.syncQueue\.shift\(\)/.test(ui), 'a refused record should be kept aside, not deleted');

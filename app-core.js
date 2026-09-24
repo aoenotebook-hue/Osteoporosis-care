@@ -438,6 +438,18 @@
     syncItems: t('รายการ', 'records'),
     syncAllSent: t('ส่งข้อมูลครบแล้ว', 'Everything has been sent'),
     syncRejectedLabel: t('ข้อมูลที่ระบบไม่รับ', 'Not accepted by the hospital system'),
+    syncFooterOtherDevice: t('เลข HN นี้ลงทะเบียนไว้กับโทรศัพท์เครื่องอื่นแล้ว ข้อมูลจากเครื่องนี้ยังเก็บไว้และยังไม่ได้ส่ง กรุณาแจ้งเจ้าหน้าที่โรงพยาบาล', 'This HN is already registered on another phone. Records from this phone are kept here and have not been sent. Please tell the hospital staff.'),
+    syncFooterRevoked: t('เจ้าหน้าที่โรงพยาบาลหยุดรับข้อมูลจากโทรศัพท์เครื่องนี้แล้ว ข้อมูลยังเก็บไว้ในเครื่อง หากต้องการส่งต่อ กรุณาติดต่อเจ้าหน้าที่', 'The hospital staff have stopped taking records from this phone. They are kept here; please contact the staff if you want to send them.'),
+    syncFooterNeedsConsent: t('ข้อมูลจะยังไม่ส่งให้โรงพยาบาลจนกว่าท่านจะยืนยันความยินยอม', 'Records will not be sent to the hospital until you confirm your consent'),
+    syncFooterConsentButton: t('ยืนยันความยินยอม', 'Confirm consent'),
+    reconsentTitle: t('ขอให้ท่านยืนยันความยินยอมอีกครั้ง', 'Please confirm your consent again'),
+    reconsentBody: t('แอปเพิ่มการป้องกันข้อมูลของท่าน ก่อนส่งข้อมูลให้โรงพยาบาลต่อ กรุณาอ่านและยืนยันความยินยอมด้านล่างอีกครั้ง ข้อมูลที่บันทึกไว้ในเครื่องยังอยู่ครบ', 'The app now protects your records better. Before it sends them to the hospital again, please read and confirm the consent below. Everything saved on this phone is still here.'),
+    reconsentConfirm: t('ยืนยันและส่งข้อมูลต่อ', 'Confirm and keep sending'),
+    reconsentLater: t('ไว้ภายหลัง', 'Not now'),
+    valueOutOfRange: t('ค่านี้อยู่นอกช่วงที่เป็นไปได้ กรุณาตรวจสอบอีกครั้ง', 'This value is outside the possible range. Please check it again.'),
+    resetWarnDevice: t('หากลงทะเบียนใหม่ด้วยเลข HN เดิม เจ้าหน้าที่โรงพยาบาลต้องยืนยันก่อน ข้อมูลจึงจะส่งได้', 'If you register again with the same HN, the hospital staff must confirm it before records can be sent.'),
+    framedNotice: t('เพื่อความปลอดภัยของข้อมูล แอปนี้เปิดได้เฉพาะในหน้าต่างของแอปเอง', 'To keep your records safe, this app only opens in its own window'),
+    framedOpen: t('เปิดแอป', 'Open the app'),
     syncLastOk: t('ส่งสำเร็จล่าสุด', 'Last sent successfully'),
     syncLastError: t('ปัญหาล่าสุด', 'Last problem'),
     syncNever: t('ยังไม่เคยส่งสำเร็จ', 'Nothing has been sent yet'),
@@ -474,6 +486,7 @@
     registerYearBEHint: t('กรอกเป็น พ.ศ. เช่น 2495', 'Enter the Buddhist-era year, for example 2495'),
     registerYearInvalidBE: t('กรุณากรอกปีเกิดเป็น พ.ศ. เช่น 2495', 'Please enter the year of birth in the Buddhist era, for example 2495'),
     registerHNRequiredOnly: t('กรุณากรอกเลขประจำตัวผู้ป่วย (HN)', 'Please enter your hospital number (HN)'),
+    registerAgeRange: t('แอปนี้สำหรับผู้ที่มีอายุ 18 ปีขึ้นไป กรุณาตรวจสอบปีเกิดอีกครั้ง', 'This app is for people aged 18 and over. Please check the year of birth.'),
     registerHNInvalid: t('เลข HN ใช้ได้เฉพาะตัวเลข ตัวอักษรภาษาอังกฤษ และเครื่องหมาย - หรือ / ไม่เกิน 20 ตัว', 'An HN may only contain digits, English letters, "-" and "/", up to 20 characters'),
     headerHnLabel: t('HN', 'HN'),
 
@@ -1362,18 +1375,258 @@
     });
   }
 
-  function buildRegistrationPayload(fields, token) {
+  // ---- submission rules: shared with apps-script/Code.gs, keep both copies identical ----
+  // What the backend accepts, checked the same way in the app (before a record
+  // is queued) and in the Apps Script (because anyone can post to it). A test
+  // compares the two copies line by line.
+
+  var PROTOCOL_VERSION = 3;
+  var HN_PATTERN = /^[A-Za-z0-9][A-Za-z0-9\/-]{0,19}$/;
+  // 32 random bytes, base64url: the phone's key, made at registration.
+  var DEVICE_KEY_PATTERN = /^[A-Za-z0-9_-]{43}$/;
+  // 'pdpa-' + the first 12 hex digits of SHA-256 over the consent notice as
+  // shown (title, body and checkbox; Thai then English). A new wording needs a
+  // new entry here; older entries stay so records queued offline still arrive.
+  var CONSENT_VERSIONS = ['pdpa-068d6b909058'];
+  var CONSENT_LANGS = ['th', 'en'];
+  var CONSENT_MAX_AGE_DAYS = 400;
+  var CLOCK_SKEW_MS = 2 * 24 * 60 * 60 * 1000;
+  var PATIENT_SEXES = ['female', 'male'];
+  var PATIENT_AGE = { min: 18, max: 120 };
+  var EARLIEST_RECORD_DATE = '2020-01-01';
+  var EARLIEST_SCAN_DATE = '1990-01-01';
+  var BONE_STATUSES = ['unknown', 'normal', 'osteopenia', 'osteoporosis', 'severeOsteoporosis'];
+  var FALL_RISKS = ['low', 'moderate', 'high'];
+  // bisphosphonate_weekly is the pre-2026-09 id, still possible in an old queue.
+  var MEDICATIONS = ['alendronate', 'risedronate', 'ibandronate', 'denosumab', 'zoledronate', 'teriparatide', 'romosozumab', 'bisphosphonate_weekly'];
+  var FRAX_TOOLS = ['incomplete', 'FRAX-official', 'app-estimate'];
+
+  var REGISTRATION_FIELDS = ['token', 'schemaVersion', 'patientId', 'hn', 'yearOfBirth', 'age', 'sex',
+    'consent', 'consentVersion', 'consentAt', 'consentLang', 'deviceKey'];
+  var RECORD_ENVELOPE = ['token', 'schemaVersion', 'patientId', 'deviceKey', 'date', 'type'];
+
+  // Ranges are the app's own input limits: nothing the app lets a patient
+  // enter is refused, and nothing outside what a body can measure is stored.
+  var RECORD_SCHEMAS = {
+    checkin: {
+      atLeastOne: true,
+      fields: {
+        heightCm: { type: 'number', min: 100, max: 210 },
+        chairStandReps: { type: 'integer', min: 0, max: 60 },
+        tugSeconds: { type: 'number', min: 1, max: 300 },
+        safetyScore: { type: 'integer', min: 0, max: 50 },
+        falls: { type: 'integer', min: 0, max: 1 },
+        missedDoses: { type: 'integer', min: 0, max: 1 },
+        balanceLevel: { type: 'integer', min: 1, max: 3 },
+        boneStatus: { type: 'enum', values: BONE_STATUSES },
+        fallRisk: { type: 'enum', values: FALL_RISKS }
+      }
+    },
+    falls: {
+      fields: {
+        injured: { type: 'integer', min: 0, max: 1, required: true },
+        cause: { type: 'text', max: 200 }
+      }
+    },
+    adherence: {
+      fields: {
+        medication: { type: 'enum', values: MEDICATIONS, required: true },
+        doseNumber: { type: 'integer', min: 1, max: 5000, required: true }
+      }
+    },
+    // Estimates from the food-frequency answers (0-21 servings a week of each
+    // food), so the ceiling is what those answers can produce, not intake.
+    nutrition: {
+      atLeastOne: true,
+      fields: {
+        calciumIntakeMg: { type: 'number', min: 0, max: 10000 },
+        calciumSupplementMg: { type: 'number', min: 0, max: 3000 },
+        vitaminDSupplementIu: { type: 'number', min: 0, max: 10000 },
+        proteinIntakeG: { type: 'number', min: 0, max: 1500 }
+      }
+    },
+    bmd: {
+      fields: {
+        scanDate: { type: 'scanDate', required: true },
+        spineT: { type: 'number', min: -6, max: 6 },
+        hipT: { type: 'number', min: -6, max: 6 },
+        lowestT: { type: 'number', min: -6, max: 6, required: true },
+        boneStatus: { type: 'enum', values: BONE_STATUSES }
+      }
+    },
+    frax: {
+      fields: {
+        tool: { type: 'enum', values: FRAX_TOOLS, required: true },
+        weightKg: { type: 'number', min: 25, max: 200 },
+        heightCm: { type: 'number', min: 100, max: 210 },
+        bmi: { type: 'number', min: 10, max: 80 },
+        majorFractureRisk: { type: 'number', min: 0, max: 100 },
+        hipFractureRisk: { type: 'number', min: 0, max: 100 }
+      }
+    }
+  };
+
+  function isPresent(value) {
+    return value !== undefined && value !== null && value !== '';
+  }
+
+  /** A yyyy-MM-dd string naming a day that exists: 2026-02-30 is refused. */
+  function isRealDate(value) {
+    if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+    var y = Number(value.slice(0, 4));
+    var m = Number(value.slice(5, 7));
+    var d = Number(value.slice(8, 10));
+    var t = new Date(Date.UTC(y, m - 1, d));
+    return t.getUTCFullYear() === y && t.getUTCMonth() === m - 1 && t.getUTCDate() === d;
+  }
+
+  function shiftDate(ymd, days) {
+    var t = new Date(Date.UTC(Number(ymd.slice(0, 4)), Number(ymd.slice(5, 7)) - 1, Number(ymd.slice(8, 10)) + days));
+    return t.toISOString().slice(0, 10);
+  }
+
+  function isWholeNumber(value) {
+    return typeof value === 'number' && isFinite(value) && Math.floor(value) === value;
+  }
+
+  function fieldIsValid(rule, value, payload) {
+    if (rule.type === 'number' || rule.type === 'integer') {
+      if (typeof value !== 'number' || !isFinite(value)) return false;
+      if (rule.type === 'integer' && Math.floor(value) !== value) return false;
+      return value >= rule.min && value <= rule.max;
+    }
+    if (rule.type === 'enum') return rule.values.indexOf(value) !== -1;
+    if (rule.type === 'text') return typeof value === 'string' && value.length <= rule.max;
+    if (rule.type === 'scanDate') return isRealDate(value) && value >= EARLIEST_SCAN_DATE && value <= payload.date;
+    return false;
+  }
+
+  /** Checks that need two fields at once. */
+  function crossCheck(payload) {
+    var errors = [];
+    if (payload.type === 'bmd') {
+      var scores = [payload.spineT, payload.hipT].filter(isPresent);
+      if (!scores.length) errors.push('missing spineT');
+      else if (Math.abs(Math.min.apply(null, scores) - payload.lowestT) > 0.001) errors.push('invalid lowestT');
+    }
+    if (payload.type === 'frax') {
+      var hasWeight = isPresent(payload.weightKg);
+      var hasHeight = isPresent(payload.heightCm);
+      if (isPresent(payload.bmi)) {
+        var metres = payload.heightCm / 100;
+        if (!hasWeight || !hasHeight) errors.push('invalid bmi');
+        else if (Math.abs(Math.round(payload.weightKg / (metres * metres) * 10) / 10 - payload.bmi) > 0.15) errors.push('invalid bmi');
+      }
+      var hasMajor = isPresent(payload.majorFractureRisk);
+      var hasHip = isPresent(payload.hipFractureRisk);
+      // A hip fracture is one of the major osteoporotic fractures, so its
+      // 10-year probability can never be the larger of the two.
+      if (hasMajor && hasHip && payload.hipFractureRisk > payload.majorFractureRisk) errors.push('invalid hipFractureRisk');
+      if (payload.tool !== 'incomplete' && !hasMajor && !hasHip) errors.push('missing majorFractureRisk');
+    }
+    return errors;
+  }
+
+  /**
+   * Every reason a record would be refused, first one first. todayYmd is the
+   * checker's own date; a record may be dated up to one day ahead of it, for
+   * the phone and the script sitting either side of midnight.
+   */
+  function checkRecord(payload, todayYmd) {
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return ['invalid request'];
+    if (payload.schemaVersion !== PROTOCOL_VERSION || typeof payload.deviceKey !== 'string' ||
+        !DEVICE_KEY_PATTERN.test(payload.deviceKey)) return ['app update required'];
+    var schema = Object.prototype.hasOwnProperty.call(RECORD_SCHEMAS, payload.type) ? RECORD_SCHEMAS[payload.type] : null;
+    if (!schema) return ['unknown record type'];
+
+    var errors = [];
+    if (typeof payload.token !== 'string' || !payload.token) errors.push('missing token');
+    if (typeof payload.patientId !== 'string' || !HN_PATTERN.test(payload.patientId)) errors.push('invalid patientId');
+    if (!isRealDate(payload.date) || payload.date < EARLIEST_RECORD_DATE || payload.date > shiftDate(todayYmd, 1)) {
+      errors.push('invalid date');
+    }
+    Object.keys(payload).forEach(function (key) {
+      if (RECORD_ENVELOPE.indexOf(key) === -1 && !Object.prototype.hasOwnProperty.call(schema.fields, key)) {
+        errors.push('unexpected field ' + key);
+      }
+    });
+    var present = 0;
+    Object.keys(schema.fields).forEach(function (name) {
+      var rule = schema.fields[name];
+      if (!isPresent(payload[name])) {
+        if (rule.required) errors.push('missing ' + name);
+        return;
+      }
+      present += 1;
+      if (!fieldIsValid(rule, payload[name], payload)) errors.push('invalid ' + name);
+    });
+    if (schema.atLeastOne && present === 0) errors.push('missing measurement');
+    return errors.length ? errors : crossCheck(payload);
+  }
+
+  /**
+   * Every reason a registration would be refused. The consent fields are the
+   * evidence of what was agreed to, in which language and when; they say
+   * nothing about who agreed (see "Identity" in the README).
+   */
+  function checkRegistration(payload, nowMs) {
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return ['invalid request'];
+    if (payload.schemaVersion !== PROTOCOL_VERSION || typeof payload.deviceKey !== 'string' ||
+        !DEVICE_KEY_PATTERN.test(payload.deviceKey)) return ['app update required'];
+
+    var errors = [];
+    Object.keys(payload).forEach(function (key) {
+      if (REGISTRATION_FIELDS.indexOf(key) === -1) errors.push('unexpected field ' + key);
+    });
+    if (typeof payload.token !== 'string' || !payload.token) errors.push('missing token');
+    if (typeof payload.patientId !== 'string' || !HN_PATTERN.test(payload.patientId)) errors.push('invalid patientId');
+    else if (payload.hn !== payload.patientId) errors.push('invalid hn');
+
+    var year = new Date(nowMs).getUTCFullYear();
+    var yob = payload.yearOfBirth;
+    if (!isPresent(yob)) errors.push('missing yearOfBirth');
+    else if (!isWholeNumber(yob) || year - yob < PATIENT_AGE.min || year - yob > PATIENT_AGE.max) errors.push('invalid yearOfBirth');
+    if (!isPresent(payload.age)) errors.push('missing age');
+    else if (!isWholeNumber(payload.age) || (isWholeNumber(yob) && Math.abs(year - yob - payload.age) > 1)) errors.push('invalid age');
+    if (!isPresent(payload.sex)) errors.push('missing sex');
+    else if (PATIENT_SEXES.indexOf(payload.sex) === -1) errors.push('invalid sex');
+
+    if (payload.consent !== true) errors.push('missing consent');
+    if (CONSENT_VERSIONS.indexOf(payload.consentVersion) === -1) errors.push('invalid consentVersion');
+    var at = typeof payload.consentAt === 'string' &&
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d{1,3})?)?(Z|[+-]\d{2}:\d{2})$/.test(payload.consentAt)
+      ? Date.parse(payload.consentAt) : NaN;
+    if (isNaN(at) || at > nowMs + CLOCK_SKEW_MS || at < nowMs - CONSENT_MAX_AGE_DAYS * 86400000) errors.push('invalid consentAt');
+    if (CONSENT_LANGS.indexOf(payload.consentLang) === -1) errors.push('invalid consentLang');
+    return errors;
+  }
+  // ---- end submission rules ----
+
+  /** The notice a patient agrees to at registration; see CONSENT_VERSIONS. */
+  var PDPA_NOTICE_VERSION = CONSENT_VERSIONS[CONSENT_VERSIONS.length - 1];
+
+  /**
+   * What the app sends to register. consent is the evidence the patient
+   * ticked: which notice (consentVersion), in which language and when. The
+   * device key is what later records are checked against.
+   */
+  function buildRegistrationPayload(fields, token, deviceKey) {
     fields = fields || {};
     var birthYear = normalizeBirthYear(fields.yearOfBirth);
+    var consent = fields.consent && typeof fields.consent === 'object' ? fields.consent : null;
     return {
-      schemaVersion: SCHEMA_VERSION,
+      schemaVersion: PROTOCOL_VERSION,
       token: token,
       patientId: fields.hn || null,
       hn: fields.hn || null,
       yearOfBirth: birthYear,
       age: deriveAge(fields.yearOfBirth),
       sex: fields.sex || null,
-      consent: !!fields.consent
+      consent: !!consent,
+      consentVersion: consent ? consent.version : null,
+      consentAt: consent ? consent.at : null,
+      consentLang: consent ? consent.lang : null,
+      deviceKey: deviceKey || null
     };
   }
 
@@ -1385,20 +1638,37 @@
    * anyone can post to it directly.
    */
   function isValidHn(hn) {
-    return typeof hn === 'string' && /^[A-Za-z0-9][A-Za-z0-9\/-]{0,19}$/.test(hn);
+    return typeof hn === 'string' && HN_PATTERN.test(hn);
   }
 
-  function validateRegistrationPayload(payload) {
-    var errors = [];
-    if (!payload || typeof payload !== 'object') return { valid: false, errors: ['payload must be an object'] };
-    if (!payload.token) errors.push('missing token');
-    if (!payload.patientId) errors.push('missing HN');
-    else if (!isValidHn(payload.patientId)) errors.push('invalid HN');
-    if (!payload.yearOfBirth) errors.push('missing yearOfBirth');
-    if (!payload.sex) errors.push('missing sex');
-    if (!payload.consent) errors.push('consent must be true');
-    if (typeof payload.schemaVersion !== 'number') errors.push('missing schemaVersion');
+  function validateRegistrationPayload(payload, nowMs) {
+    var errors = checkRegistration(payload, nowMs === undefined ? Date.now() : nowMs);
     return { valid: errors.length === 0, errors: errors };
+  }
+
+  /** The record as the Apps Script will judge it; todayYmd defaults to the phone's date. */
+  function validateRecord(payload, todayYmd) {
+    var errors = checkRecord(payload, todayYmd || formatYMD(new Date()));
+    return { valid: errors.length === 0, errors: errors };
+  }
+
+  /** 32 random bytes as base64url, the phone's registration key. */
+  function encodeDeviceKey(bytes) {
+    var alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+    var out = '';
+    var bits = 0;
+    var value = 0;
+    for (var i = 0; i < bytes.length; i++) {
+      value = (value << 8) | bytes[i];
+      bits += 8;
+      while (bits >= 6) {
+        bits -= 6;
+        out += alphabet.charAt((value >> bits) & 63);
+      }
+      value &= (1 << bits) - 1;
+    }
+    if (bits > 0) out += alphabet.charAt((value << (6 - bits)) & 63);
+    return out;
   }
 
   function renderResourceCard(link, lang) {
@@ -1981,6 +2251,19 @@
     buildRegistrationPayload: buildRegistrationPayload,
     validateRegistrationPayload: validateRegistrationPayload,
     isValidHn: isValidHn,
+    PROTOCOL_VERSION: PROTOCOL_VERSION,
+    CONSENT_VERSIONS: CONSENT_VERSIONS,
+    PDPA_NOTICE_VERSION: PDPA_NOTICE_VERSION,
+    RECORD_SCHEMAS: RECORD_SCHEMAS,
+    MEDICATIONS: MEDICATIONS,
+    BONE_STATUSES: BONE_STATUSES,
+    FALL_RISKS: FALL_RISKS,
+    PATIENT_AGE: PATIENT_AGE,
+    isRealDate: isRealDate,
+    checkRecord: checkRecord,
+    checkRegistration: checkRegistration,
+    validateRecord: validateRecord,
+    encodeDeviceKey: encodeDeviceKey,
     renderResourceCard: renderResourceCard,
     buildDedupKey: buildDedupKey,
     dedupeRecords: dedupeRecords,
