@@ -437,6 +437,7 @@
     syncPending: t('ข้อมูลที่รอส่ง', 'Waiting to send'),
     syncItems: t('รายการ', 'records'),
     syncAllSent: t('ส่งข้อมูลครบแล้ว', 'Everything has been sent'),
+    syncRejectedLabel: t('ข้อมูลที่ระบบไม่รับ', 'Not accepted by the hospital system'),
     syncLastOk: t('ส่งสำเร็จล่าสุด', 'Last sent successfully'),
     syncLastError: t('ปัญหาล่าสุด', 'Last problem'),
     syncNever: t('ยังไม่เคยส่งสำเร็จ', 'Nothing has been sent yet'),

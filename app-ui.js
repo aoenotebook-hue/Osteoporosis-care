@@ -189,22 +189,25 @@
    */
   /**
    * Replies the backend gives for a record it will never accept, however often
-   * it is sent (apps-script/Code.gs validate()). Everything else — offline, a
-   * busy lock, a token mismatch, an old script — may clear up, so it stays
-   * first in the queue and is retried.
+   * it is sent: something wrong in the record itself (apps-script/Code.gs
+   * validate()). Everything else — offline, a busy lock, a token mismatch, an
+   * old script — may clear up, so it stays first in the queue and is retried.
+   * "unknown record type" is one of those: the app updates itself but the
+   * script is redeployed by hand, so a record type newer than the deployed
+   * script is refused only until the script catches up.
    */
-  var PERMANENT_REJECTION = /^(invalid (patientId|hn|date)|unknown record type|request too large)$/;
+  var PERMANENT_REJECTION = /^(invalid (patientId|hn|date)|request too large)$/;
 
   /**
    * A record the backend refuses for good is set aside, not deleted, and the
    * queue moves on. It used to stay first in line and be sent again forever,
    * and because the queue goes in order nothing recorded after it ever
-   * reached the hospital either.
+   * reached the hospital either. There is no cap: the footer promises these
+   * are kept on the phone, and a few hundred small records fit easily.
    */
   function setAsideRejected(item, reason) {
     if (!state.syncRejected) state.syncRejected = [];
     state.syncRejected.push({ item: item, reason: reason, at: new Date().toISOString() });
-    if (state.syncRejected.length > 50) state.syncRejected.shift();
   }
 
   /**
@@ -505,7 +508,8 @@
   }
 
   function renderResetConfirm() {
-    var pending = state.syncQueue.length;
+    // Records set aside as refused never reached the hospital either.
+    var pending = state.syncQueue.length + (state.syncRejected || []).length;
     return '<div class="card-head"><span class="ico">⚠️</span><h2 style="margin:0;">' + esc(tr('resetTitle')) + '</h2></div>' +
       '<p>' + esc(tr('resetBody')) + '</p>' +
       (pending ? '<div class="card warn"><p style="margin:0;">' + esc(tr('resetWarnUnsent')) + ' (' + pending + ' ' + esc(tr('syncItems')) + ')</p></div>' : '') +
@@ -1136,9 +1140,17 @@
   function renderSyncPanel() {
     var sync = state.sync || {};
     var pending = state.syncQueue.length;
+    var rejected = state.syncRejected || [];
     var html = '<div class="card"><div class="card-head"><span class="ico">☁️</span><h3>' + esc(tr('syncTitle')) + '</h3></div>';
+    // An empty queue is not "everything sent" while refused records sit aside.
     html += '<div class="sync-row"><span class="label">' + esc(tr('syncPending')) + '</span>' +
-      '<span class="value">' + (pending ? pending + ' ' + esc(tr('syncItems')) : '✓ ' + esc(tr('syncAllSent'))) + '</span></div>';
+      '<span class="value">' + (pending || rejected.length ? pending + ' ' + esc(tr('syncItems')) : '✓ ' + esc(tr('syncAllSent'))) + '</span></div>';
+    if (rejected.length) {
+      html += '<div class="sync-row"><span class="label">' + esc(tr('syncRejectedLabel')) + '</span>' +
+        '<span class="value" style="color:var(--critical);">' + rejected.length + ' ' + esc(tr('syncItems')) +
+        ' (' + esc(rejected[rejected.length - 1].reason) + ')</span></div>' +
+        '<p class="muted" style="margin-top:8px;">' + esc(tr('syncFooterRejected').replace('{n}', rejected.length)) + '</p>';
+    }
     html += '<div class="sync-row"><span class="label">' + esc(tr('syncLastOk')) + '</span>' +
       '<span class="value">' + (sync.lastOkAt ? esc(formatDateTime(sync.lastOkAt)) : esc(tr('syncNever'))) + '</span></div>';
     if (sync.lastError === 'offline') {
