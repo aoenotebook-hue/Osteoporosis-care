@@ -266,7 +266,7 @@ Static hosting (e.g. GitHub Pages): `index.html`, `app-core.js`,
    file.
 8. **Your name in the footer** is set in `app-core.js` → `DOCTOR`:
    รศ.นพ.สรวุฒิ ธรรมยงค์กิจ / Assoc. Prof. Sorawut Thamyongkit, M.D.,
-   matching rueortho.vercel.app. The build plan listed
+   matching easybone.org. The build plan listed
    the ธรรมยงค์กิจ vs. ธำรงค์กิจ spelling as an open decision — it is now
    confirmed as ธรรมยงค์กิจ, so reuse that across the other three apps.
 9. **BMD entry** takes the spine and hip T-scores off the DXA report, and

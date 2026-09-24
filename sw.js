@@ -1,4 +1,4 @@
-var CACHE_NAME = 'osteo-care-v3';
+var CACHE_NAME = 'osteo-care-v4';
 var SHELL_FILES = [
   './',
   './index.html',
