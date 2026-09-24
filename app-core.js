@@ -1519,9 +1519,12 @@
       }
       var hasMajor = isPresent(payload.majorFractureRisk);
       var hasHip = isPresent(payload.hipFractureRisk);
-      // A hip fracture is one of the major osteoporotic fractures, so its
-      // 10-year probability can never be the larger of the two.
-      if (hasMajor && hasHip && payload.hipFractureRisk > payload.majorFractureRisk) errors.push('invalid hipFractureRisk');
+      // On a real FRAX report the hip figure is never the larger: a hip fracture
+      // is one of the major osteoporotic fractures. The app's own estimate can
+      // put it above for high-risk profiles, and is sent as it is shown.
+      if (payload.tool === 'FRAX-official' && hasMajor && hasHip && payload.hipFractureRisk > payload.majorFractureRisk) {
+        errors.push('invalid hipFractureRisk');
+      }
       if (payload.tool !== 'incomplete' && !hasMajor && !hasHip) errors.push('missing majorFractureRisk');
     }
     return errors;
@@ -1582,7 +1585,9 @@
     if (typeof payload.patientId !== 'string' || !HN_PATTERN.test(payload.patientId)) errors.push('invalid patientId');
     else if (payload.hn !== payload.patientId) errors.push('invalid hn');
 
-    var year = new Date(nowMs).getUTCFullYear();
+    // The calendar year in Bangkok, as on the patient's phone: in the first
+    // hours of 1 January the UTC year is still the old one.
+    var year = new Date(nowMs + 7 * 3600000).getUTCFullYear();
     var yob = payload.yearOfBirth;
     if (!isPresent(yob)) errors.push('missing yearOfBirth');
     else if (!isWholeNumber(yob) || year - yob < PATIENT_AGE.min || year - yob > PATIENT_AGE.max) errors.push('invalid yearOfBirth');

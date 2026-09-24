@@ -127,7 +127,7 @@ function run() {
       helpers.assertEqual(a.post({ date: daysAgo(3), type: 'falls', injured: 0, cause: ['a'] }).error, 'invalid cause');
       helpers.assertEqual(b.table('Falls').length, 0, 'none of them was written');
       // safeCell still caps and strips whatever does reach it.
-      helpers.assertEqual(b.ctx.safeCell(new Array(1000).join('x')).length, 200);
+      helpers.assertEqual(b.ctx.safeCell(new Array(1000).join('x')), "'" + new Array(201).join('x'), 'capped at 200, kept as text');
       helpers.assertEqual(b.ctx.safeCell({ evil: true }), '');
     }
   });

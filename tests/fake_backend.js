@@ -10,6 +10,8 @@ var GS_PATH = path.join(__dirname, '..', 'apps-script', 'Code.gs');
  * faithful in the ways the tests lean on:
  *   - text written to a cell that starts with = + - or @ becomes a formula,
  *     and a leading apostrophe keeps it as text (and is not read back);
+ *   - like Sheets, text that looks like a number or a date is converted:
+ *     "0012345" is stored as the number 12345, "2026-09-01" as a date;
  *   - every write to an existing row is counted, so a test can prove the
  *     script only ever appends.
  * Only synthetic records ever pass through it.
@@ -20,6 +22,8 @@ function fakeSheets() {
   function store(v) {
     if (typeof v === 'string' && v.charAt(0) === "'") return { text: v.slice(1) };
     if (typeof v === 'string' && /^[=+\-@]/.test(v)) return { formula: v };
+    if (typeof v === 'string' && /^\d+(\.\d+)?$/.test(v)) return { value: Number(v) };
+    if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)) return { value: new Date(v + 'T00:00:00Z') };
     return { value: v };
   }
   function read(cell) {
@@ -36,6 +40,12 @@ function fakeSheets() {
       appendRow: function (r) { rows.push(r.map(store)); },
       setFrozenRows: function () {},
       getLastRow: function () { return rows.length; },
+      getLastColumn: function () {
+        return rows.reduce(function (w, r) {
+          for (var i = r.length; i > 0; i--) { if (read(r[i - 1]) !== '') return Math.max(w, i); }
+          return w;
+        }, 0);
+      },
       getDataRange: function () { return { getValues: function () { return rows.map(function (r) { return r.map(read); }); } }; },
       getRange: function (row, col, numRows, numCols) {
         return {
@@ -71,7 +81,11 @@ function fakeCache() {
   return {
     store: store,
     get: function (k) { return Object.prototype.hasOwnProperty.call(store, k) ? store[k] : null; },
-    put: function (k, v) { store[k] = String(v); }
+    put: function (k, v, seconds) {
+      // Apps Script keeps a cached value for at most six hours.
+      if (seconds > 21600) throw new Error('Exception: Argument too large: expirationInSeconds');
+      store[k] = String(v);
+    }
   };
 }
 

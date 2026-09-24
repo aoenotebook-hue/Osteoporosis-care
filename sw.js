@@ -2,7 +2,7 @@
 // be shared with other apps (GitHub Pages serves all of an account's sites
 // from one origin), so a new version deletes only its own old caches.
 var CACHE_PREFIX = 'osteo-care-';
-var CACHE_NAME = CACHE_PREFIX + 'v6';
+var CACHE_NAME = CACHE_PREFIX + 'v7';
 var SHELL_FILES = [
   './',
   './index.html',

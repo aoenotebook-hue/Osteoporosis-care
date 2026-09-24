@@ -50,13 +50,34 @@ function run() {
   cases.push({
     name: "a new version deletes only this app's old caches; other apps' caches survive",
     fn: function () {
-      var result = activateWith(['osteo-care-v4', 'osteo-care-v5', 'osteo-care-v6', 'fall-diary-v2',
+      var result = activateWith(['osteo-care-v4', 'osteo-care-v5', 'osteo-care-v6', 'osteo-care-v7', 'fall-diary-v2',
         'workbox-precache-v2-https://x/', 'rueortho-images', 'osteo-care']);
-      helpers.assertEqual(result.current, 'osteo-care-v6');
-      helpers.assertEqual(result.deleted.sort().join(), 'osteo-care-v4,osteo-care-v5', 'deleted');
-      ['fall-diary-v2', 'workbox-precache-v2-https://x/', 'rueortho-images', 'osteo-care', 'osteo-care-v6'].forEach(function (kept) {
+      helpers.assertEqual(result.current, 'osteo-care-v7');
+      helpers.assertEqual(result.deleted.sort().join(), 'osteo-care-v4,osteo-care-v5,osteo-care-v6', 'deleted');
+      ['fall-diary-v2', 'workbox-precache-v2-https://x/', 'rueortho-images', 'osteo-care', 'osteo-care-v7'].forEach(function (kept) {
         helpers.assert(result.left.indexOf(kept) !== -1, kept + ' was deleted');
       });
+    }
+  });
+
+  cases.push({
+    name: 'a change to the app files comes with a new cache name, or installed phones never see it',
+    fn: function () {
+      // The worker answers the app's own files from its cache and only
+      // fetches them again when sw.js itself changes. tests/shell-version.json
+      // records which files the current cache name was cut for.
+      var crypto = require('crypto');
+      var record = JSON.parse(fs.readFileSync(path.join(__dirname, 'shell-version.json'), 'utf8'));
+      var hash = crypto.createHash('sha256');
+      ['index.html', 'app-core.js', 'app-ui.js', 'manifest.webmanifest', 'icon.svg'].forEach(function (f) {
+        hash.update(fs.readFileSync(path.join(root, f)));
+      });
+      var now = hash.digest('hex').slice(0, 16);
+      var sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
+      var cacheName = "osteo-care-v" + (sw.match(/CACHE_PREFIX \+ 'v(\d+)'/) || [])[1];
+      helpers.assertEqual(cacheName, record.cacheName, 'sw.js and tests/shell-version.json disagree on the cache name');
+      helpers.assertEqual(now, record.shellHash, 'the app files changed since ' + record.cacheName +
+        ': raise the version in sw.js, then set tests/shell-version.json to {"cacheName": the new name, "shellHash": "' + now + '"}');
     }
   });
 

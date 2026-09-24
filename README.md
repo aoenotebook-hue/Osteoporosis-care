@@ -216,7 +216,7 @@ replacing anything already there.
 4. Confirm it took: open the `/exec` URL in a browser. It answers
 
    ```json
-   {"ok":true,"service":"osteoporosis-care","protocol":3,"tokenConfigured":true,"sheets":[...],"version":"2026-09-24.2"}
+   {"ok":true,"service":"osteoporosis-care","protocol":3,"tokenConfigured":true,"sheets":[...],"version":"2026-09-25"}
    ```
 
 5. **Check the deployed backend**, from any computer with Node 18 or later:
@@ -227,16 +227,17 @@ replacing anything already there.
 
    Every probe must pass. They send requests the script must refuse, so they
    write nothing (and they stop at once if the version is wrong, before an
-   older script could accept anything). `--write` adds a round trip with two
-   made-up `ZZTEST-` patients and prints the rows to delete. **Until this
-   passes, the fixes are not live.**
+   older script could accept anything). **Then run it once more with
+   `--write`:** only that round trip — two made-up `ZZTEST-` patients —
+   proves the script accepts records, and it prints the rows to delete
+   afterwards. **Until both pass, the fixes are not live.**
 
 Access must be **Anyone**, not "Anyone with a Google account" — the
 latter answers with a login page the app cannot follow. `SHARED_TOKEN`
 must be identical in `Code.gs` and `app-ui.js`.
 
 The first request after deploying moves any tab from an earlier version
-aside as "<Name> (before 2026-09-24.2)" — intact — and starts a fresh one.
+aside as "<Name> (before 2026-09-25)" — intact — and starts a fresh one.
 Phones register again on their own; a phone registered before this version
 first asks its patient to confirm consent once.
 
@@ -261,9 +262,9 @@ The short version; `docs/SECURITY.md` has the detail.
   `docs/SECURITY.md` sets out the options.
 - **Nothing is overwritten, and everything is checked** against the same
   rules the app uses: required fields, types, real dates, clinical ranges,
-  consent evidence. Text starting with `=`, `+`, `-` or `@` is stored as
-  text, never as a formula. Submissions are rate-limited per phone and
-  per day.
+  consent evidence. Every piece of text is stored as text: a formula never
+  runs, and an HN such as `0012345` is not turned into a number.
+  Submissions are rate-limited per phone and per HN.
 - **Moving a patient to a new phone:** in Devices, set the old phone's
   status to `revoked`.
 - **Share the Google Sheet only with the care team** — it holds HNs and
@@ -343,7 +344,11 @@ across, and for how long it is kept.
    has been recorded uses approximate Asian baselines
    (`FRAX_BASELINE_RISK`). Review those figures, and decide whether you
    want the estimate shown to patients at all or only the official
-   result — it is one `else if` in `renderFraxCard()`.
+   result — it is one `else if` in `renderFraxCard()`. Note that for
+   high-risk profiles (for example 75, T-score −4, two risk factors) the
+   estimate shows a **hip** figure above the **major** one, which a real
+   FRAX result never does; the multiplier caps in `estimateFractureRisk`
+   are the place to look.
 
 ## Writing for patients
 

@@ -274,7 +274,7 @@ function run() {
   });
 
   cases.push({
-    name: 'submissions are limited per phone, per day and per HN',
+    name: 'submissions are limited per phone, per day and per HN, in windows CacheService can hold',
     fn: function () {
       var b = fake.backend();
       var p = patient(b, 'TEST-0001');
@@ -289,7 +289,7 @@ function run() {
       q.post({ date: daysAgo(1), type: 'checkin', heightCm: 159 });
       helpers.assertEqual(q.post({ date: daysAgo(1), type: 'checkin', heightCm: 158 }).error, 'too many changes for this date');
 
-      b.ctx.LIMITS.registrationsPerHnPerDay = 2;
+      b.ctx.LIMITS.registrationsPerHnPerSixHours = 2;
       var reg = Object.assign({}, q.reg);
       b.post(reg);
       helpers.assertEqual(b.post(reg).error, 'busy, try again', 'repeated registrations for one HN are throttled');
@@ -359,6 +359,92 @@ function run() {
       helpers.assertEqual(aside.rows.length, 2, 'and kept whole');
       helpers.assertEqual(b.table('CheckIns').length, 1);
       helpers.assertEqual(b.overwrites.length, 0);
+    }
+  });
+
+  cases.push({
+    name: 'an HN, date or text that Sheets would convert is stored exactly as sent',
+    fn: function () {
+      // Sheets turns "0012345" into the number 12345. The phone's HN would then
+      // never match its Devices row again, and every upload would be refused.
+      var b = fake.backend();
+      ['0012345', '12-3456', '000'].forEach(function (hn) {
+        var p = patient(b, hn);
+        helpers.assert(p.registered.ok, hn + ' did not register: ' + p.registered.error);
+        var first = p.post({ date: daysAgo(1), type: 'falls', injured: 0, cause: '2026-09-01' });
+        helpers.assert(first.ok, hn + ': a record after registering was refused: ' + first.error);
+        helpers.assertEqual(p.post({ date: daysAgo(1), type: 'checkin', heightCm: 160 }).result.action, 'inserted');
+        helpers.assertEqual(p.post({ date: daysAgo(1), type: 'checkin', heightCm: 159 }).result.action, 'corrected',
+          hn + ': the second change must find the first');
+      });
+      var devices = b.table('Devices').map(function (d) { return d.patientId; });
+      helpers.assertEqual(devices.join(), '0012345,12-3456,000', 'HNs kept as text');
+      helpers.assertEqual(b.table('Falls')[0].cause, '2026-09-01', 'a cause that looks like a date stays text');
+    }
+  });
+
+  cases.push({
+    name: 'staff may add their own columns to the right of a tab',
+    fn: function () {
+      var b = fake.backend();
+      var p = patient(b, 'TEST-0001');
+      p.post({ date: daysAgo(1), type: 'checkin', heightCm: 160 });
+      var header = b.sheets.CheckIns.rows[0];
+      header.push({ value: 'staff note' });
+      b.sheets.CheckIns.rows[1].push({ value: 'checked by nurse' });
+      helpers.assert(p.post({ date: daysAgo(1), type: 'checkin', heightCm: 159 }).ok, 'refused after a staff column was added');
+      helpers.assertEqual(Object.keys(b.sheets).filter(function (n) { return /before/.test(n); }).length, 0,
+        'the tab must not be moved aside for a staff column');
+      helpers.assertEqual(b.table('CheckIns').length, 2);
+    }
+  });
+
+  cases.push({
+    name: "every fracture-risk estimate the app can show is accepted as it is shown",
+    fn: function () {
+      // The app's estimate can put the hip figure above the major one for
+      // high-risk profiles; that is the clinical calculation, and the rules
+      // must not refuse it (only an official FRAX report must have hip <= major).
+      var key = core.encodeDeviceKey(new Uint8Array(32));
+      var factors = core.FRAX_FACTORS.map(function (f) { return f.id; });
+      var checked = 0;
+      ['female', 'male'].forEach(function (sex) {
+        [50, 65, 75, 85, 95].forEach(function (age) {
+          for (var mask = 0; mask < (1 << factors.length); mask += 7) {
+            [[35, 160], [60, 160], [90, 170]].forEach(function (wh) {
+              [null, -2.5, -4].forEach(function (t) {
+                var frax = { weightKg: wh[0], heightCm: wh[1] };
+                factors.forEach(function (id, i) { if (mask & (1 << i)) frax[id] = true; });
+                var shown = core.fractureRiskToShow(core.buildFraxWorksheet({ age: age, sex: sex }, frax,
+                  t === null ? [] : [{ date: '2026-01-01', spineT: t, hipT: t }]));
+                var record = { token: 't', schemaVersion: core.PROTOCOL_VERSION, patientId: 'TEST-1', deviceKey: key, date: '2026-09-01', type: 'frax',
+                  weightKg: wh[0], heightCm: wh[1], bmi: core.computeBmi(wh[0], wh[1]),
+                  tool: !shown ? 'incomplete' : (shown.isOfficial ? 'FRAX-official' : 'app-estimate'),
+                  majorFractureRisk: shown && shown.major !== null ? shown.major : '', hipFractureRisk: shown && shown.hip !== null ? shown.hip : '' };
+                var errors = core.checkRecord(record, '2026-09-02');
+                helpers.assertEqual(errors.join(), '', 'refused: ' + JSON.stringify(record));
+                checked += 1;
+              });
+            });
+          }
+        });
+      });
+      helpers.assert(checked > 1000, 'too few estimates checked');
+      // A typed official result still has to make sense.
+      helpers.assertEqual(core.checkRecord({ token: 't', schemaVersion: core.PROTOCOL_VERSION, patientId: 'TEST-1', deviceKey: key,
+        date: '2026-09-01', type: 'frax', tool: 'FRAX-official', majorFractureRisk: 5, hipFractureRisk: 9 }, '2026-09-02')[0], 'invalid hipFractureRisk');
+    }
+  });
+
+  cases.push({
+    name: 'age is counted in the Bangkok year, as on the patient\'s phone',
+    fn: function () {
+      // 1 January, 01:00 in Bangkok is still 31 December in UTC.
+      var newYearBangkok = Date.UTC(2026, 11, 31, 18, 0);
+      var reg = { token: 't', schemaVersion: core.PROTOCOL_VERSION, patientId: 'TEST-1', hn: 'TEST-1', yearOfBirth: 2009, age: 18,
+        sex: 'female', consent: true, consentVersion: core.PDPA_NOTICE_VERSION, consentAt: new Date(newYearBangkok).toISOString(),
+        consentLang: 'th', deviceKey: core.encodeDeviceKey(new Uint8Array(32)) };
+      helpers.assertEqual(core.checkRegistration(reg, newYearBangkok).join(), '', 'turning 18 in 2027 (Bangkok) is 18');
     }
   });
 
