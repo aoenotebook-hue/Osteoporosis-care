@@ -28,9 +28,9 @@ function today() { return new Date(Date.now() + 7 * 3600000).toISOString().slice
 function record(hn, deviceKey, fields) {
   return Object.assign({ token: TOKEN, schemaVersion: PROTOCOL, patientId: hn, deviceKey: deviceKey, date: today() }, fields);
 }
-function registration(hn, deviceKey) {
+function registration(hn, deviceKey, sex) {
   var year = new Date().getUTCFullYear();
-  return { token: TOKEN, schemaVersion: PROTOCOL, patientId: hn, hn: hn, yearOfBirth: 1950, age: year - 1950, sex: 'female',
+  return { token: TOKEN, schemaVersion: PROTOCOL, patientId: hn, hn: hn, yearOfBirth: 1950, age: year - 1950, sex: sex || 'female',
     consent: true, consentVersion: CONSENT, consentAt: new Date().toISOString(), consentLang: 'en', deviceKey: deviceKey };
 }
 
@@ -104,7 +104,7 @@ async function probe(transport, options) {
     var keyB = key();
     await expect('two made-up patients register', async function () {
       var a = await transport.post(JSON.stringify(registration(hnA, keyA)));
-      var b = await transport.post(JSON.stringify(registration(hnB, keyB)));
+      var b = await transport.post(JSON.stringify(registration(hnB, keyB, 'male')));
       if (!a.ok || !b.ok) throw new Error(JSON.stringify([a, b]));
       return hnA + ', ' + hnB;
     });
@@ -113,16 +113,24 @@ async function probe(transport, options) {
       return refusedWith(await transport.post(JSON.stringify(record(hnB, keyA, { type: 'checkin', heightCm: 170 }))),
         'device not registered for this patient');
     });
-    await expect("patient A's phone cannot claim patient B's HN", async function () {
-      return refusedWith(await transport.post(JSON.stringify(registration(hnB, keyA))), 'hn registered on another device');
+    await expect("patient A's phone cannot add itself to patient B's HN with A's own details", async function () {
+      return refusedWith(await transport.post(JSON.stringify(registration(hnB, keyA, 'female'))), 'details do not match this hn');
     });
     await expect("a correction from B's own phone is a new version", async function () {
       var r = await transport.post(JSON.stringify(record(hnB, keyB, { type: 'checkin', heightCm: 158 })));
       if (!r.ok || !r.result || r.result.action !== 'corrected' || r.result.version !== 2) throw new Error(JSON.stringify(r));
       return 'version ' + r.result.version + ', receipt ' + r.result.receiptId;
     });
-    results.cleanup = 'Delete the rows for ' + hnA + ' and ' + hnB + ' from Devices, Registrations, CheckIns and Audit, and the ' +
-      'pending Devices row for ' + hnB + '.';
+    await expect("B's new phone with B's details is accepted and keeps its own records", async function () {
+      var keyB2 = key();
+      var reg = await transport.post(JSON.stringify(registration(hnB, keyB2, 'male')));
+      if (!reg.ok) throw new Error('registration: ' + JSON.stringify(reg));
+      var r = await transport.post(JSON.stringify(record(hnB, keyB2, { type: 'checkin', heightCm: 157 })));
+      if (!r.ok || r.result.version !== 1) throw new Error('expected version 1 of its own chain: ' + JSON.stringify(r));
+      return 'accepted without staff; its record is version 1 of its own chain';
+    });
+    results.cleanup = 'Delete the rows for ' + hnA + ' and ' + hnB + ' from Devices (including the pending one), ' +
+      'Registrations, CheckIns and Audit.';
   }
   return results;
 }

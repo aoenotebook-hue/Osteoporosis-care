@@ -291,8 +291,8 @@
    * "unknown record type" and "app update required" are among those: the app
    * updates itself but the script is redeployed by hand, so either side can
    * be a version ahead for a while. So are "device not registered for this
-   * patient", "hn registered on another device" and "device revoked for
-   * this patient", which staff resolve.
+   * patient", "hn registered on another device", "details do not match this
+   * hn" and "device revoked for this patient", which staff resolve.
    */
   var PERMANENT_REJECTION = /^(invalid [A-Za-z]+|missing [A-Za-z]+|unexpected field [A-Za-z]+|request too large|too many changes for this date)$/;
 
@@ -619,6 +619,7 @@
       // The two reasons only staff can clear get words a patient can act on.
       if (reason === 'hn registered on another device') reason = tr('syncFooterOtherDevice');
       else if (reason === 'device revoked for this patient') reason = tr('syncFooterRevoked');
+      else if (reason === 'details do not match this hn') reason = tr('syncFooterDetailsMismatch');
       html += '<div class="footer-sync">' + esc(tr('syncFooterPending').replace('{n}', pending)) +
         (reason ? '<br><span class="sync-reason">' + esc(reason) + '</span>' : '') +
         ' <button type="button" class="reset-link" data-action="sync-now">' + esc(tr('syncFooterRetry')) + '</button></div>';
@@ -641,7 +642,7 @@
     return '<div class="card-head"><span class="ico">⚠️</span><h2 style="margin:0;">' + esc(tr('resetTitle')) + '</h2></div>' +
       '<p>' + esc(tr('resetBody')) + '</p>' +
       (pending ? '<div class="card warn"><p style="margin:0;">' + esc(tr('resetWarnUnsent')) + ' (' + pending + ' ' + esc(tr('syncItems')) + ')</p></div>' : '') +
-      // The phone's key goes with the reset, so the HN stays bound to it on the sheet.
+      // The phone's key goes with the reset; registering again needs the same details.
       (state.registered ? '<p class="muted">' + esc(tr('resetWarnDevice')) + '</p>' : '') +
       '<p><strong>' + esc(tr('resetConfirmQuestion')) + '</strong></p>' +
       '<div class="stack">' +
