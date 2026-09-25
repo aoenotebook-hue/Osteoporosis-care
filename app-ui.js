@@ -704,7 +704,9 @@
       (inLineApp() ? lineNotice() : '') +
       '<form id="registerForm" novalidate>' +
         '<label for="hnInput">' + esc(tr('registerHN')) + '</label>' +
-        '<input type="text" id="hnInput" name="hn" inputmode="numeric" autocomplete="off" maxlength="20">' +
+        // Room for spaces between the HN's 20 characters: the 20 is checked
+        // after spaces are removed, or a spaced HN would lose its last digits.
+        '<input type="text" id="hnInput" name="hn" inputmode="numeric" autocomplete="off" maxlength="40">' +
         '<label for="yobInput">' + esc(tr('registerYearOfBirth')) + '</label>' +
         '<input type="number" id="yobInput" name="yearOfBirth" inputmode="numeric">' +
         '<div class="field-hint">' + esc(tr('registerYearBEHint')) + '</div>' +

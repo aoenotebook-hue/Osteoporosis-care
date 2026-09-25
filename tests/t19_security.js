@@ -144,7 +144,13 @@ function run() {
         helpers.assert(!core.isValidHn(hn), JSON.stringify(hn) + ' should be refused');
       });
       helpers.assert(/C\.isValidHn\(hn\)/.test(ui), 'registration does not check the HN');
-      helpers.assert(/id="hnInput"[^>]*maxlength="20"/.test(ui), 'the HN field has no length cap');
+      // The field's cap applies before spaces are removed, so it must leave
+      // room for them: a 20-character HN typed in pairs must not lose digits.
+      var cap = Number((ui.match(/id="hnInput"[^>]*maxlength="(\d+)"/) || [])[1]);
+      helpers.assert(cap > 0 && cap <= 64, 'the HN field has no sensible length cap');
+      var spaced = '12 34 56 78 90 12 34 56 78 90';
+      helpers.assertEqual(core.normalizeHn(spaced.slice(0, cap)), '12345678901234567890', 'the field cut a spaced HN short');
+      helpers.assert(!core.isValidHn(core.normalizeHn('1234567890 12345678901')), 'more than 20 characters after spaces are removed is refused');
       helpers.assert(/id="fallCause"[^>]*maxlength="200"/.test(ui) && /id="checkinFallCause"[^>]*maxlength="200"/.test(ui), 'fall cause fields have no length cap');
     }
   });
