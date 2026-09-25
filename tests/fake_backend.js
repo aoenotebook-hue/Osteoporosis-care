@@ -33,8 +33,14 @@ function fakeSheets() {
   }
   function makeSheet(name) {
     var rows = [];
+    var filter = null;
     var sheet = {
       rows: rows,
+      // Formatting is not modelled; the calls only have to exist.
+      formats: [],
+      getFilter: function () { return filter; },
+      clear: function () { rows.length = 0; },
+      setColumnWidth: function () {},
       getName: function () { return name; },
       setName: function (next) { delete sheets[name]; name = next; sheets[next] = sheet; return sheet; },
       appendRow: function (r) { rows.push(r.map(store)); },
@@ -60,8 +66,27 @@ function fakeSheets() {
             return out;
           },
           setValues: function (vals) {
-            overwrites.push(name + ' row ' + row);
-            rows[row - 1] = vals[0].map(store);
+            if (vals.length !== (numRows || 1) || vals.some(function (v) { return v.length !== (numCols || 1); })) {
+              throw new Error('Exception: The number of rows or columns in the data does not match the range');
+            }
+            vals.forEach(function (v, i) {
+              if (rows[row - 1 + i]) overwrites.push(name + ' row ' + (row + i));
+              var target = rows[row - 1 + i] = rows[row - 1 + i] || [];
+              v.forEach(function (cell, j) { target[col - 1 + j] = store(cell); });
+            });
+          },
+          setFontWeight: function () { return this; },
+          setBackground: function () { return this; },
+          setBackgrounds: function (colors) {
+            if (colors.length !== (numRows || 1)) throw new Error('Exception: The number of rows in the data does not match the range');
+            return this;
+          },
+          setWrap: function () { return this; },
+          setVerticalAlignment: function () { return this; },
+          createFilter: function () {
+            if (filter) throw new Error('Exception: You can\'t create a filter in a sheet that already has a filter.');
+            filter = { row: row, numRows: numRows, remove: function () { filter = null; } };
+            return filter;
           }
         };
       }
@@ -116,7 +141,10 @@ function backend(options) {
         });
       },
       getUuid: function () { return crypto.randomUUID(); },
-      formatDate: function (d) { return bangkokDate(d); }
+      formatDate: function (d, tz, format) {
+        var stamp = new Date(d.getTime() + 7 * 3600000).toISOString();
+        return format === 'yyyy-MM-dd HH:mm' ? stamp.slice(0, 10) + ' ' + stamp.slice(11, 16) : stamp.slice(0, 10);
+      }
     },
     Session: { getScriptTimeZone: function () { return 'Asia/Bangkok'; } }
   };

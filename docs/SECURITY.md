@@ -1,6 +1,6 @@
 # Security: identity, audit trail, hosting and local data
 
-Script version **2026-09-25.2**, upload protocol **3**. This file says what the
+Script version **2026-09-26**, upload protocol **3**. This file says what the
 app and the Apps Script now enforce, what they cannot, and what is left for
 the clinic to decide. Everything here is covered by `tests/t19`–`t22` against
 synthetic records only.
@@ -76,6 +76,13 @@ Stronger options remain available if the clinic wants them later:
 
 ## Staff procedures
 
+- **Reading results.** Use the tabs สรุปผู้ป่วย (one row per patient) and
+  ผลรายครั้ง (every result, newest first). The script rebuilds them from the
+  data tabs each time the file is opened, from each record's current version,
+  leaving out `revoked` phones and marking rows from a patient's other phone.
+  They are for reading: an edit there is lost at the next rebuild, and they
+  are never used to decide what the script accepts. Every piece of text in
+  them is kept as text, so nothing a patient typed can run as a formula.
 - **Current values.** In CheckIns, Nutrition, Bmd, FractureRisk and
   Registrations, the row with the highest `version` for a patient, a day and a
   phone (`credentialId`) is that phone's current one; a patient with two
@@ -187,7 +194,7 @@ The backend is fixed only when the deployed script passes the probes:
    everything. Set the project time zone to Bangkok.
 2. **Deploy → Manage deployments → pencil icon → Version: New version →
    Deploy.**
-3. Open the `/exec` URL. It must say `"version":"2026-09-25.2"` and
+3. Open the `/exec` URL. It must say `"version":"2026-09-26"` and
    `"protocol":3`.
 4. From a computer with Node 18 or later, run
    `node tools/verify-backend.js <the /exec URL>`. The read-only probes send
