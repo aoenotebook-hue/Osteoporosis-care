@@ -216,7 +216,7 @@ replacing anything already there.
 4. Confirm it took: open the `/exec` URL in a browser. It answers
 
    ```json
-   {"ok":true,"service":"osteoporosis-care","protocol":3,"tokenConfigured":true,"sheets":[...],"version":"2026-09-25.2"}
+   {"ok":true,"service":"osteoporosis-care","protocol":3,"tokenConfigured":true,"sheets":[...],"version":"2026-09-26"}
    ```
 
 5. **Check the deployed backend**, from any computer with Node 18 or later:
@@ -236,16 +236,47 @@ Access must be **Anyone**, not "Anyone with a Google account" — the
 latter answers with a login page the app cannot follow. `SHARED_TOKEN`
 must be identical in `Code.gs` and `app-ui.js`.
 
-The first request after deploying moves any tab from an earlier version
-aside as "<Name> (before 2026-09-25.2)" — intact — and starts a fresh one.
-Phones register again on their own; a phone registered before this version
-first asks its patient to confirm consent once.
+When a version changes a tab's columns, the first request after deploying
+moves the old tab aside as "<Name> (before <that version>)" — intact — and
+starts a fresh one. 2026-09-25.2 did this for the tabs from before it (phones
+register again on their own, and one registered before it first asks its
+patient to confirm consent once); 2026-09-26 changes no columns.
 
 The tabs are append-only. A change to a day's check-in, nutrition, BMD or
 FRAX record is a new row with the next `version`, naming the row it
 supersedes; the highest version is current. A second fall on one day is a
 second event; an exact repeat is skipped. The Audit tab logs every accepted
 change, conflict and refusal from a registered phone.
+
+### Reading patients' results in the sheet
+
+The data tabs above are the record, written for the script: English column
+names, codes such as `severeOsteoporosis`, every version, and the phone each
+row came from. For reading, the script builds two more tabs, first in the
+file:
+
+- **สรุปผู้ป่วย** — one row per patient, newest activity first: age and sex,
+  a **ควรดู (Needs attention)** column highlighted in red, bone condition,
+  latest BMD and FRAX, fall risk, falls in the past 12 months, height and its
+  change, chair stand and TUG against their cut-offs, balance level, home
+  safety, the latest dose, missed doses and nutrition.
+- **ผลรายครั้ง** — every result, newest first, one line each in words, noting
+  when a day's record was corrected or came from another of the patient's
+  phones. Filter the HN column to see one patient's history.
+
+Everything is in Thai as the app shows it to the patient, with headers in
+Thai and English and dates in the Buddhist era (25 ก.ย. 2569). "Needs
+attention" uses only the app's own cut-offs: an injured fall or two falls in
+12 months, height down 2 cm or more since the first measurement, TUG of
+12 seconds or more, chair stands below the norm for age and sex, missed
+doses at the last check-in, and a phone waiting in Devices.
+
+The two tabs are rebuilt each time the spreadsheet is opened, and from the
+menu **ดูแลกระดูกพรุน → อัปเดตผลผู้ป่วย** while it is open. They show only
+each record's current version and nothing from a `revoked` phone. They hold
+nothing of their own: an edit made there is gone at the next rebuild, so
+correct a result in the app, not in the sheet. Rebuilding never changes the
+data tabs. Rows in the "(before …)" tabs are not included.
 
 ### Security — read before the pilot
 

@@ -9,7 +9,7 @@
  *      > Deploy.  Saving alone does NOT update the live /exec URL, which is
  *      why an older copy of this script can keep answering requests.
  *   5. Check it worked: open the /exec URL in a browser. You should see
- *      {"ok":true,"service":"osteoporosis-care","protocol":3,"version":"2026-09-25.2", ...}
+ *      {"ok":true,"service":"osteoporosis-care","protocol":3,"version":"2026-09-26", ...}
  *      then run `node tools/verify-backend.js <the /exec URL>` from the repo
  *      (README, "Check the deployed backend"). Until both pass, the fixes in
  *      this file are not live.
@@ -17,9 +17,15 @@
  * Access must be "Anyone" (not "Anyone with a Google account"), otherwise
  * Google answers with a login page that the app cannot follow.
  *
- * The first request after deploying moves each tab whose columns changed
- * aside as "<Name> (before 2026-09-25.2)" and starts a fresh one. Nothing is
- * deleted; patients' phones register again on their own.
+ * When a version changes a tab's columns, the first request after deploying
+ * moves the old tab aside as "<Name> (before <that version>)" and starts a
+ * fresh one. Nothing is deleted; patients' phones register again on their
+ * own. 2026-09-25.2 did this; 2026-09-26 changes no columns.
+ *
+ * READING RESULTS: after saving, reload the spreadsheet. A menu
+ * "ดูแลกระดูกพรุน" appears, and two tabs for reading are built and kept up
+ * to date each time the file is opened: สรุปผู้ป่วย (one row per patient)
+ * and ผลรายครั้ง (every result, newest first). See "readable results" below.
  *
  * SECURITY — what this script can and cannot promise:
  *   - SHARED_TOKEN is NOT a password. It ships inside the app, and the app's
@@ -57,7 +63,7 @@
  * patient's): set it to "revoked"; it then cannot write or register again.
  */
 
-var SCRIPT_VERSION = '2026-09-25.2';
+var SCRIPT_VERSION = '2026-09-26';
 var SHARED_TOKEN = 'mQ6tfi1HQa0fBNbhzt2AoVk_YKMfmX5v';
 var MAX_TEXT = 200;
 var MAX_BODY = 20000;
@@ -700,4 +706,502 @@ function todayInScriptZone() {
 function setUpSheets() {
   Object.keys(SHEET_COLUMNS).forEach(function (name) { openSheet(name); });
   return 'Created/verified: ' + Object.keys(SHEET_COLUMNS).join(', ');
+}
+
+/* ---------- readable results for staff ---------- */
+
+/*
+ * The tabs above are the record: machine column names, codes, every version
+ * and the phone each came from. Staff read two more tabs, rebuilt from them
+ * each time the spreadsheet is opened, and from the menu
+ * "ดูแลกระดูกพรุน → อัปเดตผลผู้ป่วย":
+ *   - สรุปผู้ป่วย: one row per patient, their latest results in words;
+ *   - ผลรายครั้ง: every result, newest first, one line each.
+ * They hold nothing of their own, so an edit made there is gone at the next
+ * rebuild. They show each record's current version only, and nothing from a
+ * phone whose status is 'revoked'. Labels and cut-offs are the app's own
+ * (tests/t23 compares them with app-core.js), so the sheet says what the
+ * patient's screen says. Opening the file never changes the record tabs.
+ */
+var SUMMARY_TAB = 'สรุปผู้ป่วย';
+var RESULTS_TAB = 'ผลรายครั้ง';
+
+var READABLE = {
+  sex: { female: 'หญิง', male: 'ชาย' },
+  boneStatus: {
+    unknown: 'ยังไม่ทราบ',
+    normal: 'กระดูกปกติ',
+    osteopenia: 'กระดูกบาง (osteopenia)',
+    osteoporosis: 'กระดูกพรุน (osteoporosis)',
+    severeOsteoporosis: 'กระดูกพรุนที่เคยหักแล้ว (severe osteoporosis)'
+  },
+  fallRisk: { low: 'โอกาสหกล้มต่ำ', moderate: 'โอกาสหกล้มปานกลาง', high: 'โอกาสหกล้มสูง' },
+  balanceLevel: { 1: 'ระดับ 1 — จับที่ยึดตลอด', 2: 'ระดับ 2 — แตะที่ยึดเบา ๆ', 3: 'ระดับ 3 — ทำได้เอง' },
+  medication: {
+    alendronate: 'ยาเม็ดอะเลนโดรเนต (alendronate)',
+    risedronate: 'ยาเม็ดไรซีโดรเนต (risedronate)',
+    ibandronate: 'ยาเม็ดไอแบนโดรเนต (ibandronate)',
+    denosumab: 'ยาฉีดเดโนซูแมบ (denosumab)',
+    zoledronate: 'ยาฉีดเข้าหลอดเลือดดำ โซเลโดรเนต (zoledronate)',
+    teriparatide: 'ยาฉีดเทอริพาราไทด์ (teriparatide)',
+    romosozumab: 'ยาฉีดโรโมโซซูแมบ (romosozumab)',
+    // The pre-2026-09 id: the app maps it to weekly alendronate.
+    bisphosphonate_weekly: 'ยาเม็ดอะเลนโดรเนต (alendronate)'
+  },
+  fraxTool: { 'FRAX-official': 'จากเว็บไซต์ FRAX', 'app-estimate': 'ค่าประมาณจากแอป', incomplete: 'ข้อมูลยังไม่ครบ' }
+};
+
+// The app's cut-offs (app-core.js), copied because this script cannot load
+// the app; tests/t23 fails if the two drift apart.
+var RESULT_RULES = {
+  tugSlowSeconds: 12,     // TUG_THRESHOLD_SECONDS: 12 s or longer counts toward high fall risk
+  heightLossCm: 2,        // HEIGHT_LOSS_FLAG_CM: tell the doctor, a vertebra may have collapsed
+  safetyItems: 20,        // SAFETY_ITEMS.length: the home checklist
+  // CHAIR_STAND_NORMS: [from age, to age, fewest stands in 30 s]
+  chairStand: {
+    male: [[60, 64, 14], [65, 69, 12], [70, 74, 12], [75, 79, 11], [80, 84, 10], [85, 89, 8], [90, 200, 7]],
+    female: [[60, 64, 12], [65, 69, 11], [70, 74, 10], [75, 79, 10], [80, 84, 9], [85, 89, 8], [90, 200, 4]]
+  }
+};
+
+function chairStandNormFor(age, sex) {
+  var table = RESULT_RULES.chairStand[sex === 'male' ? 'male' : 'female'];
+  for (var i = 0; i < table.length; i++) {
+    if (age >= table[i][0] && age <= table[i][1]) return table[i][2];
+  }
+  return age < 60 ? table[0][2] : table[table.length - 1][2];
+}
+
+function calciumTargetFor(age, sex) {
+  if (sex === 'female' && age >= 50) return 1200;
+  if (sex === 'male' && age >= 70) return 1200;
+  return 1000;
+}
+
+function proteinTargetFor(weightKg, age) {
+  if (!(weightKg > 0)) return null;
+  return Math.round(weightKg * (age >= 65 ? 1.2 : 1.0));
+}
+
+var THAI_MONTHS = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+
+function isDateValue(value) {
+  return Object.prototype.toString.call(value) === '[object Date]' && !isNaN(value.getTime());
+}
+
+/** yyyy-MM-dd of a cell, whether Sheets kept it as text or turned it into a date. */
+function ymdOf(value) {
+  if (isDateValue(value)) return Utilities.formatDate(value, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+  return cellToString(value).trim();
+}
+
+/** 2026-09-25 → "25 ก.ย. 2569": the Buddhist-era year, as the app asks for it. */
+function thaiDate(value) {
+  var ymd = ymdOf(value);
+  if (!isRealDate(ymd)) return ymd;
+  return Number(ymd.slice(8, 10)) + ' ' + THAI_MONTHS[Number(ymd.slice(5, 7)) - 1] + ' ' + (Number(ymd.slice(0, 4)) + 543);
+}
+
+function thaiDateTime(value) {
+  if (!isDateValue(value)) return thaiDate(value);
+  var stamp = Utilities.formatDate(value, Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm');
+  return thaiDate(stamp.slice(0, 10)) + ' ' + stamp.slice(11, 16);
+}
+
+function numberIn(value) {
+  if (typeof value === 'number') return isFinite(value) ? value : null;
+  var text = cellToString(value).trim();
+  return text !== '' && isFinite(Number(text)) ? Number(text) : null;
+}
+
+/** 1250 → "1,250"; 13.25 → "13.3". */
+function formatNumber(value) {
+  var rounded = Math.round(value * 10) / 10;
+  var parts = String(Math.abs(rounded)).split('.');
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return (rounded < 0 ? '-' : '') + parts.join('.');
+}
+
+/** A record tab's rows as objects, or none if it is missing or laid out by an older script. */
+function recordRows(name) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(name);
+  if (!sheet || sheet.getLastRow() < 2) return [];
+  var cols = SHEET_COLUMNS[name];
+  var values = sheet.getDataRange().getValues();
+  if (values[0].slice(0, cols.length).map(cellToString).join('|') !== cols.join('|')) return [];
+  return values.slice(1).map(function (row) {
+    var out = {};
+    cols.forEach(function (col, i) { out[col] = row[i]; });
+    out.patientId = cellToString(out.patientId);
+    out.credentialId = cellToString(out.credentialId);
+    out.date = out.date === undefined ? ymdOf(out.receivedAt) : ymdOf(out.date);
+    return out;
+  }).filter(function (r) { return r.patientId !== ''; });
+}
+
+/** The highest version for each patient, day and phone (each patient and phone, for registrations). */
+function currentVersions(rows, byDate) {
+  var best = {};
+  var order = [];
+  rows.forEach(function (row) {
+    var key = row.patientId + '|' + (byDate ? row.date + '|' : '') + row.credentialId;
+    if (!best[key]) order.push(key);
+    if (!best[key] || Number(row.version) > Number(best[key].version)) best[key] = row;
+  });
+  return order.map(function (key) { return best[key]; });
+}
+
+function receivedMs(row) {
+  return isDateValue(row.receivedAt) ? row.receivedAt.getTime() : 0;
+}
+
+function byDateThenReceived(a, b) {
+  if (a.date !== b.date) return a.date < b.date ? -1 : 1;
+  return receivedMs(a) - receivedMs(b);
+}
+
+/** The newest present value of a field, with the row it came from. */
+function latestOf(rows, field) {
+  for (var i = rows.length - 1; i >= 0; i--) {
+    if (isPresent(rows[i][field]) && cellToString(rows[i][field]).trim() !== '') return { value: rows[i][field], row: rows[i] };
+  }
+  return null;
+}
+
+function label(table, value) {
+  var key = cellToString(value).trim();
+  return Object.prototype.hasOwnProperty.call(READABLE[table], key) ? READABLE[table][key] : key;
+}
+
+/* Sentences for one result each; the patient's age and sex decide the chair-stand norm. */
+
+function chairStandText(reps, patient) {
+  var text = formatNumber(reps) + ' ครั้งใน 30 วินาที';
+  if (patient.age === null || !patient.sex) return text;
+  var norm = chairStandNormFor(patient.age, patient.sex);
+  return text + (reps >= norm ? ' (ผ่านเกณฑ์ ' + norm + ')' : ' (ต่ำกว่าเกณฑ์ ' + norm + ')');
+}
+
+function tugText(seconds) {
+  return formatNumber(seconds) + ' วินาที' +
+    (seconds >= RESULT_RULES.tugSlowSeconds ? ' (ช้า: ' + RESULT_RULES.tugSlowSeconds + ' วินาทีขึ้นไป เสี่ยงล้ม)' : ' (ปกติ)');
+}
+
+function checkinText(row, patient) {
+  var parts = [];
+  var n;
+  if ((n = numberIn(row.heightCm)) !== null) parts.push('ส่วนสูง ' + formatNumber(n) + ' ซม.');
+  if ((n = numberIn(row.chairStandReps)) !== null) parts.push('ลุก-นั่ง ' + chairStandText(n, patient));
+  if ((n = numberIn(row.tugSeconds)) !== null) parts.push('ลุกเดินจับเวลา ' + tugText(n));
+  if ((n = numberIn(row.safetyScore)) !== null) parts.push('บ้านปลอดภัย ' + formatNumber(n) + '/' + RESULT_RULES.safetyItems + ' ข้อ');
+  if ((n = numberIn(row.falls)) !== null) parts.push(n ? 'เดือนนี้ล้ม' : 'เดือนนี้ไม่ล้ม');
+  if ((n = numberIn(row.missedDoses)) !== null) parts.push(n ? 'ลืมยาบางครั้ง' : 'ใช้ยาครบ');
+  if (isPresent(row.balanceLevel)) parts.push('การทรงตัว' + label('balanceLevel', row.balanceLevel));
+  if (isPresent(row.boneStatus)) parts.push('สภาพกระดูก: ' + label('boneStatus', row.boneStatus));
+  if (isPresent(row.fallRisk)) parts.push(label('fallRisk', row.fallRisk));
+  return parts.join(' · ');
+}
+
+function bmdText(row) {
+  var parts = [];
+  var n;
+  if ((n = numberIn(row.spineT)) !== null) parts.push('กระดูกสันหลัง ' + formatNumber(n));
+  if ((n = numberIn(row.hipT)) !== null) parts.push('สะโพก ' + formatNumber(n));
+  var text = 'T-score ' + parts.join(' · ');
+  if (isPresent(row.scanDate)) text += ' (ตรวจ ' + thaiDate(row.scanDate) + ')';
+  if (isPresent(row.boneStatus)) text += ' → ' + label('boneStatus', row.boneStatus);
+  return text;
+}
+
+function fraxText(row) {
+  var tool = cellToString(row.tool);
+  var major = numberIn(row.majorFractureRisk);
+  var hip = numberIn(row.hipFractureRisk);
+  if (tool === 'incomplete' || (major === null && hip === null)) return label('fraxTool', 'incomplete');
+  var parts = [];
+  if (major !== null) parts.push('กระดูกหักสำคัญ ' + formatNumber(major) + '%');
+  if (hip !== null) parts.push('สะโพกหัก ' + formatNumber(hip) + '%');
+  return parts.join(' · ') + ' (' + label('fraxTool', tool) + ')';
+}
+
+function fraxDetailText(row) {
+  var parts = [fraxText(row)];
+  var n;
+  if ((n = numberIn(row.weightKg)) !== null) parts.push('น้ำหนัก ' + formatNumber(n) + ' กก.');
+  if ((n = numberIn(row.heightCm)) !== null) parts.push('ส่วนสูง ' + formatNumber(n) + ' ซม.');
+  if ((n = numberIn(row.bmi)) !== null) parts.push('BMI ' + formatNumber(n));
+  return parts.join(' · ');
+}
+
+function nutritionText(row, patient) {
+  var parts = [];
+  var n;
+  if ((n = numberIn(row.calciumIntakeMg)) !== null) {
+    var target = patient.age !== null && patient.sex ? calciumTargetFor(patient.age, patient.sex) : null;
+    parts.push('แคลเซียมจากอาหาร ~' + formatNumber(n) + ' มก./วัน' + (target ? ' (เป้า ' + formatNumber(target) + ')' : ''));
+  }
+  if ((n = numberIn(row.calciumSupplementMg)) !== null) parts.push(n ? 'แอปแนะนำแคลเซียมเสริม ' + formatNumber(n) + ' มก./วัน' : 'ไม่ต้องเสริมแคลเซียม');
+  if ((n = numberIn(row.vitaminDSupplementIu)) !== null) parts.push('แอปแนะนำวิตามินดี ' + formatNumber(n) + ' IU/วัน');
+  if ((n = numberIn(row.proteinIntakeG)) !== null) {
+    var protein = proteinTargetFor(patient.weightKg, patient.age === null ? 0 : patient.age);
+    parts.push('โปรตีน ~' + formatNumber(n) + ' ก./วัน' + (protein ? ' (เป้า ' + protein + ')' : ''));
+  }
+  return parts.join(' · ');
+}
+
+function fallText(row) {
+  var cause = cellToString(row.cause).trim();
+  return (numberIn(row.injured) ? 'ล้มและบาดเจ็บ' : 'ล้ม ไม่บาดเจ็บ') + (cause ? ' — ' + cause : '');
+}
+
+function doseText(row) {
+  var n = numberIn(row.doseNumber);
+  return label('medication', row.medication) + (n !== null ? ' ครั้งที่ ' + formatNumber(n) : '');
+}
+
+/**
+ * Both tabs' rows, built from the record tabs without changing them.
+ * todayYmd is the script's own date; falls count over the year before it.
+ */
+function patientResults(todayYmd) {
+  var devices = recordRows('Devices');
+  var revoked = {};
+  var phones = {};
+  devices.forEach(function (d) {
+    var status = cellToString(d.status).trim().toLowerCase();
+    if (status === 'revoked') revoked[d.patientId + '|' + d.credentialId] = true;
+    if (!phones[d.patientId]) phones[d.patientId] = { active: [], pending: 0 };
+    if (status === 'active') phones[d.patientId].active.push(d.credentialId);
+    if (status === 'pending') phones[d.patientId].pending += 1;
+  });
+  function kept(rows) { return rows.filter(function (r) { return !revoked[r.patientId + '|' + r.credentialId]; }); }
+
+  var tables = {
+    Registrations: currentVersions(kept(recordRows('Registrations')), false),
+    CheckIns: currentVersions(kept(recordRows('CheckIns')), true),
+    Nutrition: currentVersions(kept(recordRows('Nutrition')), true),
+    Bmd: currentVersions(kept(recordRows('Bmd')), true),
+    FractureRisk: currentVersions(kept(recordRows('FractureRisk')), true),
+    Falls: kept(recordRows('Falls')),
+    Adherence: kept(recordRows('Adherence'))
+  };
+  var ids = [];
+  var rowsOf = {};
+  Object.keys(tables).forEach(function (name) {
+    tables[name].sort(byDateThenReceived);
+    tables[name].forEach(function (row) {
+      if (!rowsOf[row.patientId]) { rowsOf[row.patientId] = {}; ids.push(row.patientId); }
+      (rowsOf[row.patientId][name] = rowsOf[row.patientId][name] || []).push(row);
+    });
+  });
+
+  var thisYear = Number(todayYmd.slice(0, 4));
+  var yearAgo = shiftDate(todayYmd, -365);
+  var summary = [];
+  var results = [];
+
+  ids.forEach(function (id) {
+    var mine = rowsOf[id];
+    function list(name) { return mine[name] || []; }
+    var registration = list('Registrations').slice().sort(function (a, b) { return receivedMs(a) - receivedMs(b); });
+    var reg = registration.length ? registration[registration.length - 1] : {};
+    var yob = numberIn(reg.yearOfBirth);
+    var weight = latestOf(list('FractureRisk'), 'weightKg');
+    var patient = {
+      age: yob === null ? null : thisYear - yob,
+      sex: cellToString(reg.sex),
+      weightKg: weight ? numberIn(weight.value) : null
+    };
+    var phone = phones[id] || { active: [], pending: 0 };
+    // The first phone bound to the HN (Devices keeps them in order) is the
+    // patient's own; rows from any other are marked, since a further phone
+    // joins on HN, year of birth and sex alone.
+    var firstPhone = phone.active.length ? phone.active[0] : '';
+    var attention = [];
+    var lastMs = 0;
+
+    function addResult(name, type, row, text) {
+      if (!text) return;
+      var notes = [];
+      if (Number(row.version) > 1) notes.push('แก้ไขแล้ว ' + (Number(row.version) - 1) + ' ครั้ง (ประวัติอยู่ในแท็บ ' + name + ')');
+      if (firstPhone && row.credentialId && row.credentialId !== firstPhone) notes.push('จากโทรศัพท์เครื่องอื่นของผู้ป่วย');
+      results.push({ date: row.date, ms: receivedMs(row), cells: [thaiDate(row.date), id, type, text, notes.join(' · '), thaiDateTime(row.receivedAt)] });
+      lastMs = Math.max(lastMs, receivedMs(row));
+    }
+    registration.forEach(function (row) {
+      var n = numberIn(row.yearOfBirth);
+      addResult('Registrations', 'ลงทะเบียน', row, [
+        n === null ? '' : 'เกิดปี พ.ศ. ' + (n + 543),
+        label('sex', row.sex),
+        isPresent(row.consentAt) ? 'ยินยอมตามประกาศ PDPA เมื่อ ' + thaiDate(cellToString(row.consentAt).slice(0, 10)) : ''
+      ].filter(Boolean).join(' · '));
+    });
+    list('CheckIns').forEach(function (row) { addResult('CheckIns', 'ติดตามผล', row, checkinText(row, patient)); });
+    list('Falls').forEach(function (row) { addResult('Falls', 'การล้ม', row, fallText(row)); });
+    list('Adherence').forEach(function (row) { addResult('Adherence', 'ใช้ยา', row, doseText(row)); });
+    list('Nutrition').forEach(function (row) { addResult('Nutrition', 'อาหาร', row, nutritionText(row, patient)); });
+    list('Bmd').forEach(function (row) { addResult('Bmd', 'ความหนาแน่นกระดูก (BMD)', row, bmdText(row)); });
+    list('FractureRisk').forEach(function (row) { addResult('FractureRisk', 'ความเสี่ยงกระดูกหัก (FRAX)', row, fraxDetailText(row)); });
+
+    var checkins = list('CheckIns');
+    var when = function (found) { return found ? ' · ' + thaiDate(found.row.date) : ''; };
+
+    var bone = latestOf(checkins, 'boneStatus');
+    var bmdBone = latestOf(list('Bmd'), 'boneStatus');
+    if (bmdBone && (!bone || bmdBone.row.date > bone.row.date)) bone = bmdBone;
+
+    var bmd = list('Bmd').slice().sort(function (a, b) { return ymdOf(a.scanDate) < ymdOf(b.scanDate) ? -1 : ymdOf(a.scanDate) > ymdOf(b.scanDate) ? 1 : byDateThenReceived(a, b); });
+    var latestBmd = bmd.length ? bmd[bmd.length - 1] : null;
+    var fraxRows = list('FractureRisk');
+    var frax = fraxRows.length ? fraxRows[fraxRows.length - 1] : null;
+
+    var falls = list('Falls').filter(function (r) { return r.date >= yearAgo; });
+    var injured = falls.filter(function (r) { return numberIn(r.injured); }).length;
+    var fallsText = 'ไม่มี';
+    if (falls.length) {
+      var lastFall = falls[falls.length - 1];
+      fallsText = falls.length + ' ครั้ง' + (injured ? ' (บาดเจ็บ ' + injured + ')' : '') +
+        ' · ล่าสุด ' + thaiDate(lastFall.date) + (cellToString(lastFall.cause).trim() ? ': ' + cellToString(lastFall.cause).trim() : '');
+      if (injured) attention.push('ล้มแล้วบาดเจ็บ');
+      if (falls.length >= 2) attention.push('ล้ม ' + falls.length + ' ครั้งใน 12 เดือน');
+    }
+
+    var heights = checkins.filter(function (r) { return numberIn(r.heightCm) !== null; });
+    var heightText = '';
+    if (heights.length) {
+      var first = heights[0];
+      var last = heights[heights.length - 1];
+      var now = numberIn(last.heightCm);
+      var change = Math.round((now - numberIn(first.heightCm)) * 10) / 10;
+      heightText = formatNumber(now) + ' ซม.' + when({ row: last });
+      if (heights.length > 1) {
+        heightText += change < 0 ? ' (ลดลง ' + formatNumber(-change) + ' ซม. จาก ' + thaiDate(first.date) + ')'
+          : change > 0 ? ' (เพิ่มขึ้น ' + formatNumber(change) + ' ซม. จาก ' + thaiDate(first.date) + ')'
+          : ' (เท่าเดิมตั้งแต่ ' + thaiDate(first.date) + ')';
+      }
+      if (-change >= RESULT_RULES.heightLossCm) attention.push('ส่วนสูงลดลง ' + formatNumber(-change) + ' ซม.');
+    }
+
+    var chair = latestOf(checkins, 'chairStandReps');
+    if (chair && patient.age !== null && patient.sex && numberIn(chair.value) < chairStandNormFor(patient.age, patient.sex)) {
+      attention.push('ลุก-นั่งต่ำกว่าเกณฑ์');
+    }
+    var tug = latestOf(checkins, 'tugSeconds');
+    if (tug && numberIn(tug.value) >= RESULT_RULES.tugSlowSeconds) attention.push('ลุกเดินจับเวลา ' + RESULT_RULES.tugSlowSeconds + ' วินาทีขึ้นไป');
+    var missed = latestOf(checkins, 'missedDoses');
+    if (missed && numberIn(missed.value)) attention.push('ลืมยา');
+    if (phone.pending) attention.push('มีโทรศัพท์รอยืนยันในแท็บ Devices');
+
+    var balance = latestOf(checkins, 'balanceLevel');
+    var safety = latestOf(checkins, 'safetyScore');
+    var fallRisk = latestOf(checkins, 'fallRisk');
+    var doses = list('Adherence');
+    var dose = doses.length ? doses[doses.length - 1] : null;
+    var nutritionRows = list('Nutrition');
+    var nutrition = nutritionRows.length ? nutritionRows[nutritionRows.length - 1] : null;
+
+    summary.push({ ms: lastMs, cells: [
+      id,
+      [patient.age === null ? '' : patient.age + ' ปี', label('sex', patient.sex)].filter(Boolean).join(' · '),
+      attention.join(' · '),
+      bone ? label('boneStatus', bone.value) : '',
+      latestBmd ? bmdText(latestBmd).replace(/ → .*$/, '') : '',
+      frax ? fraxText(frax) + ' · ' + thaiDate(frax.date) : '',
+      fallRisk ? label('fallRisk', fallRisk.value) + when(fallRisk) : '',
+      fallsText,
+      heightText,
+      chair ? chairStandText(numberIn(chair.value), patient) + when(chair) : '',
+      tug ? tugText(numberIn(tug.value)) + when(tug) : '',
+      balance ? label('balanceLevel', balance.value) : '',
+      safety ? formatNumber(numberIn(safety.value)) + '/' + RESULT_RULES.safetyItems + ' ข้อ' + when(safety) : '',
+      dose ? doseText(dose) + ' · ' + thaiDate(dose.date) : '',
+      missed ? (numberIn(missed.value) ? 'ลืมบางครั้ง' : 'ใช้ยาครบ') + when(missed) : '',
+      nutrition ? nutritionText(nutrition, patient) + ' · ' + thaiDate(nutrition.date) : '',
+      lastMs ? thaiDateTime(new Date(lastMs)) : '',
+      phone.active.length + ' เครื่อง' + (phone.pending ? ' (รอยืนยัน ' + phone.pending + ')' : '')
+    ] });
+  });
+
+  summary.sort(function (a, b) { return b.ms - a.ms; });
+  results.sort(function (a, b) { return a.date !== b.date ? (a.date < b.date ? 1 : -1) : b.ms - a.ms; });
+  return {
+    summary: summary.map(function (r) { return r.cells; }),
+    results: results.map(function (r) { return r.cells; })
+  };
+}
+
+var SUMMARY_HEADER = ['HN', 'อายุ · เพศ\nAge · sex', 'ควรดู\nNeeds attention', 'สภาพกระดูก\nBone condition',
+  'BMD ล่าสุด (T-score)\nLatest BMD', 'ความเสี่ยงกระดูกหัก 10 ปี\nFRAX', 'โอกาสหกล้ม\nFall risk',
+  'การล้มใน 12 เดือน\nFalls, 12 months', 'ส่วนสูง\nHeight', 'ลุก-นั่งเก้าอี้ 30 วินาที\nChair stand',
+  'ลุกเดินจับเวลา (TUG)\nTimed Up and Go', 'ระดับการทรงตัว\nBalance level', 'บ้านปลอดภัย\nHome safety',
+  'ยาล่าสุด\nLatest dose', 'การใช้ยาเดือนล่าสุด\nMissed doses', 'อาหาร\nNutrition', 'ส่งข้อมูลล่าสุด\nLast sent',
+  'โทรศัพท์\nPhones'];
+var SUMMARY_WIDTHS = [110, 110, 220, 200, 230, 260, 170, 230, 260, 220, 230, 190, 150, 260, 150, 380, 140, 110];
+var RESULTS_HEADER = ['วันที่\nDate', 'HN', 'เรื่อง\nType', 'ผล\nResult', 'หมายเหตุ\nNote', 'ได้รับเมื่อ\nReceived'];
+var RESULTS_WIDTHS = [110, 110, 170, 560, 260, 140];
+
+/**
+ * Text for a readable tab. Like safeCell, every piece of text is kept as
+ * text, so a fall cause of "=IMAGE(…)" or a T-score of "-2.8" is shown, never
+ * run; unlike it, the line break in a header survives and a sentence is not
+ * cut at a patient field's length.
+ */
+function readableCell(value) {
+  if (typeof value === 'number') return isFinite(value) ? value : '';
+  var text = cellToString(value).replace(/[\u0000-\u0009\u000b-\u001f\u007f]/g, ' ').slice(0, 5000);
+  return text === '' ? '' : "'" + text;
+}
+
+function writeReadableTab(name, position, title, header, widths, rows, highlightColumn) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(name) || ss.insertSheet(name, position);
+  var filter = sheet.getFilter();
+  if (filter) filter.remove();
+  sheet.clear(); // contents and formatting, so no highlight outlives its row
+  var blank = header.map(function () { return ''; });
+  var values = [[title].concat(blank.slice(1)), header].concat(rows).map(function (row) { return row.map(readableCell); });
+  sheet.getRange(1, 1, values.length, header.length).setValues(values);
+  sheet.setFrozenRows(2);
+  sheet.getRange(1, 1).setFontWeight('bold');
+  sheet.getRange(2, 1, 1, header.length).setFontWeight('bold').setBackground('#e8f0fb').setWrap(true);
+  if (rows.length) {
+    sheet.getRange(3, 1, rows.length, header.length).setWrap(true).setVerticalAlignment('top');
+    if (highlightColumn) {
+      sheet.getRange(3, highlightColumn, rows.length, 1).setBackgrounds(rows.map(function (row) {
+        return [row[highlightColumn - 1] ? '#fde2e1' : null];
+      }));
+    }
+  }
+  widths.forEach(function (w, i) { sheet.setColumnWidth(i + 1, w); });
+  sheet.getRange(2, 1, rows.length + 1, header.length).createFilter();
+}
+
+/** Rebuilds สรุปผู้ป่วย and ผลรายครั้ง. Run from the menu, or on its own each time the file opens. */
+function refreshPatientResults() {
+  var built = patientResults(todayInScriptZone());
+  var stamp = 'อัปเดต ' + thaiDateTime(new Date()) +
+    ' · สร้างใหม่จากแท็บข้อมูลทุกครั้งที่เปิดไฟล์ แก้ไขในแท็บนี้จะหายไป · ไม่รวมข้อมูลจากโทรศัพท์ที่ยกเลิก (revoked)' +
+    ' / Rebuilt from the data tabs each time the file opens; edits here are lost.';
+  writeReadableTab(SUMMARY_TAB, 0, 'สรุปผลผู้ป่วย · ' + built.summary.length + ' คน · ' + stamp,
+    SUMMARY_HEADER, SUMMARY_WIDTHS, built.summary, SUMMARY_HEADER.indexOf('ควรดู\nNeeds attention') + 1);
+  writeReadableTab(RESULTS_TAB, 1, 'ผลรายครั้ง ใหม่สุดอยู่บน · ' + built.results.length + ' รายการ · ' + stamp,
+    RESULTS_HEADER, RESULTS_WIDTHS, built.results);
+  return 'Updated ' + built.summary.length + ' patients, ' + built.results.length + ' results';
+}
+
+/** Simple trigger: adds the menu and brings the readable tabs up to date. */
+function onOpen() {
+  try {
+    SpreadsheetApp.getUi().createMenu('ดูแลกระดูกพรุน')
+      .addItem('อัปเดตผลผู้ป่วย / Update patient results', 'refreshPatientResults')
+      .addToUi();
+  } catch (err) {
+    // No menu outside the spreadsheet's own window.
+  }
+  try {
+    refreshPatientResults();
+  } catch (err) {
+    // A viewer without edit rights cannot rebuild; the tabs stay as they were.
+    if (typeof console !== 'undefined') console.log('refreshPatientResults: ' + err);
+  }
 }
