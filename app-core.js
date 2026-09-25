@@ -27,6 +27,9 @@
     a2hsPrompt: t('เพิ่มแอปนี้ไว้ที่หน้าจอหลัก เพื่อเปิดใช้ได้สะดวกขึ้น', 'Add this app to your home screen for easier access'),
     a2hsInstall: t('เพิ่มลงหน้าจอหลัก', 'Add to Home Screen'),
     a2hsDismiss: t('ไว้ภายหลัง', 'Not now'),
+    a2hsIos: t('เพิ่มแอปไว้ที่หน้าจอหลัก: แตะปุ่มแชร์ (สี่เหลี่ยมมีลูกศรชี้ขึ้น) แล้วเลือก "เพิ่มไปยังหน้าจอโฮม"', 'Add this app to your home screen: tap the Share button (a square with an arrow) and choose "Add to Home Screen"'),
+    lineBrowserNotice: t('ท่านเปิดแอปจากในแอป LINE ข้อมูลที่บันทึกในหน้าต่างนี้อาจหายได้ และเพิ่มไว้ที่หน้าจอหลักไม่ได้ กรุณาเปิดในเบราว์เซอร์ของโทรศัพท์', 'You opened this app inside LINE, where saved records can be lost and the app cannot be added to your home screen. Please open it in your phone\'s browser.'),
+    lineBrowserOpen: t('เปิดในเบราว์เซอร์', 'Open in the browser'),
 
     pdpaTitle: t('ความยินยอมให้ใช้ข้อมูลส่วนบุคคล (PDPA)', 'Personal Data Consent (PDPA)'),
     pdpaBody: t('ข้อมูลของท่านใช้เพื่อการดูแลรักษาและติดตามอาการเท่านั้น ท่านขอถอนความยินยอมได้ทุกเมื่อ เพียงแจ้งที่โรงพยาบาล', 'Your information is used only to care for you and follow your progress. You can withdraw your consent at any time by telling the hospital.'),
@@ -1646,6 +1649,18 @@
     return typeof hn === 'string' && HN_PATTERN.test(hn);
   }
 
+  /**
+   * An HN as a patient might type or paste it, made regular before it is
+   * checked: Thai digits become 0-9 and spaces go ("๐๐๑ ๒๓๔๕" is 0012345).
+   * Nothing else changes, so an HN already registered still matches.
+   */
+  function normalizeHn(raw) {
+    var thaiDigits = '\u0e50\u0e51\u0e52\u0e53\u0e54\u0e55\u0e56\u0e57\u0e58\u0e59';
+    return String(raw === undefined || raw === null ? '' : raw)
+      .replace(/[\u0e50-\u0e59]/g, function (d) { return String(thaiDigits.indexOf(d)); })
+      .replace(/\s+/g, '');
+  }
+
   function validateRegistrationPayload(payload, nowMs) {
     var errors = checkRegistration(payload, nowMs === undefined ? Date.now() : nowMs);
     return { valid: errors.length === 0, errors: errors };
@@ -2256,6 +2271,7 @@
     buildRegistrationPayload: buildRegistrationPayload,
     validateRegistrationPayload: validateRegistrationPayload,
     isValidHn: isValidHn,
+    normalizeHn: normalizeHn,
     PROTOCOL_VERSION: PROTOCOL_VERSION,
     CONSENT_VERSIONS: CONSENT_VERSIONS,
     PDPA_NOTICE_VERSION: PDPA_NOTICE_VERSION,

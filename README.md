@@ -304,6 +304,26 @@ send headers; there the app only protects itself by refusing to draw inside
 a frame. `docs/SECURITY.md` has the plan for moving existing patients' data
 across, and for how long it is kept.
 
+## Giving patients the app
+
+- **Show, print or send `https://osteoporosis-care.vercel.app/start.html`.** It
+  has a QR code, the address and four steps in Thai and English, and prints on
+  one A4 page. `app-qr.png` is the same QR code as a picture to send in LINE
+  (the page offers it for saving). The QR code opens
+  `https://osteoporosis-care.vercel.app/`; it was checked by decoding it.
+- **Patients need only their HN, year of birth (พ.ศ.) and sex.** Staff hand out
+  no code. An HN typed with spaces or Thai digits (๔๔๐๕ ๑๒๓) is taken as the
+  same HN (4405123).
+- **Opened from LINE**, the app says so and offers "เปิดในเบราว์เซอร์": inside
+  LINE it cannot be added to the home screen, works only online, and may lose
+  what it saves. The button uses LINE's `openExternalBrowser=1`.
+- **Home screen:** Android shows an install button; on iPhone, where Safari has
+  none, the app explains the Share → "เพิ่มไปยังหน้าจอโฮม" steps. Both appear
+  only after the first questionnaire, never over it.
+- **A second phone for the same HN** (a new phone, a reset app, a tablet) is at
+  present held as "pending" until staff revoke the first phone in the Devices
+  tab — see "Security". Accepting it automatically is a decision still open.
+
 ## Before a real pilot (do not skip)
 
 1. **Every Thai clinical string** — medication instructions, red flags,
