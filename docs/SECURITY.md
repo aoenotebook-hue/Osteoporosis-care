@@ -1,6 +1,6 @@
 # Security: identity, audit trail, hosting and local data
 
-Script version **2026-09-25**, upload protocol **3**. This file says what the
+Script version **2026-09-25.2**, upload protocol **3**. This file says what the
 app and the Apps Script now enforce, what they cannot, and what is left for
 the clinic to decide. Everything here is covered by `tests/t19`–`t22` against
 synthetic records only.
@@ -43,39 +43,50 @@ Bangkok date. The ranges are the app's own input limits (`t20` checks that),
 so nothing a patient can type is refused. An out-of-range value is flagged
 next to the field in the patient's language, and it is not saved.
 
-## Identity: needs a clinic decision
+## Identity: the clinic's choice (option C, 2026-09-25)
 
-The key proves that a record came from **the phone that registered the HN**.
-It does not prove the person is that patient. The first phone to register an
-HN holds it. If a stranger registers a real patient's HN first, the real
-patient's phone is refused ("registered on another phone") until staff revoke
-the stranger's device. The same reply also tells anyone who asks whether an HN
-is enrolled. The consent tick has the same limit: it records what was agreed
-to, not who agreed.
+Patients need only their HN; staff hand out no codes. The first phone to
+register an HN holds it. **Another phone for the same HN** (a new phone, a
+reset app, a tablet, a relative's phone) is accepted without staff when the
+year of birth and sex it sends match the latest registration of a phone that
+already holds the HN. If they differ, the phone waits as `pending`, the
+patient is told to check with staff, and the Audit tab records a `mismatch`.
 
-Closing that gap needs a step that happens outside the app. The options:
+What this does and does not protect:
 
-| Option | How it works | Staff work | Code needed |
-|---|---|---|---|
-| **A. Enrollment code** (recommended) | At the clinic, staff add a row to an `Enrollment` tab (HN plus a one-time 8-character code, valid 14 days) and give the patient the code on paper or by LINE. The app asks for it at registration, and the script binds the phone only if code and HN match; the code is then marked used. | One row per patient, at a visit they already make | A code field on the registration form and a check in `handleRegistration` (about a day, with tests) |
-| **B. Staff approval** | Registrations and records are accepted but held as `pending` until staff tick `verified` in Devices after a phone call. | A call per patient, before data counts | A `verified` column; staff views filter on it |
-| **C. SMS or e-mail one-time code** | The script sends a code to contact details the hospital already holds. | None day to day | A paid SMS gateway or hospital mail relay, plus contact data the script would have to see |
-| **D. Keep first-come binding** | As now, plus a weekly look at `conflict` rows in Audit and `pending` rows in Devices. | A weekly check | None |
+- **It proves knowledge, not identity.** Someone who knows a patient's HN,
+  birth year and sex can add a phone. That phone can add rows under the HN,
+  each labelled with its own `credentialId`. It **cannot change, supersede
+  or delete** the rows another phone wrote: every phone keeps its own chain of
+  versions, and nothing is overwritten. There is also no way to read rows
+  back.
+- **Guessing is slow and visible.** Registrations for one HN are limited to
+  10 in six hours, and every miss is an Audit `mismatch` row with a
+  `pending` phone in Devices.
+- **A revoked phone stays revoked**, whatever it sends.
+- **The consent tick** records what was agreed to, not who agreed.
 
-Until the clinic chooses, D is what runs. A and B also close the enrollment
-check described above.
+Stronger options remain available if the clinic wants them later:
+
+| Option | How it works | Staff work |
+|---|---|---|
+| Enrollment code | Staff give each patient a one-time code at a visit; the app asks for it at registration | One row per patient |
+| Staff approval | New phones wait until staff confirm by phone | A call per new phone |
+| SMS or e-mail code | The script sends a code to contact details the hospital holds | None; needs a gateway |
 
 ## Staff procedures
 
 - **Current values.** In CheckIns, Nutrition, Bmd, FractureRisk and
-  Registrations, the row with the highest `version` for a patient (and a day)
-  is current. Lower versions are its history. Filter or sort on `version`, and
+  Registrations, the row with the highest `version` for a patient, a day and a
+  phone (`credentialId`) is that phone's current one; a patient with two
+  phones has two. Lower versions are its history. Filter or sort on `version`, and
   don't edit or delete rows: the history is the audit trail.
-- **A patient changes phones, or erased the app and registered again.** The
-  new phone shows "registered on another phone", and a `pending` row appears in
-  Devices. After confirming it is the patient, change the old phone's `status`
-  from `active` to `revoked`. The new phone's queued records go through at its
-  next send.
+- **A patient changes phones, or erased the app and registered again.**
+  Nothing to do if they entered the same year of birth and sex. If not, a
+  `pending` row appears in Devices (and a `mismatch` row in Audit); after
+  confirming it is the patient, change its `status` to `active`, and its
+  queued records go through at its next send. `additional phone` rows in Audit
+  list every phone added this way, for an occasional look.
 - **A lost phone, or a patient who withdraws.** Set the phone's `status` to
   `revoked`. A revoked phone cannot write, and cannot register its way back,
   even when no other phone holds the HN. To let the same phone back in,
@@ -83,7 +94,7 @@ check described above.
 - **Refused records.** Audit rows with action `refused` show what a genuine
   phone sent and why it was refused. The phone keeps the record and shows the
   patient a note to tell staff.
-- **Tabs named "… (before 2026-09-25)"** are the data from before this
+- **Tabs named "… (before 2026-09-25.2)"** are the data from before this
   version, moved aside intact on first use. Review them, then archive them
   under the retention policy below.
 
@@ -147,8 +158,8 @@ one-time transfer:
      caches.
    Nothing passes through a server.
 3. **If the transfer cannot run** (another phone, a cleared browser), the
-   patient registers again on the new origin, and staff revoke the old device
-   as for a new phone. Data already sent to the sheet is unaffected; history
+   patient registers again on the new origin with the same year of birth and
+   sex, which is accepted as a new phone. Data already sent to the sheet is unaffected; history
    kept only on the phone is lost.
 4. **After a set period** (suggested: 90 days), replace the GitHub Pages site
    with a static "moved" page, and turn Pages off once visits stop.
@@ -158,8 +169,8 @@ one-time transfer:
 - **On the phone:** a record leaves the upload queue only when the script
   acknowledges it. Refused records stay on the phone, visible, until the
   patient or staff reset the app. The footer's reset erases everything,
-  including the phone's key; after that, registering the same HN needs
-  staff to revoke the old device, and the reset dialog says so. A stored
+  including the phone's key; registering the same HN again works with the
+  same year of birth and sex, and the reset dialog says so. A stored
   profile no longer carries the shared token.
 - **In the sheet:** the hospital's PDPA retention period applies to every tab,
   Audit and Devices included. **The clinic needs to set it.** A suggestion is
@@ -176,7 +187,7 @@ The backend is fixed only when the deployed script passes the probes:
    everything. Set the project time zone to Bangkok.
 2. **Deploy → Manage deployments → pencil icon → Version: New version →
    Deploy.**
-3. Open the `/exec` URL. It must say `"version":"2026-09-25"` and
+3. Open the `/exec` URL. It must say `"version":"2026-09-25.2"` and
    `"protocol":3`.
 4. From a computer with Node 18 or later, run
    `node tools/verify-backend.js <the /exec URL>`. The read-only probes send
@@ -194,12 +205,13 @@ accepted, and one phone can merge into another patient's day (`t22`).
 ## What remains
 
 - `SHARED_TOKEN` is public by design; the per-phone key carries the security.
-- Identity is first-come until the clinic chooses an option above.
+- A new phone is accepted on knowledge of the HN, birth year and sex
+  (option C); the stronger options above stay available.
 - Data on the phone is in plain `localStorage`. Anyone holding an unlocked
   phone can read it, as with any web app.
 - Rate limits are per phone, and a stranger can make new keys. The
   new-phones-per-hour cap and the registration cap are what bound that.
   The per-HN registration cap can also be used up by a stranger for six
   hours; the patient's phone then retries.
-- The reply "registered on another phone" tells anyone who asks whether an
-  HN is enrolled. Options A and B close this.
+- The reply "details do not match" tells anyone who asks that an HN is
+  enrolled. An enrollment code or staff approval would close this.

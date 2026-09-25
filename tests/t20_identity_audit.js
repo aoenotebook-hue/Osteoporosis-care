@@ -42,13 +42,14 @@ function run() {
     name: "patient A's phone cannot write to, or overwrite, patient B's records",
     fn: function () {
       var b = fake.backend();
-      var a = patient(b, 'TEST-000A');
+      var year = new Date().getUTCFullYear();
+      var a = patient(b, 'TEST-000A', { yearOfBirth: 1960, age: year - 1960, sex: 'male' });
       var p = patient(b, 'TEST-000B');
       helpers.assert(a.registered.ok && p.registered.ok, 'both register');
       helpers.assert(p.post({ date: daysAgo(1), type: 'checkin', heightCm: 160 }).ok, "B's own record");
       var before = JSON.stringify(b.table('CheckIns'));
 
-      // A's genuine key, B's HN: every kind of record, and a registration.
+      // A's genuine key, B's HN, without registering it: every kind of record.
       ['checkin', 'falls', 'adherence', 'nutrition', 'bmd', 'frax'].forEach(function (type) {
         var fields = {
           checkin: { heightCm: 150 }, falls: { injured: 0 }, adherence: { medication: 'alendronate', doseNumber: 1 },
@@ -58,16 +59,25 @@ function run() {
         var r = a.post(Object.assign({ date: daysAgo(1), type: type }, fields), 'TEST-000B');
         helpers.assertEqual(r.error, 'device not registered for this patient', type + ' from the wrong phone');
       });
-      var takeover = b.post(Object.assign({}, p.reg, { deviceKey: a.key }));
-      helpers.assertEqual(takeover.error, 'hn registered on another device', "A cannot claim B's HN");
-      // A stranger with a fresh key fares no better.
-      var stranger = fake.deviceKey();
-      var r2 = b.post({ token: b.token, schemaVersion: core.PROTOCOL_VERSION, patientId: 'TEST-000B', deviceKey: stranger,
-        date: daysAgo(1), type: 'checkin', heightCm: 999 });
-      helpers.assert(!r2.ok, 'a stranger is refused');
-
+      // Registering B's HN with A's own details is refused (option C).
+      var takeover = b.post(Object.assign({}, a.reg, { patientId: 'TEST-000B', hn: 'TEST-000B' }));
+      helpers.assertEqual(takeover.error, 'details do not match this hn', "A cannot add a phone to B's HN with A's details");
       helpers.assertEqual(JSON.stringify(b.table('CheckIns')), before, "B's rows are exactly as they were");
-      helpers.assert(p.post({ date: daysAgo(1), type: 'checkin', tugSeconds: 12 }).ok, 'B still writes');
+
+      // Someone who knows B's year of birth and sex can add a phone, but its rows
+      // are its own: B's rows stay as they were and B's corrections build on B's.
+      var added = b.post(Object.assign({}, p.reg, { deviceKey: a.key }));
+      helpers.assert(added.ok, 'a phone with matching details is accepted');
+      var addedRow = a.post({ date: daysAgo(1), type: 'checkin', heightCm: 150 }, 'TEST-000B');
+      helpers.assertEqual(addedRow.result.version, 1, "the added phone starts its own chain, not a version of B's");
+      helpers.assertEqual(p.post({ date: daysAgo(1), type: 'checkin', heightCm: 159 }).result.version, 2, "B's correction continues B's chain");
+      var rows = b.table('CheckIns');
+      var bKey = b.table('Devices').filter(function (d) { return d.patientId === 'TEST-000B'; })[0].credentialId;
+      var bRows = rows.filter(function (r) { return r.credentialId === bKey; });
+      helpers.assertEqual(bRows.map(function (r) { return r.heightCm; }).join(), '160,159', "B's rows: only B's own values");
+      helpers.assertEqual(bRows[1].supersedes, bRows[0].receiptId);
+      helpers.assertEqual(rows.filter(function (r) { return r.credentialId !== bKey; })[0].supersedes, '', 'the added phone supersedes nothing');
+      helpers.assertEqual(b.table('Audit').filter(function (x) { return x.action === 'additional phone'; }).length, 1, 'the added phone is in the Audit tab');
       helpers.assertEqual(b.overwrites.length, 0, 'no row was written over');
     }
   });
@@ -303,29 +313,56 @@ function run() {
   });
 
   cases.push({
-    name: 'staff move a patient to a new phone by revoking the old one',
+    name: "a patient's new phone is accepted when year of birth and sex match; otherwise it waits for staff",
     fn: function () {
       var b = fake.backend();
+      var year = new Date().getUTCFullYear();
       var old = patient(b, 'TEST-0001');
-      var fresh = patient(b, 'TEST-0001');
-      helpers.assertEqual(fresh.registered.error, 'hn registered on another device');
-      helpers.assertEqual(patient(b, 'TEST-0001', { deviceKey: fresh.key }).registered.error, 'hn registered on another device');
-      var devices = b.table('Devices');
-      helpers.assertEqual(devices.map(function (d) { return d.status; }).join(), 'active,pending', 'one pending row, however often it asks');
-      helpers.assertEqual(b.table('Audit').filter(function (a) { return a.action === 'conflict'; }).length, 1);
-
-      // Staff change the old phone's status in the Devices tab.
-      b.sheets.Devices.rows[1][3] = { value: 'revoked' };
-      helpers.assert(b.post(fresh.reg).ok, 'the new phone is accepted once the old one is revoked');
-      helpers.assertEqual(old.post({ date: daysAgo(1), type: 'falls', injured: 0 }).error, 'device not registered for this patient');
+      // The patient corrected their birth year once; the new phone must match the correction.
+      helpers.assert(b.post(Object.assign({}, old.reg, { yearOfBirth: 1951, age: year - 1951 })).ok, 'correction');
+      var stale = patient(b, 'TEST-0001');
+      helpers.assertEqual(stale.registered.error, 'details do not match this hn', 'an earlier version does not count');
+      var fresh = patient(b, 'TEST-0001', { yearOfBirth: 1951, age: year - 1951 });
+      helpers.assert(fresh.registered.ok, 'the new phone with matching details is accepted, no staff step');
       helpers.assert(fresh.post({ date: daysAgo(1), type: 'falls', injured: 0 }).ok, 'the new phone writes');
+      helpers.assert(old.post({ date: daysAgo(2), type: 'falls', injured: 0 }).ok, 'the old phone still writes');
+
+      var devices = b.table('Devices');
+      helpers.assertEqual(devices.map(function (d) { return d.status; }).join(), 'active,pending,active');
+      helpers.assertEqual(b.table('Audit').filter(function (a) { return a.action === 'mismatch'; }).length, 1);
+      // Staff approve the pending phone by setting it to active.
+      b.sheets.Devices.rows[2][3] = { value: 'active' };
+      helpers.assert(b.post(stale.reg).ok, 'an approved phone registers');
+      helpers.assert(stale.post({ date: daysAgo(3), type: 'falls', injured: 0 }).ok, 'and writes');
+
+      // A revoked phone stays revoked, details or not.
+      b.sheets.Devices.rows[1][3] = { value: 'revoked' };
       helpers.assertEqual(b.post(old.reg).error, 'device revoked for this patient', 'the revoked phone cannot register back');
+      helpers.assertEqual(old.post({ date: daysAgo(4), type: 'falls', injured: 0 }).error, 'device not registered for this patient');
 
       // Revoked with no other phone active (a lost phone): it still cannot come back.
       var lost = patient(b, 'TEST-0002');
       b.sheets.Devices.rows[b.sheets.Devices.rows.length - 1][3] = { value: 'Revoked ' };
       helpers.assertEqual(b.post(lost.reg).error, 'device revoked for this patient');
       helpers.assertEqual(lost.post({ date: daysAgo(1), type: 'falls', injured: 0 }).error, 'device not registered for this patient');
+    }
+  });
+
+  cases.push({
+    name: 'guessing year of birth and sex is held to the registration limit',
+    fn: function () {
+      var b = fake.backend();
+      var year = new Date().getUTCFullYear();
+      patient(b, 'TEST-0001', { yearOfBirth: 1944, age: year - 1944 });
+      var answers = [];
+      for (var y = 1950; y < 1965; y++) {
+        answers.push(patient(b, 'TEST-0001', { yearOfBirth: y, age: year - y }).registered.error);
+      }
+      helpers.assertEqual(answers.slice(0, 9).every(function (e) { return e === 'details do not match this hn'; }), true);
+      helpers.assertEqual(answers.slice(9).every(function (e) { return e === 'busy, try again'; }), true,
+        'after ' + (b.ctx.LIMITS.registrationsPerHnPerSixHours - 1) + ' misses the HN answers busy: ' + answers.join());
+      helpers.assertEqual(patient(b, 'TEST-0001', { yearOfBirth: 1944, age: year - 1944 }).registered.error, 'busy, try again',
+        'even the right answer waits once the limit is reached');
     }
   });
 

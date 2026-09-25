@@ -216,7 +216,7 @@ replacing anything already there.
 4. Confirm it took: open the `/exec` URL in a browser. It answers
 
    ```json
-   {"ok":true,"service":"osteoporosis-care","protocol":3,"tokenConfigured":true,"sheets":[...],"version":"2026-09-25"}
+   {"ok":true,"service":"osteoporosis-care","protocol":3,"tokenConfigured":true,"sheets":[...],"version":"2026-09-25.2"}
    ```
 
 5. **Check the deployed backend**, from any computer with Node 18 or later:
@@ -237,7 +237,7 @@ latter answers with a login page the app cannot follow. `SHARED_TOKEN`
 must be identical in `Code.gs` and `app-ui.js`.
 
 The first request after deploying moves any tab from an earlier version
-aside as "<Name> (before 2026-09-25)" — intact — and starts a fresh one.
+aside as "<Name> (before 2026-09-25.2)" — intact — and starts a fresh one.
 Phones register again on their own; a phone registered before this version
 first asks its patient to confirm consent once.
 
@@ -256,17 +256,21 @@ The short version; `docs/SECURITY.md` has the detail.
   registration, stored only as a hash in the Devices tab, and required for
   every record. Knowing someone's HN is not enough to write to their rows,
   and the script has no way to read rows back out.
-- **Identity is still first-come.** The key proves the phone, not the
-  person. How patients prove who they are — an enrollment code handed out
-  at the clinic is the recommendation — is a clinic decision;
-  `docs/SECURITY.md` sets out the options.
+- **Patients need only their HN; staff hand out no codes.** The first phone
+  to register an HN holds it. Another phone for the same HN (a new phone, a
+  reset app, a tablet) is accepted without staff when its year of birth and
+  sex match the HN's registration; otherwise it waits as `pending`. Each phone
+  keeps its own records, so no phone can change another's. This proves
+  knowledge of those details, not identity — `docs/SECURITY.md` has the
+  trade-off.
 - **Nothing is overwritten, and everything is checked** against the same
   rules the app uses: required fields, types, real dates, clinical ranges,
   consent evidence. Every piece of text is stored as text: a formula never
   runs, and an HN such as `0012345` is not turned into a number.
   Submissions are rate-limited per phone and per HN.
-- **Moving a patient to a new phone:** in Devices, set the old phone's
-  status to `revoked`.
+- **A lost phone, or one that is not the patient's:** in Devices, set its
+  status to `revoked`. A `pending` phone (details did not match) can be let
+  in by setting it to `active`.
 - **Share the Google Sheet only with the care team** — it holds HNs and
   health data. The app keeps its own copy on the phone in `localStorage`;
   "ล้างข้อมูลและเริ่มใหม่" in the footer erases it on a shared phone.
@@ -279,8 +283,9 @@ causes, in order:
 
 1. **The script was never redeployed** (step 3) — `tools/verify-backend.js`
    says so in its first line.
-2. **"registered on another phone"** — the HN is bound to a different
-   phone; see "Moving a patient to a new phone".
+2. **"year of birth or sex does not match"** — a second phone for the HN
+   sent details that differ from the registration. Check them with the
+   patient; set the phone to `active` in Devices to let it in.
 3. **"consent needed"** — a phone from before this version is waiting for
    its patient to confirm consent (a button in the footer).
 4. **Token mismatch** — the script answers `invalid token` with HTTP 200.
@@ -303,6 +308,27 @@ other security headers. GitHub Pages shares one origin, and so one
 send headers; there the app only protects itself by refusing to draw inside
 a frame. `docs/SECURITY.md` has the plan for moving existing patients' data
 across, and for how long it is kept.
+
+## Giving patients the app
+
+- **Show, print or send `https://osteoporosis-care.vercel.app/start.html`.** It
+  has a QR code, the address and four steps in Thai and English, and prints on
+  one A4 page. `app-qr.png` is the same QR code as a picture to send in LINE
+  (the page offers it for saving). The QR code opens
+  `https://osteoporosis-care.vercel.app/`; it was checked by decoding it.
+- **Patients need only their HN, year of birth (พ.ศ.) and sex.** Staff hand out
+  no code. An HN typed with spaces or Thai digits (๔๔๐๕ ๑๒๓) is taken as the
+  same HN (4405123).
+- **Opened from LINE**, the app says so and offers "เปิดในเบราว์เซอร์": inside
+  LINE it cannot be added to the home screen, works only online, and may lose
+  what it saves. The button uses LINE's `openExternalBrowser=1`.
+- **Home screen:** Android shows an install button; on iPhone, where Safari has
+  none, the app explains the Share → "เพิ่มไปยังหน้าจอโฮม" steps. Both appear
+  only after the first questionnaire, never over it.
+- **A second phone for the same HN** (a new phone, a reset app, a tablet)
+  works straight away if the patient enters the same year of birth and sex as
+  before. If they differ, the app says so and the phone waits as `pending` in
+  the Devices tab for staff.
 
 ## Before a real pilot (do not skip)
 

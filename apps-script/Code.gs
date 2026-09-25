@@ -9,7 +9,7 @@
  *      > Deploy.  Saving alone does NOT update the live /exec URL, which is
  *      why an older copy of this script can keep answering requests.
  *   5. Check it worked: open the /exec URL in a browser. You should see
- *      {"ok":true,"service":"osteoporosis-care","protocol":3,"version":"2026-09-25", ...}
+ *      {"ok":true,"service":"osteoporosis-care","protocol":3,"version":"2026-09-25.2", ...}
  *      then run `node tools/verify-backend.js <the /exec URL>` from the repo
  *      (README, "Check the deployed backend"). Until both pass, the fixes in
  *      this file are not live.
@@ -18,7 +18,7 @@
  * Google answers with a login page that the app cannot follow.
  *
  * The first request after deploying moves each tab whose columns changed
- * aside as "<Name> (before 2026-09-25)" and starts a fresh one. Nothing is
+ * aside as "<Name> (before 2026-09-25.2)" and starts a fresh one. Nothing is
  * deleted; patients' phones register again on their own.
  *
  * SECURITY — what this script can and cannot promise:
@@ -29,13 +29,20 @@
  *     is written only when its key belongs to the HN it names, so knowing
  *     another patient's HN is not enough to write to, or overwrite, their
  *     rows. Nothing here reads patient rows back out to anyone.
- *   - The first phone to register an HN is bound to it. That proves the
- *     phone, not the person: a stranger who registers a real patient's HN
- *     first would hold it until staff revoke that device. Choosing how
- *     identity is confirmed is a clinic decision (README, "Identity").
+ *   - Patients need only their HN: staff hand out no codes. The first phone
+ *     to register an HN is bound to it. Another phone for the same HN (a new
+ *     phone, a reset app, a tablet) is accepted without staff when the year
+ *     of birth and sex it sends match the HN's registration (the clinic's
+ *     choice, option C, 2026-09-25); otherwise it waits as "pending".
+ *     Guessing is held to LIMITS.registrationsPerHnPerSixHours, and every
+ *     miss is in the Audit tab. This proves knowledge of those details, not
+ *     identity: someone who knows a patient's HN, birth year and sex can add
+ *     a phone. It can add rows under the HN, labelled with its own phone,
+ *     but cannot change or supersede the rows another phone wrote.
  *   - Nothing is ever overwritten. A correction to a day's check-in is a new
- *     row with the next version number, naming the row it supersedes; the
- *     Audit tab logs every accepted change and every conflict.
+ *     row with the next version number, naming the row it supersedes, and
+ *     each phone keeps its own chain. The Audit tab logs every accepted
+ *     change, every additional phone and every mismatch.
  *   - Every value is checked against the same rules the app uses (per-record
  *     fields, types, real dates, clinical ranges, consent evidence), capped,
  *     and passed through safeCell so text such as =IMAGE(...) is stored as
@@ -44,12 +51,13 @@
  *   - Share the Google Sheet only with the care team. It holds HNs and health
  *     data.
  *
- * STAFF — moving a patient to a new phone: in the Devices tab, change the old
- * phone's status from "active" to "revoked". The new phone's next attempt is
- * then accepted (it shows as "pending" until then).
+ * STAFF — nothing is needed day to day. A "pending" row in Devices is a phone
+ * whose year of birth or sex did not match: set it to "active" once you know
+ * it is the patient's. A phone that should no longer send (lost, or not the
+ * patient's): set it to "revoked"; it then cannot write or register again.
  */
 
-var SCRIPT_VERSION = '2026-09-25';
+var SCRIPT_VERSION = '2026-09-25.2';
 var SHARED_TOKEN = 'mQ6tfi1HQa0fBNbhzt2AoVk_YKMfmX5v';
 var MAX_TEXT = 200;
 var MAX_BODY = 20000;
@@ -320,9 +328,11 @@ var SHEET_COLUMNS = {
  * Records of the same kind on the same day are filled in over the course of
  * that day (height first, then a self-test, then a safety score). Each
  * change is a new version row carrying the day's values so far; the highest
- * version for a patient and day is the current one, and the earlier rows are
- * its history. A second fall on a day is a second event and gets its own row;
- * an exact repeat is skipped. A second dose on one day is skipped.
+ * version for a patient, day and phone is the current one, and the earlier
+ * rows are its history. Each phone keeps its own chain, so one phone never
+ * supersedes another's rows. A second fall on a day is a second event and
+ * gets its own row; an exact repeat is skipped. A second dose on one day is
+ * skipped.
  */
 var SHEET_ROUTING = {
   checkin: { sheet: 'CheckIns', mode: 'versioned' },
@@ -406,6 +416,7 @@ function devicesFor(patientId) {
     var row = table.data[r];
     if (cellToString(row[cols.indexOf('patientId')]) !== patientId) continue;
     out.push({
+      id: cellToString(row[cols.indexOf('credentialId')]),
       hash: cellToString(row[cols.indexOf('credentialHash')]),
       status: cellToString(row[cols.indexOf('status')]).trim().toLowerCase()
     });
@@ -447,26 +458,51 @@ function handleRegistration(payload) {
     return refuse('device revoked for this patient');
   }
   var mine = devices.some(function (d) { return d.status === 'active' && d.hash === credential.hash; });
-  var active = devices.some(function (d) { return d.status === 'active'; });
+  var others = devices.filter(function (d) { return d.status === 'active' && d.hash !== credential.hash; });
 
-  if (!mine && active) {
-    // Another phone holds this HN. Nothing about that patient is written or
-    // returned; staff see the attempt and decide (see STAFF above).
+  if (!mine && others.length && !detailsMatch(payload, others)) {
+    // Another phone holds this HN and this one's year of birth or sex differs
+    // from that registration. Nothing about the patient is returned (not even
+    // which of the two differs); staff can see the attempt and decide.
     var pending = devices.some(function (d) { return d.status === 'pending' && d.hash === credential.hash; });
     if (!pending) {
       appendRow('Devices', { patientId: payload.patientId, credentialId: credential.id, credentialHash: credential.hash,
-        status: 'pending', createdAt: new Date(), note: 'HN already registered on another phone' });
-      audit(payload.patientId, credential.id, 'registration', '', 'conflict', 'HN already registered on another phone', '');
+        status: 'pending', createdAt: new Date(), note: 'year of birth or sex did not match the registration' });
     }
-    return refuse('hn registered on another device');
+    audit(payload.patientId, credential.id, 'registration', '', 'mismatch', 'year of birth or sex did not match the registration', '');
+    return refuse('details do not match this hn');
   }
   if (!mine) {
     if (overLimit('newdevice', LIMITS.newDevicesPerHour, 3600)) return refuse('busy, try again');
     appendRow('Devices', { patientId: payload.patientId, credentialId: credential.id, credentialHash: credential.hash,
-      status: 'active', createdAt: new Date(), note: '' });
+      status: 'active', createdAt: new Date(), note: others.length ? 'additional phone: year of birth and sex matched' : '' });
+    if (others.length) audit(payload.patientId, credential.id, 'registration', '', 'additional phone', 'year of birth and sex matched', '');
   }
-  var result = writeVersioned('Registrations', payload, credential, ['patientId'], 'registration');
+  var result = writeVersioned('Registrations', payload, credential, ['patientId', 'credentialId'], 'registration');
   return jsonReply({ ok: true, result: result });
+}
+
+/**
+ * Whether the year of birth and sex sent match the latest registration of
+ * one of the HN's active phones. A patient's own corrections count: only
+ * each phone's latest version is compared, never an earlier one.
+ */
+function detailsMatch(payload, activeDevices) {
+  var table = openSheet('Registrations');
+  var cols = SHEET_COLUMNS.Registrations;
+  var ids = activeDevices.map(function (d) { return d.id; });
+  var latest = {};
+  for (var r = 1; r < table.data.length; r++) {
+    var row = table.data[r];
+    var id = cellToString(row[cols.indexOf('credentialId')]);
+    if (cellToString(row[cols.indexOf('patientId')]) !== payload.patientId || ids.indexOf(id) === -1) continue;
+    if (!latest[id] || Number(row[cols.indexOf('version')]) > Number(latest[id][cols.indexOf('version')])) latest[id] = row;
+  }
+  return Object.keys(latest).some(function (id) {
+    var row = latest[id];
+    return cellToString(row[cols.indexOf('yearOfBirth')]) === cellToString(payload.yearOfBirth) &&
+      cellToString(row[cols.indexOf('sex')]) === cellToString(payload.sex);
+  });
 }
 
 /* ---------- records ---------- */
@@ -495,7 +531,7 @@ function handleRecord(payload) {
   var routing = SHEET_ROUTING[payload.type];
   var result;
   if (routing.mode === 'versioned') {
-    result = writeVersioned(routing.sheet, payload, credential, ['patientId', 'date'], payload.type);
+    result = writeVersioned(routing.sheet, payload, credential, ['patientId', 'date', 'credentialId'], payload.type);
   } else {
     result = writeEvent(routing, payload, credential);
   }
@@ -505,9 +541,10 @@ function handleRecord(payload) {
 /* ---------- writing: append only ---------- */
 
 /**
- * The patient's latest row for the key (patient, or patient and day), with
- * this request's values laid over it, appended as the next version. Returns
- * duplicate_skipped when nothing changed. Existing rows are never written.
+ * This phone's latest row for the key (patient and phone, or patient, day and
+ * phone), with this request's values laid over it, appended as the next
+ * version. Returns duplicate_skipped when nothing changed. Existing rows are
+ * never written, and another phone's rows are never the base of a version.
  */
 function writeVersioned(sheetName, payload, credential, keyColumns, request) {
   var table = openSheet(sheetName);
@@ -517,7 +554,9 @@ function writeVersioned(sheetName, payload, credential, keyColumns, request) {
   var count = 0;
   for (var r = 1; r < table.data.length; r++) {
     var row = table.data[r];
-    var same = keyColumns.every(function (k) { return cellToString(row[cols.indexOf(k)]) === cellToString(payload[k]); });
+    var same = keyColumns.every(function (k) {
+      return cellToString(row[cols.indexOf(k)]) === (k === 'credentialId' ? credential.id : cellToString(payload[k]));
+    });
     if (!same) continue;
     count += 1;
     if (!latest || Number(row[versionCol]) > Number(latest[versionCol])) latest = row;

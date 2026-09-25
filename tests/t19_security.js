@@ -79,12 +79,16 @@ function run() {
       helpers.assertEqual(b.post(a.reg).result.action, 'duplicate_skipped', 'identical repeat');
       var changed = b.post(Object.assign({}, a.reg, { sex: 'male' }));
       helpers.assertEqual(changed.result.action, 'corrected', 'a changed registration from the same phone');
-      var stranger = patient(b, 'TEST-0001', { sex: 'male', yearOfBirth: 1990, age: new Date().getUTCFullYear() - 1990 });
-      helpers.assertEqual(stranger.registered.error, 'hn registered on another device');
+      var stranger = patient(b, 'TEST-0001', { sex: 'female', yearOfBirth: 1990, age: new Date().getUTCFullYear() - 1990 });
+      helpers.assertEqual(stranger.registered.error, 'details do not match this hn');
+      var second = patient(b, 'TEST-0001', { sex: 'male' });
+      helpers.assert(second.registered.ok, 'a second phone with the current details is accepted');
       var rows = b.table('Registrations');
-      helpers.assertEqual(rows.length, 2, 'two versions from the registered phone, nothing from the other');
+      helpers.assertEqual(rows.length, 3, 'two versions from the first phone, one from the second, nothing from the stranger');
       helpers.assertEqual(rows[0].sex, 'female', 'the first registration must be untouched');
       helpers.assertEqual(rows[1].supersedes, rows[0].receiptId, 'the correction names what it supersedes');
+      helpers.assertEqual(rows[2].version, 1, 'the second phone starts its own chain');
+      helpers.assertEqual(rows[2].supersedes, '', 'and supersedes nothing of the first phone\'s');
       helpers.assertEqual(b.overwrites.length, 0, 'no row was written over');
     }
   });

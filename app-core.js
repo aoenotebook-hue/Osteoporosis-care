@@ -27,6 +27,9 @@
     a2hsPrompt: t('เพิ่มแอปนี้ไว้ที่หน้าจอหลัก เพื่อเปิดใช้ได้สะดวกขึ้น', 'Add this app to your home screen for easier access'),
     a2hsInstall: t('เพิ่มลงหน้าจอหลัก', 'Add to Home Screen'),
     a2hsDismiss: t('ไว้ภายหลัง', 'Not now'),
+    a2hsIos: t('เพิ่มแอปไว้ที่หน้าจอหลัก: แตะปุ่มแชร์ (สี่เหลี่ยมมีลูกศรชี้ขึ้น) แล้วเลือก "เพิ่มไปยังหน้าจอโฮม"', 'Add this app to your home screen: tap the Share button (a square with an arrow) and choose "Add to Home Screen"'),
+    lineBrowserNotice: t('ท่านเปิดแอปจากในแอป LINE ข้อมูลที่บันทึกในหน้าต่างนี้อาจหายได้ และเพิ่มไว้ที่หน้าจอหลักไม่ได้ กรุณาเปิดในเบราว์เซอร์ของโทรศัพท์', 'You opened this app inside LINE, where saved records can be lost and the app cannot be added to your home screen. Please open it in your phone\'s browser.'),
+    lineBrowserOpen: t('เปิดในเบราว์เซอร์', 'Open in the browser'),
 
     pdpaTitle: t('ความยินยอมให้ใช้ข้อมูลส่วนบุคคล (PDPA)', 'Personal Data Consent (PDPA)'),
     pdpaBody: t('ข้อมูลของท่านใช้เพื่อการดูแลรักษาและติดตามอาการเท่านั้น ท่านขอถอนความยินยอมได้ทุกเมื่อ เพียงแจ้งที่โรงพยาบาล', 'Your information is used only to care for you and follow your progress. You can withdraw your consent at any time by telling the hospital.'),
@@ -439,6 +442,7 @@
     syncAllSent: t('ส่งข้อมูลครบแล้ว', 'Everything has been sent'),
     syncRejectedLabel: t('ข้อมูลที่ระบบไม่รับ', 'Not accepted by the hospital system'),
     syncFooterOtherDevice: t('เลข HN นี้ลงทะเบียนไว้กับโทรศัพท์เครื่องอื่นแล้ว ข้อมูลจากเครื่องนี้ยังเก็บไว้และยังไม่ได้ส่ง กรุณาแจ้งเจ้าหน้าที่โรงพยาบาล', 'This HN is already registered on another phone. Records from this phone are kept here and have not been sent. Please tell the hospital staff.'),
+    syncFooterDetailsMismatch: t('ปีเกิดหรือเพศในเครื่องนี้ไม่ตรงกับที่ลงทะเบียนไว้กับเลข HN นี้ ข้อมูลยังเก็บไว้ในเครื่องและยังไม่ได้ส่ง กรุณาแจ้งเจ้าหน้าที่โรงพยาบาล', 'The year of birth or sex on this phone does not match the registration for this HN. Records are kept here and have not been sent. Please tell the hospital staff.'),
     syncFooterRevoked: t('เจ้าหน้าที่โรงพยาบาลหยุดรับข้อมูลจากโทรศัพท์เครื่องนี้แล้ว ข้อมูลยังเก็บไว้ในเครื่อง หากต้องการส่งต่อ กรุณาติดต่อเจ้าหน้าที่', 'The hospital staff have stopped taking records from this phone. They are kept here; please contact the staff if you want to send them.'),
     syncFooterNeedsConsent: t('ข้อมูลจะยังไม่ส่งให้โรงพยาบาลจนกว่าท่านจะยืนยันความยินยอม', 'Records will not be sent to the hospital until you confirm your consent'),
     syncFooterConsentButton: t('ยืนยันความยินยอม', 'Confirm consent'),
@@ -447,7 +451,7 @@
     reconsentConfirm: t('ยืนยันและส่งข้อมูลต่อ', 'Confirm and keep sending'),
     reconsentLater: t('ไว้ภายหลัง', 'Not now'),
     valueOutOfRange: t('ค่านี้อยู่นอกช่วงที่เป็นไปได้ กรุณาตรวจสอบอีกครั้ง', 'This value is outside the possible range. Please check it again.'),
-    resetWarnDevice: t('หากลงทะเบียนใหม่ด้วยเลข HN เดิม เจ้าหน้าที่โรงพยาบาลต้องยืนยันก่อน ข้อมูลจึงจะส่งได้', 'If you register again with the same HN, the hospital staff must confirm it before records can be sent.'),
+    resetWarnDevice: t('หากลงทะเบียนใหม่ด้วยเลข HN เดิม ให้ใช้ปีเกิดและเพศเดิม ข้อมูลจึงจะส่งต่อได้', 'If you register again with the same HN, use the same year of birth and sex so your records can still be sent.'),
     framedNotice: t('เพื่อความปลอดภัยของข้อมูล แอปนี้เปิดได้เฉพาะในหน้าต่างของแอปเอง', 'To keep your records safe, this app only opens in its own window'),
     framedOpen: t('เปิดแอป', 'Open the app'),
     syncLastOk: t('ส่งสำเร็จล่าสุด', 'Last sent successfully'),
@@ -1646,6 +1650,18 @@
     return typeof hn === 'string' && HN_PATTERN.test(hn);
   }
 
+  /**
+   * An HN as a patient might type or paste it, made regular before it is
+   * checked: Thai digits become 0-9 and spaces go ("๐๐๑ ๒๓๔๕" is 0012345).
+   * Nothing else changes, so an HN already registered still matches.
+   */
+  function normalizeHn(raw) {
+    var thaiDigits = '\u0e50\u0e51\u0e52\u0e53\u0e54\u0e55\u0e56\u0e57\u0e58\u0e59';
+    return String(raw === undefined || raw === null ? '' : raw)
+      .replace(/[\u0e50-\u0e59]/g, function (d) { return String(thaiDigits.indexOf(d)); })
+      .replace(/\s+/g, '');
+  }
+
   function validateRegistrationPayload(payload, nowMs) {
     var errors = checkRegistration(payload, nowMs === undefined ? Date.now() : nowMs);
     return { valid: errors.length === 0, errors: errors };
@@ -2256,6 +2272,7 @@
     buildRegistrationPayload: buildRegistrationPayload,
     validateRegistrationPayload: validateRegistrationPayload,
     isValidHn: isValidHn,
+    normalizeHn: normalizeHn,
     PROTOCOL_VERSION: PROTOCOL_VERSION,
     CONSENT_VERSIONS: CONSENT_VERSIONS,
     PDPA_NOTICE_VERSION: PDPA_NOTICE_VERSION,

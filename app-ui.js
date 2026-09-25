@@ -291,8 +291,8 @@
    * "unknown record type" and "app update required" are among those: the app
    * updates itself but the script is redeployed by hand, so either side can
    * be a version ahead for a while. So are "device not registered for this
-   * patient", "hn registered on another device" and "device revoked for
-   * this patient", which staff resolve.
+   * patient", "hn registered on another device", "details do not match this
+   * hn" and "device revoked for this patient", which staff resolve.
    */
   var PERMANENT_REJECTION = /^(invalid [A-Za-z]+|missing [A-Za-z]+|unexpected field [A-Za-z]+|request too large|too many changes for this date)$/;
 
@@ -594,7 +594,7 @@
     } else {
       $('#tabBar').hidden = false;
       renderTabBar();
-      screen.innerHTML = renderActiveScreen() + renderFooter();
+      screen.innerHTML = (inLineApp() ? lineNotice() : '') + renderActiveScreen() + renderFooter();
       if (checkin.open) overlay.innerHTML = '<div class="overlay"><div class="modal">' + renderCheckin() + '</div></div>';
       else if (nutrition.open) overlay.innerHTML = '<div class="overlay"><div class="modal">' + renderNutritionWizard() + '</div></div>';
       else if (fraxFormOpen) overlay.innerHTML = '<div class="overlay"><div class="modal">' + renderFraxForm() + '</div></div>';
@@ -619,6 +619,7 @@
       // The two reasons only staff can clear get words a patient can act on.
       if (reason === 'hn registered on another device') reason = tr('syncFooterOtherDevice');
       else if (reason === 'device revoked for this patient') reason = tr('syncFooterRevoked');
+      else if (reason === 'details do not match this hn') reason = tr('syncFooterDetailsMismatch');
       html += '<div class="footer-sync">' + esc(tr('syncFooterPending').replace('{n}', pending)) +
         (reason ? '<br><span class="sync-reason">' + esc(reason) + '</span>' : '') +
         ' <button type="button" class="reset-link" data-action="sync-now">' + esc(tr('syncFooterRetry')) + '</button></div>';
@@ -641,7 +642,7 @@
     return '<div class="card-head"><span class="ico">⚠️</span><h2 style="margin:0;">' + esc(tr('resetTitle')) + '</h2></div>' +
       '<p>' + esc(tr('resetBody')) + '</p>' +
       (pending ? '<div class="card warn"><p style="margin:0;">' + esc(tr('resetWarnUnsent')) + ' (' + pending + ' ' + esc(tr('syncItems')) + ')</p></div>' : '') +
-      // The phone's key goes with the reset, so the HN stays bound to it on the sheet.
+      // The phone's key goes with the reset; registering again needs the same details.
       (state.registered ? '<p class="muted">' + esc(tr('resetWarnDevice')) + '</p>' : '') +
       '<p><strong>' + esc(tr('resetConfirmQuestion')) + '</strong></p>' +
       '<div class="stack">' +
@@ -700,6 +701,7 @@
       '<svg class="modal-logo" viewBox="0 0 192 192" aria-hidden="true"><rect width="192" height="192" rx="38" fill="#1c5cab"/><g fill="#ffffff"><rect x="52" y="82" width="88" height="28" rx="14"/><circle cx="58" cy="76" r="21"/><circle cx="58" cy="116" r="21"/><circle cx="134" cy="76" r="21"/><circle cx="134" cy="116" r="21"/></g><g fill="#1c5cab"><circle cx="74" cy="96" r="7.5"/><circle cx="95" cy="87" r="5.5"/><circle cx="96" cy="106" r="6.5"/><circle cx="116" cy="95" r="7"/></g></svg>' +
       '<h2 class="center">' + esc(tr('registerTitle')) + '</h2>' +
       '<p class="muted center">' + esc(tr('registerIntro')) + '</p>' +
+      (inLineApp() ? lineNotice() : '') +
       '<form id="registerForm" novalidate>' +
         '<label for="hnInput">' + esc(tr('registerHN')) + '</label>' +
         '<input type="text" id="hnInput" name="hn" inputmode="numeric" autocomplete="off" maxlength="20">' +
@@ -724,7 +726,8 @@
 
   function handleRegisterSubmit(form) {
     var fd = new FormData(form);
-    var hn = (fd.get('hn') || '').trim();
+    // Spaces and Thai digits are what a patient is likely to type; neither is an error.
+    var hn = C.normalizeHn(fd.get('hn'));
     var yearRaw = parseInt(fd.get('yearOfBirth'), 10);
     var sex = fd.get('sex');
     var errorBox = $('#registerError');
@@ -2349,17 +2352,50 @@
     renderA2hs();
   });
 
+  /**
+   * LINE opens links in its own browser, where the app cannot be added to the
+   * home screen, works only online, and may lose what it saves. Most patients
+   * will be sent the link in LINE, so the app says so and offers the way out:
+   * LINE opens any link carrying openExternalBrowser=1 in the phone's browser.
+   */
+  function inLineApp() {
+    return /\bLine\//i.test(navigator.userAgent || '');
+  }
+
+  function externalBrowserUrl() {
+    var url = new URL(location.href);
+    url.searchParams.set('openExternalBrowser', '1');
+    return url.toString();
+  }
+
+  function lineNotice() {
+    return '<div class="card warn" role="note"><p>' + esc(tr('lineBrowserNotice')) + '</p>' +
+      '<a class="btn secondary" href="' + esc(externalBrowserUrl()) + '">' + esc(tr('lineBrowserOpen')) + '</a></div>';
+  }
+
+  /** iPhone Safari has no install prompt: the patient needs to be told where the button is. */
+  function isIosSafari() {
+    var ua = navigator.userAgent || '';
+    return /iPhone|iPad|iPod/.test(ua) && !/CriOS|FxiOS|EdgiOS|\bLine\//i.test(ua);
+  }
+
   function renderA2hs() {
     var banner = $('#a2hsBanner');
     var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-    if (standalone || state.a2hsDismissed || !deferredInstallPrompt || !state.registered) {
+    // Not before onboarding is done: the banner is fixed to the bottom of the
+    // screen and would sit over the questionnaire's Next button.
+    if (standalone || state.a2hsDismissed || !state.registered || !state.boneStatus || inLineApp() ||
+        (!deferredInstallPrompt && !isIosSafari())) {
       banner.hidden = true;
       return;
     }
     banner.hidden = false;
-    banner.innerHTML = '<p>' + esc(tr('a2hsPrompt')) + '</p><div class="a2hs-actions">' +
-      '<button type="button" class="install" data-action="install-a2hs">' + esc(tr('a2hsInstall')) + '</button>' +
-      '<button type="button" class="dismiss" data-action="dismiss-a2hs">' + esc(tr('a2hsDismiss')) + '</button></div>';
+    banner.innerHTML = deferredInstallPrompt
+      ? '<p>' + esc(tr('a2hsPrompt')) + '</p><div class="a2hs-actions">' +
+        '<button type="button" class="install" data-action="install-a2hs">' + esc(tr('a2hsInstall')) + '</button>' +
+        '<button type="button" class="dismiss" data-action="dismiss-a2hs">' + esc(tr('a2hsDismiss')) + '</button></div>'
+      : '<p>' + esc(tr('a2hsIos')) + '</p><div class="a2hs-actions">' +
+        '<button type="button" class="dismiss" data-action="dismiss-a2hs">' + esc(tr('a2hsDismiss')) + '</button></div>';
   }
 
   /* ---------- timers ---------- */

@@ -50,11 +50,12 @@ function run() {
   cases.push({
     name: "a new version deletes only this app's old caches; other apps' caches survive",
     fn: function () {
-      var result = activateWith(['osteo-care-v4', 'osteo-care-v5', 'osteo-care-v6', 'osteo-care-v7', 'fall-diary-v2',
+      var current = 'osteo-care-v' + (fs.readFileSync(path.join(root, 'sw.js'), 'utf8').match(/CACHE_PREFIX \+ 'v(\d+)'/) || [])[1];
+      var result = activateWith(['osteo-care-v4', 'osteo-care-v5', 'osteo-care-v6', current, 'fall-diary-v2',
         'workbox-precache-v2-https://x/', 'rueortho-images', 'osteo-care']);
-      helpers.assertEqual(result.current, 'osteo-care-v7');
+      helpers.assertEqual(result.current, current);
       helpers.assertEqual(result.deleted.sort().join(), 'osteo-care-v4,osteo-care-v5,osteo-care-v6', 'deleted');
-      ['fall-diary-v2', 'workbox-precache-v2-https://x/', 'rueortho-images', 'osteo-care', 'osteo-care-v7'].forEach(function (kept) {
+      ['fall-diary-v2', 'workbox-precache-v2-https://x/', 'rueortho-images', 'osteo-care', current].forEach(function (kept) {
         helpers.assert(result.left.indexOf(kept) !== -1, kept + ' was deleted');
       });
     }
@@ -114,6 +115,30 @@ function run() {
       ['apps-script', 'tests', 'tools'].forEach(function (dir) { helpers.assert(ignored.indexOf(dir) !== -1, dir + ' would be served'); });
       var sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
       ['./index.html', './app-core.js', './app-ui.js'].forEach(function (f) { helpers.assert(sw.indexOf("'" + f + "'") !== -1, f + ' not cached for offline use'); });
+    }
+  });
+
+  cases.push({
+    name: 'patients can reach the app from a printed page, a QR code or a LINE message',
+    fn: function () {
+      var start = fs.readFileSync(path.join(root, 'start.html'), 'utf8');
+      var page = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+      var csp = function (html) { return (html.match(/http-equiv="Content-Security-Policy" content="([^"]+)"/) || [])[1]; };
+      helpers.assertEqual(csp(start), csp(page), 'the start page carries the same policy as the app');
+      helpers.assert(!/<script/i.test(start), 'the start page runs no script');
+      helpers.assert(/role="img" aria-label="QR code: https:\/\/osteoporosis-care\.vercel\.app\/"/.test(start), 'QR code with its address as a label');
+      helpers.assert(start.indexOf('href="https://osteoporosis-care.vercel.app/"') !== -1, 'the address is also a link');
+      helpers.assert(fs.statSync(path.join(root, 'app-qr.png')).size > 1000, 'the QR picture for chats is missing');
+      helpers.assert(start.indexOf('href="app-qr.png" download') !== -1, 'the QR picture is not offered for saving');
+
+      var ui = fs.readFileSync(path.join(root, 'app-ui.js'), 'utf8');
+      helpers.assert(/openExternalBrowser/.test(ui), 'no way out of the LINE browser');
+      helpers.assert(/\(inLineApp\(\) \? lineNotice\(\) : ''\)/.test(ui), 'the LINE notice is not shown');
+      helpers.assert(/tr\('a2hsIos'\)/.test(ui), 'iPhone users get no home-screen help');
+      // The banner is fixed to the bottom of the screen; during onboarding it
+      // covered the questionnaire's Next button on iPhone.
+      var a2hs = (ui.match(/function renderA2hs\(\) \{([\s\S]*?)\n  \}/) || [])[1] || '';
+      helpers.assert(/!state\.boneStatus/.test(a2hs), 'the install banner must wait until onboarding is finished');
     }
   });
 

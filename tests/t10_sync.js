@@ -161,12 +161,13 @@ function run() {
       // moment, a signal), so the record must stay queued and be tried again.
       var gs = fs.readFileSync(path.join(root, 'apps-script', 'Code.gs'), 'utf8');
       ['unknown record type', 'app update required', 'device not registered for this patient',
-        'hn registered on another device', 'device revoked for this patient', 'busy, try again', 'rate limited, try later', 'consent needed',
+        'hn registered on another device', 'details do not match this hn', 'device revoked for this patient', 'busy, try again',
+        'rate limited, try later', 'consent needed',
         'invalid token — the app and this script are using different SHARED_TOKEN values',
         'no request body', 'offline', 'HTTP 500', 'Exception: Service Spreadsheets timed out'].forEach(function (reason) {
         helpers.assert(!permanent.test(reason), '"' + reason + '" would throw away a record that could still arrive');
       });
-      ['app update required', 'device not registered for this patient', 'hn registered on another device',
+      ['app update required', 'device not registered for this patient', 'details do not match this hn',
         'device revoked for this patient', 'busy, try again', 'rate limited, try later', 'too many changes for this date'].forEach(function (reason) {
         helpers.assert(gs.indexOf("'" + reason + "'") !== -1, 'the script no longer says "' + reason + '"; update the app to match');
       });

@@ -100,6 +100,17 @@ function run() {
     }
   });
 
+  cases.push({
+    name: 'an HN typed with spaces or Thai digits is accepted as the same HN',
+    fn: function () {
+      helpers.assertEqual(core.normalizeHn(' 44 05 123 '), '4405123');
+      helpers.assertEqual(core.normalizeHn('\u0e54\u0e54\u0e50\u0e55\u0e51\u0e52\u0e53'), '4405123');
+      helpers.assertEqual(core.normalizeHn('\u0e50\u0e50\u0e51 \u0e52\u0e53\u0e54\u0e55'), '0012345', 'leading zeros are kept');
+      helpers.assertEqual(core.normalizeHn('AB/12-34'), 'AB/12-34', 'an HN already valid is unchanged');
+      helpers.assert(!core.isValidHn(core.normalizeHn('=1+1')), 'a formula is still refused');
+    }
+  });
+
   return helpers.runSuite('t2_webhook_payload', cases);
 }
 
