@@ -1,6 +1,6 @@
 # Security: identity, audit trail, hosting and local data
 
-Script version **2026-09-24.2**, upload protocol **3**. This file says what the
+Script version **2026-09-25**, upload protocol **3**. This file says what the
 app and the Apps Script now enforce, what they cannot, and what is left for
 the clinic to decide. Everything here is covered by `tests/t19`–`t22` against
 synthetic records only.
@@ -36,7 +36,7 @@ them again because anyone can post to it.
 | adherence | a known medication, dose number 1–5000 |
 | nutrition | calcium 0–10000 mg, supplement 0–3000 mg, vitamin D 0–10000 IU, protein 0–1500 g (what the food-frequency answers can produce at their limit, not a plausible intake) |
 | bmd | scan date 1990 onwards and not after the record date; spine/hip T −6 to +6 (at least one); `lowestT` must be the lower of them |
-| frax | tool; weight 25–200 kg; height 100–210 cm; BMI must match weight and height; risks 0–100 %, hip ≤ major |
+| frax | tool; weight 25–200 kg; height 100–210 cm; BMI must match weight and height; risks 0–100 %; on an official FRAX result hip ≤ major (the app's own estimate can exceed it and is sent as shown) |
 
 Every record: a real date from 2020-01-01 up to one day ahead of the script's
 Bangkok date. The ranges are the app's own input limits (`t20` checks that),
@@ -83,7 +83,7 @@ check described above.
 - **Refused records.** Audit rows with action `refused` show what a genuine
   phone sent and why it was refused. The phone keeps the record and shows the
   patient a note to tell staff.
-- **Tabs named "… (before 2026-09-24.2)"** are the data from before this
+- **Tabs named "… (before 2026-09-25)"** are the data from before this
   version, moved aside intact on first use. Review them, then archive them
   under the retention policy below.
 
@@ -91,13 +91,15 @@ check described above.
 
 | Limit | Value | When reached |
 |---|---|---|
-| Requests per phone | 120 an hour, 500 a day | "rate limited, try later"; stays queued |
+| Requests per phone | 120 an hour, 300 in six hours | "rate limited, try later"; stays queued |
 | Versions of one record per patient per day | check-in 30; nutrition, BMD, FRAX, falls 10; doses 1 | "too many changes for this date"; set aside on the phone |
-| Registration attempts per HN | 10 a day | "busy, try again"; stays queued |
+| Registration attempts per HN | 10 in six hours | "busy, try again"; stays queued |
 | New phones bound | 60 an hour | "busy, try again"; stays queued |
 | Request size | 20,000 characters | "request too large" |
 
-Counters use `CacheService`, which is best effort, and they are adjustable in
+Counters use `CacheService`, which is best effort and keeps a value for at
+most six hours, so no window is longer than that (a longer expiry is refused
+by Apps Script and would make every request fail). They are adjustable in
 `LIMITS` in `Code.gs`.
 
 ## Hosting on a separate origin
@@ -174,14 +176,16 @@ The backend is fixed only when the deployed script passes the probes:
    everything. Set the project time zone to Bangkok.
 2. **Deploy → Manage deployments → pencil icon → Version: New version →
    Deploy.**
-3. Open the `/exec` URL. It must say `"version":"2026-09-24.2"` and
+3. Open the `/exec` URL. It must say `"version":"2026-09-25"` and
    `"protocol":3`.
 4. From a computer with Node 18 or later, run
    `node tools/verify-backend.js <the /exec URL>`. The read-only probes send
    requests the script must refuse, and must all pass. If the version is
    wrong, the tool stops before sending anything that an older script would
-   write. `--write` also runs a full round trip with two made-up `ZZTEST-`
-   patients and prints the rows to delete.
+   write.
+5. Run it once more with `--write`. The read-only probes never reach the
+   code that accepts a record; only this round trip, with two made-up
+   `ZZTEST-` patients, proves that it works. It prints the rows to delete.
 
 Against the script as it was before this change, the same probes reproduce
 the findings: a bare token-and-HN registration is accepted, 999 cm is
@@ -195,7 +199,7 @@ accepted, and one phone can merge into another patient's day (`t22`).
   phone can read it, as with any web app.
 - Rate limits are per phone, and a stranger can make new keys. The
   new-phones-per-hour cap and the registration cap are what bound that.
-  The per-HN registration cap can also be used up by a stranger for a day;
-  the patient's phone then retries the next day.
+  The per-HN registration cap can also be used up by a stranger for six
+  hours; the patient's phone then retries.
 - The reply "registered on another phone" tells anyone who asks whether an
   HN is enrolled. Options A and B close this.

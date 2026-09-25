@@ -146,11 +146,14 @@ if (require.main === module) {
     console.error('Usage: node tools/verify-backend.js https://script.google.com/macros/s/…/exec [--write]');
     process.exit(2);
   }
-  probe(fetchTransport(url), { write: process.argv.indexOf('--write') !== -1 }).then(function (results) {
+  var options = { write: process.argv.indexOf('--write') !== -1 };
+  probe(fetchTransport(url), options).then(function (results) {
     results.forEach(function (r) { console.log((r.ok ? 'PASS ' : 'FAIL ') + r.name + (r.detail ? ' — ' + r.detail : '')); });
     if (results.cleanup) console.log('\n' + results.cleanup);
     var failed = results.filter(function (r) { return !r.ok; }).length;
-    console.log(failed ? '\n' + failed + ' probe(s) failed: the backend is NOT fixed yet.' : '\nAll probes passed.');
+    console.log(failed ? '\n' + failed + ' probe(s) failed: the backend is NOT fixed yet.'
+      : options.write ? '\nAll probes passed, the round trip included.'
+      : '\nAll read-only probes passed. They never reach the code that accepts a record: run once more with --write to prove that.');
     process.exitCode = failed ? 1 : 0;
   }, function (e) { console.error(e); process.exitCode = 1; });
 }
