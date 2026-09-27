@@ -168,6 +168,60 @@ function run() {
   });
 
   cases.push({
+    name: 'a status staff type loosely still counts ("Wrong HN", "wrong_hn", " Active ")',
+    fn: function () {
+      ['Wrong HN', 'wrong_hn', ' WRONG-HN '].forEach(function (typed, i) {
+        var b = fake.backend();
+        var typo = phone(b, 1950, 'female');
+        var owner = phone(b, 1944, 'male');
+        var hn = 'TEST-LOOSE' + i;
+        typo.register(hn);
+        helpers.assertEqual(owner.register(hn).error, 'details do not match this hn');
+        var cols = b.ctx.SHEET_COLUMNS.Devices;
+        b.sheets.Devices.rows.forEach(function (r) {
+          if (String(r[cols.indexOf('credentialId')].text) === typo.id) r[cols.indexOf('status')] = { text: typed };
+        });
+        helpers.assertEqual(typo.send(hn, { date: daysAgo(1), type: 'checkin', heightCm: 150 }).error, 'hn marked wrong', JSON.stringify(typed));
+        helpers.assert(owner.register(hn).ok, 'the owner gets in after staff typed ' + JSON.stringify(typed));
+      });
+      helpers.assertEqual(fake.backend().ctx.deviceStatus(' Active '), 'active');
+    }
+  });
+
+  cases.push({
+    name: 'a wrong year of birth can be corrected by the same phone, keeping its history',
+    fn: function () {
+      var b = fake.backend();
+      var first = phone(b, 1950, 'female');
+      first.register('TEST-YEAR');
+      first.send('TEST-YEAR', { date: daysAgo(3), type: 'checkin', heightCm: 158 });
+      // The patient's new phone: the dial was left one year off.
+      var slip = phone(b, 1951, 'female');
+      helpers.assertEqual(slip.register('TEST-YEAR').error, 'details do not match this hn', 'held back');
+      var fixed = phone(b, 1950, 'female');
+      fixed.key = slip.key; // the same phone, sending corrected details
+      var again = b.post({ token: b.token, schemaVersion: core.PROTOCOL_VERSION, patientId: 'TEST-YEAR', hn: 'TEST-YEAR',
+        yearOfBirth: 1950, age: YEAR - 1950, sex: 'female', consent: true, consentVersion: core.PDPA_NOTICE_VERSION,
+        consentAt: new Date().toISOString(), consentLang: 'th', deviceKey: slip.key });
+      helpers.assert(again.ok, 'corrected details are accepted: ' + JSON.stringify(again));
+      helpers.assert(slip.send('TEST-YEAR', { date: daysAgo(1), type: 'checkin', heightCm: 158.5 }).ok, 'and its records go');
+
+      // The first phone itself corrects its sex: a new version, the old kept.
+      var corrected = b.post({ token: b.token, schemaVersion: core.PROTOCOL_VERSION, patientId: 'TEST-YEAR', hn: 'TEST-YEAR',
+        yearOfBirth: 1950, age: YEAR - 1950, sex: 'male', consent: true, consentVersion: core.PDPA_NOTICE_VERSION,
+        consentAt: new Date().toISOString(), consentLang: 'th', deviceKey: first.key });
+      helpers.assert(corrected.ok && corrected.result.version === 2, 'version 2 of its registration: ' + JSON.stringify(corrected));
+      b.ctx.refreshPatientResults();
+      helpers.assert(/ชาย/.test(summaryRow(b, 'TEST-YEAR')['Age · sex']), 'the summary uses the corrected sex');
+
+      var ui = fs.readFileSync(path.join(__dirname, '..', 'app-ui.js'), 'utf8');
+      var apply = (ui.match(/function applyDetailsChange\(yearBE, sex\) \{[\s\S]*?\n  \}/) || [''])[0];
+      helpers.assert(/queueRegistration\(\)/.test(apply) && !/syncQueue = /.test(apply), 'the correction re-registers and keeps the queue');
+      helpers.assert(/data-action="open-details-change"/.test(ui), 'the correction is offered');
+    }
+  });
+
+  cases.push({
     name: 'the app confirms the HN before registering, and a change of HN resends everything in order',
     fn: function () {
       var ui = fs.readFileSync(path.join(__dirname, '..', 'app-ui.js'), 'utf8');

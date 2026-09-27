@@ -216,7 +216,7 @@ replacing anything already there.
 4. Confirm it took: open the `/exec` URL in a browser. It answers
 
    ```json
-   {"ok":true,"service":"osteoporosis-care","protocol":3,"tokenConfigured":true,"sheets":[...],"version":"2026-09-28"}
+   {"ok":true,"service":"osteoporosis-care","protocol":3,"tokenConfigured":true,"sheets":[...],"version":"2026-09-28.2"}
    ```
 
 5. **Check the deployed backend**, from any computer with Node 18 or later:
@@ -240,7 +240,7 @@ When a version changes a tab's columns, the first request after deploying
 moves the old tab aside as "<Name> (before <that version>)" — intact — and
 starts a fresh one. 2026-09-25.2 did this for the tabs from before it (phones
 register again on their own, and one registered before it first asks its
-patient to confirm consent once); 2026-09-26 and 2026-09-28 change no columns.
+patient to confirm consent once); later versions change no columns.
 
 The tabs are append-only. A change to a day's check-in, nutrition, BMD or
 FRAX record is a new row with the next `version`, naming the row it
@@ -309,6 +309,12 @@ The short version; `docs/SECURITY.md` has the detail.
   phone's status to `wrong-hn`; its app then asks the patient to change HN.
   The HN's real owner, held back as `pending`, is let in as soon as no other
   phone holds the HN.
+- **A wrong year of birth or sex.** "ปีเกิดหรือเพศผิด? แก้ไข" in the footer
+  (and a button in the banner when the details do not match) lets the same
+  phone send corrected details, keeping everything on it. The script keeps
+  the earlier registration as history.
+- **Typing a status.** The script reads `Active`, `wrong hn`, `Wrong_HN` and
+  the like as `active` and `wrong-hn`.
 - **A lost phone, or one that is not the patient's:** in Devices, set its
   status to `revoked`. A `pending` phone (details did not match) can be let
   in by setting it to `active`.
