@@ -47,6 +47,9 @@
   var consentPromptOpen = true;
   var fraxFormOpen = false;
   var registrationSex = null;
+  // What the patient has put in the registration form so far, so that
+  // switching language (which redraws it) does not clear it.
+  var registrationDraft = { hn: '', year: null };
   var bmdJustSaved = false;
   var chairStandTimer = { running: false, remaining: 30, awaitingReps: false, intervalId: null };
   var tugTimer = { running: false, elapsed: 0, intervalId: null };
@@ -178,8 +181,11 @@
   function formatDate(dateStr) {
     if (!dateStr) return '-';
     var d = C.parseYMD(dateStr);
-    return d.getDate() + ' ' + MONTH_SHORT[state.lang][d.getMonth()] + ' ' + d.getFullYear();
+    return d.getDate() + ' ' + MONTH_SHORT[state.lang][d.getMonth()] + ' ' + displayYear(d.getFullYear());
   }
+
+  /** Thai readers count years in the Buddhist era, as registration asks for them. */
+  function displayYear(year) { return state.lang === 'th' ? year + 543 : year; }
 
   function formatMonthLabel(monthKey) {
     var parts = monthKey.split('-');
@@ -411,7 +417,7 @@
 
   function shortDate(dateStr) {
     var d = C.parseYMD(dateStr);
-    return MONTH_SHORT[state.lang][d.getMonth()] + ' ' + String(d.getFullYear()).slice(-2);
+    return MONTH_SHORT[state.lang][d.getMonth()] + ' ' + String(displayYear(d.getFullYear())).slice(-2);
   }
 
   function deltaChip(change, unit, higherIsBetter) {
@@ -510,7 +516,9 @@
     var g = chartGeometry(points.length);
     var plotW = g.width - g.padLeft - g.padRight;
     var plotH = g.height - g.padTop - g.padBottom;
-    var max = Math.max(1, Math.max.apply(null, points.map(function (p) { return p.value; })));
+    // Counts: an even top keeps the middle gridline on a whole number (a top
+    // of 1 labelled its middle "1" as well).
+    var max = Math.max(2, Math.ceil(Math.max.apply(null, points.map(function (p) { return p.value; })) / 2) * 2);
     var slot = plotW / points.length;
     var barW = Math.min(24, slot - 8);
 
@@ -706,10 +714,9 @@
         '<label for="hnInput">' + esc(tr('registerHN')) + '</label>' +
         // Room for spaces between the HN's 20 characters: the 20 is checked
         // after spaces are removed, or a spaced HN would lose its last digits.
-        '<input type="text" id="hnInput" name="hn" inputmode="numeric" autocomplete="off" maxlength="40">' +
-        '<label for="yobInput">' + esc(tr('registerYearOfBirth')) + '</label>' +
-        '<input type="number" id="yobInput" name="yearOfBirth" inputmode="numeric">' +
-        '<div class="field-hint">' + esc(tr('registerYearBEHint')) + '</div>' +
+        '<input type="text" id="hnInput" name="hn" inputmode="numeric" autocomplete="off" maxlength="40" value="' + esc(registrationDraft.hn) + '">' +
+        '<label id="yobLabel">' + esc(tr('registerYearOfBirth')) + '</label>' +
+        birthYearWheel() +
         '<label>' + esc(tr('registerSex')) + '</label>' +
         '<div class="choice-grid">' +
           '<button type="button" class="choice-btn' + (registrationSex === 'female' ? ' selected' : '') + '" data-action="reg-sex" data-value="female">' + esc(tr('registerSexFemale')) + '</button>' +
@@ -726,11 +733,29 @@
       '</form>';
   }
 
+  /** Buddhist-era years for everyone the app is for (18 to 120), oldest first. */
+  function birthYearWheel() {
+    var thisYearBE = new Date().getFullYear() + 543;
+    var values = [];
+    for (var year = thisYearBE - C.PATIENT_AGE.max; year <= thisYearBE - C.PATIENT_AGE.min; year++) {
+      values.push({ value: year, label: String(year) });
+    }
+    return wheelField({
+      id: 'yobInput', name: 'yearOfBirth', values: values, value: registrationDraft.year,
+      start: thisYearBE - 70, label: tr('registerYearOfBirth'), prompt: tr('registerYearBEHint'),
+      readout: function (yearBE) {
+        return tr('registerYearReadout')
+          .replace('{be}', yearBE).replace('{ce}', yearBE - 543).replace('{age}', C.deriveAge(yearBE));
+      }
+    });
+  }
+
   function handleRegisterSubmit(form) {
     var fd = new FormData(form);
     // Spaces and Thai digits are what a patient is likely to type; neither is an error.
     var hn = C.normalizeHn(fd.get('hn'));
     var yearRaw = parseInt(fd.get('yearOfBirth'), 10);
+    registrationDraft = { hn: String(fd.get('hn') || ''), year: isNaN(yearRaw) ? null : yearRaw };
     var sex = fd.get('sex');
     var errorBox = $('#registerError');
 
@@ -744,6 +769,7 @@
     // letters, digits, '-' and '/': a value starting with '=' would otherwise
     // be stored as a spreadsheet formula.
     if (!C.isValidHn(hn)) return fail('registerHNInvalid');
+    if (isNaN(yearRaw)) return fail('registerYearRequired');
     // Years are collected in the Buddhist era only, so a Gregorian year is a mistake.
     if (!yearRaw || yearRaw < 2400 || yearRaw > 2600 || C.deriveAge(yearRaw) === null) {
       return fail('registerYearInvalidBE');
@@ -814,20 +840,45 @@
         '<button type="button" class="choice-btn' + (value === true ? ' selected' : '') + '" data-action="answer" data-field="' + q.field + '" data-type="boolean" data-value="true">' + esc(tr('yes')) + '</button>' +
         '<button type="button" class="choice-btn' + (value === false ? ' selected' : '') + '" data-action="answer" data-field="' + q.field + '" data-type="boolean" data-value="false">' + esc(tr('no')) + '</button>' +
         '</div>';
+    } else if (q.type === 'count') {
+      input = '<div class="count-grid">';
+      for (var n = 0; n <= q.max; n++) {
+        var picked = typeof value === 'number' && (n === q.max ? value >= q.max : value === n);
+        var sub = n === 0 ? tr('countNever') : n === q.max ? tr('countOrMore') : tr(n === 1 ? 'countOnce' : 'countTimes');
+        input += '<button type="button" class="count-btn' + (picked ? ' selected' : '') + '" data-action="answer" data-field="' + q.field + '"' +
+          ' data-type="number" data-value="' + n + '" aria-pressed="' + picked + '">' + n + (n === q.max ? '+' : '') +
+          '<small>' + esc(sub) + '</small></button>';
+      }
+      input += '</div>';
+    } else if (q.field === 'currentMedClass') {
+      // A picture of each medicine and how it is given, full width, so a
+      // patient can match it to what they have at home.
+      input = q.options.map(function (opt) {
+        var med = C.getMedClass(opt.value);
+        var picked = value === opt.value;
+        return '<button type="button" class="med-card' + (picked ? ' selected' : '') + '" data-action="answer" data-field="' + q.field + '"' +
+          ' data-type="choice" data-value="' + esc(opt.value) + '" aria-pressed="' + picked + '">' +
+          (med && med.photo ? '<img class="med-photo" src="' + esc(med.photo) + '" alt="" loading="lazy" draggable="false">'
+            : '<span class="med-icon" aria-hidden="true">' + (med ? med.icon : '🚫') + '</span>') +
+          '<span class="med-body"><span class="med-name">' + esc(opt.labelKey ? tr(opt.labelKey) : loc(opt.label)) + '</span>' +
+          (med ? '<span class="med-meta">' + esc(loc(med.route)) + '</span>' : '') + '</span></button>';
+      }).join('');
     } else if (q.type === 'choice') {
       input = '<div class="choice-grid">' + q.options.map(function (opt) {
         var label = opt.labelKey ? tr(opt.labelKey) : loc(opt.label);
         return '<button type="button" class="choice-btn' + (value === opt.value ? ' selected' : '') + '" data-action="answer" data-field="' + q.field + '" data-type="choice" data-value="' + esc(opt.value) + '">' + esc(label) + '</button>';
       }).join('') + '</div>';
     } else {
-      input = '<input type="number" inputmode="decimal" step="any" id="onboardingNumberInput" value="' + (value === undefined ? '' : esc(value)) + '">';
+      // The only number left is the T-score.
+      input = tScoreSlider('onboardingNumberInput', value, tr(q.labelKey));
     }
 
     var ready = value !== undefined && value !== null && value !== '';
     return '' +
       '<div class="step-dots">' + qs.map(function (_, i) { return '<span class="' + (i <= idx ? 'on' : '') + '"></span>'; }).join('') + '</div>' +
       '<p class="muted">' + esc(tr('onboardingTitle')) + ' — ' + esc(tr('onboardingProgress')) + ' ' + (idx + 1) + '</p>' +
-      '<div class="card"><h2>' + esc(tr(q.labelKey)) + '</h2>' + input + '</div>' +
+      '<div class="card"><h2>' + esc(tr(q.labelKey)) + '</h2>' +
+        (q.helpKey ? '<p class="question-help">' + esc(tr(q.helpKey)) + '</p>' : '') + input + '</div>' +
       '<div class="btn-row">' +
         (idx > 0 ? '<button type="button" class="btn secondary" data-action="onboarding-back">' + esc(tr('onboardingBack')) + '</button>' : '') +
         '<button type="button" class="btn" id="onboardingNextBtn" data-action="onboarding-next"' + (ready ? '' : ' disabled') + '>' + esc(tr('onboardingNext')) + '</button>' +
@@ -1050,10 +1101,13 @@
     if (opts.labelKey) html += '<label for="' + id + '">' + esc(tr(opts.labelKey)) + '</label>';
     html += '<div class="stepper">' +
       '<button type="button" data-action="num-step" data-target="' + id + '" data-step="' + (-step) + '" aria-label="' + esc(tr('stepDown')) + '">−</button>' +
-      '<input type="number" id="' + id + '" inputmode="decimal" step="' + step + '"' +
+      // iPhone's decimal keypad has no minus sign; a field that can go
+      // below zero (a T-score) gets the keyboard that has one.
+      '<input type="number" id="' + id + '"' + (opts.signed ? '' : ' inputmode="decimal"') + ' step="' + step + '"' +
         (opts.min !== undefined ? ' min="' + opts.min + '"' : '') +
         (opts.max !== undefined ? ' max="' + opts.max + '"' : '') +
         (opts.placeholder ? ' placeholder="' + esc(opts.placeholder) + '"' : '') +
+        (opts.start !== undefined ? ' data-start="' + esc(opts.start) + '"' : '') +
         ' value="' + esc(value) + '">' +
       '<button type="button" data-action="num-step" data-target="' + id + '" data-step="' + step + '" aria-label="' + esc(tr('stepUp')) + '">+</button>' +
       '</div>';
@@ -1065,6 +1119,226 @@
     }
     if (opts.hintKey) html += '<p class="field-hint">' + esc(tr(opts.hintKey)) + '</p>';
     return html;
+  }
+
+  function hasNumber(value) {
+    return value !== undefined && value !== null && value !== '' && !isNaN(parseFloat(value));
+  }
+
+  /** The digits a step needs: 0.1 → "1.5", 1 → "2", 0.5 → "155.5". */
+  function stepText(value, step) {
+    var decimals = String(step).indexOf('.') === -1 ? 0 : String(step).split('.')[1].length;
+    return (Math.round(value * Math.pow(10, decimals)) / Math.pow(10, decimals)).toFixed(decimals);
+  }
+
+  /**
+   * A number box and a slider kept in step: drag for a quick answer, or type
+   * or press − + for an exact one. The box is what the app reads. The slider
+   * stays grey until the patient moves one or the other, so nothing is saved
+   * that they did not choose. Zones colour the track and name the band the
+   * value is in (the T-score bands). compact: slider and a small box on one
+   * line, for a list of foods.
+   */
+  function sliderField(opts) {
+    var id = opts.id;
+    var step = opts.step || 1;
+    var sMin = opts.sliderMin !== undefined ? opts.sliderMin : opts.min;
+    var sMax = opts.sliderMax !== undefined ? opts.sliderMax : opts.max;
+    var has = hasNumber(opts.value);
+    var start = has ? Math.min(sMax, Math.max(sMin, parseFloat(opts.value))) : (opts.start !== undefined ? opts.start : sMin);
+    // Where a value sits on the track: the thumb's centre travels from half
+    // a thumb in from each end, so the colours and ticks are placed the same way.
+    var at = function (v) {
+      var frac = Math.round((v - sMin) / (sMax - sMin) * 10000) / 10000;
+      return 'calc(17px + (100% - 34px) * ' + frac + ')';
+    };
+    var scaleText = function (v) { return Math.round(v) === v ? String(v) : stepText(v, step); };
+    var track = '';
+    var scale = '<div class="slider-scale"><span>' + esc(scaleText(sMin)) + '</span>' +
+      (opts.unit ? '<span>' + esc(opts.unit) + '</span>' : '') + '<span>' + esc(scaleText(sMax)) + '</span></div>';
+    if (opts.zones) {
+      var from = '0%';
+      track = ' style="--track: linear-gradient(to right, ' + opts.zones.map(function (z) {
+        var to = z.max === undefined ? '100%' : at(z.max);
+        var part = 'var(--zone-' + z.tone + ') ' + from + ', var(--zone-' + z.tone + ') ' + to;
+        from = to;
+        return part;
+      }).join(', ') + ')"';
+      scale = '<div class="slider-scale zoned"><span class="lo">' + esc(scaleText(sMin)) + '</span>' +
+        opts.zones.filter(function (z) { return z.max !== undefined; }).map(function (z) {
+          return '<span class="tick" style="left:' + at(z.max) + '">' + esc(scaleText(z.max)) + '</span>';
+        }).join('') + '<span class="hi">' + esc(scaleText(sMax)) + '</span></div>';
+    }
+    var range = '<input type="range" class="slider-range' + (has ? '' : ' unset') + '" data-slider-for="' + id + '"' +
+      ' min="' + sMin + '" max="' + sMax + '" step="' + step + '" value="' + start + '"' +
+      ' aria-label="' + esc(opts.label || '') + '"' +
+      (opts.zones ? ' data-zones="' + esc(JSON.stringify(opts.zones.map(function (z) {
+        return { max: z.max, below: !!z.below, tone: z.tone, text: tr(z.labelKey) };
+      }))) + '"' : '') + track + '>';
+    var value = has ? opts.value : '';
+    if (opts.compact) {
+      return '<div class="slider-row">' + range +
+        '<input type="number" id="' + id + '" inputmode="decimal" step="' + step + '" min="' + opts.min + '" max="' + opts.max + '"' +
+          ' placeholder="' + esc(opts.placeholder || '') + '" value="' + esc(value) + '"' +
+          (opts.label ? ' aria-label="' + esc(opts.label) + '"' : '') + '>' +
+        (opts.unit ? '<span class="slider-unit">' + esc(opts.unit) + '</span>' : '') + '</div>';
+    }
+    return '<div class="slider-field">' +
+      numberField({ id: id, step: step, min: opts.min, max: opts.max, value: value, signed: opts.min < 0,
+        placeholder: opts.placeholder, start: start }) +
+      range + scale +
+      (opts.zones ? '<p class="slider-zone" id="' + id + 'Zone" aria-live="polite">' + esc(zoneFor(opts.zones, has ? parseFloat(opts.value) : null)) + '</p>' : '') +
+      '</div>';
+  }
+
+  function zoneFor(zones, value) {
+    if (value === null || isNaN(value)) return '';
+    for (var i = 0; i < zones.length; i++) {
+      var z = zones[i];
+      if (z.max === undefined || (z.below ? value < z.max : value <= z.max)) return z.text || tr(z.labelKey);
+    }
+    return '';
+  }
+
+  // The T-score bands the app classifies by (C.T_SCORE_OSTEOPOROSIS and
+  // C.T_SCORE_NORMAL): -2.5 and below, above that but below -1, -1 and above.
+  var T_SCORE_ZONES = [
+    { max: C.T_SCORE_OSTEOPOROSIS, tone: 'bad', labelKey: 'tScoreZoneOsteoporosis' },
+    { max: C.T_SCORE_NORMAL, below: true, tone: 'mid', labelKey: 'tScoreZoneOsteopenia' },
+    { tone: 'good', labelKey: 'tScoreZoneNormal' }
+  ];
+
+  function tScoreSlider(id, value, label) {
+    // The box takes all the rules allow; the slider covers the usual range.
+    var rule = C.RECORD_SCHEMAS.bmd.fields.spineT;
+    return sliderField({ id: id, step: 0.1, min: rule.min, max: rule.max, sliderMin: -5, sliderMax: 3, start: -1, value: value,
+      label: label, placeholder: 'T-score', zones: T_SCORE_ZONES });
+  }
+
+  /** Keeps a slider and its box in step, whichever the patient moved. */
+  function syncSlider(e) {
+    var el = e.target;
+    if (!el || !el.classList) return;
+    if (el.classList.contains('slider-range')) {
+      var box = document.getElementById(el.getAttribute('data-slider-for'));
+      el.classList.remove('unset');
+      if (box) {
+        box.value = stepText(parseFloat(el.value), parseFloat(el.getAttribute('step')) || 1);
+        box.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      showZone(el);
+    } else if (el.id) {
+      var range = document.querySelector('.slider-range[data-slider-for="' + el.id + '"]');
+      if (!range) return;
+      if (hasNumber(el.value)) {
+        range.value = el.value;
+        range.classList.remove('unset');
+      } else {
+        range.classList.add('unset');
+      }
+      showZone(range);
+    }
+  }
+
+  function showZone(range) {
+    var out = document.getElementById(range.getAttribute('data-slider-for') + 'Zone');
+    var box = document.getElementById(range.getAttribute('data-slider-for'));
+    if (!out || !box) return;
+    var zones = JSON.parse(range.getAttribute('data-zones') || '[]');
+    var value = hasNumber(box.value) ? parseFloat(box.value) : null;
+    var text = zoneFor(zones, value);
+    out.textContent = text;
+    out.className = 'slider-zone' + (text ? ' ' + zones.filter(function (z) { return z.text === text; })[0].tone : '');
+  }
+
+  document.addEventListener('input', syncSlider);
+
+  /**
+   * A dial: a short list that scrolls and snaps, the row in the middle band
+   * being the answer. Scrolling, tapping a row or the arrow keys choose. The
+   * answer is kept in a hidden input (id), which stays empty until the
+   * patient has chosen, so a dial left where it started saves nothing.
+   * opts: id, name, values [{ value, label }], value, start, label, unit,
+   * prompt, readout(value) → the sentence shown under the dial.
+   */
+  var WHEEL_ROW = 44;
+  var wheelReadouts = {};
+
+  function wheelField(opts) {
+    var id = opts.id;
+    var chosen = hasNumber(opts.value);
+    wheelReadouts[id] = { readout: opts.readout, prompt: opts.prompt };
+    return '<div class="wheel-field">' +
+      '<input type="hidden" id="' + id + '"' + (opts.name ? ' name="' + opts.name + '"' : '') + ' value="' + (chosen ? esc(opts.value) : '') + '">' +
+      '<div class="wheel-wrap">' +
+        '<div class="wheel" role="listbox" tabindex="0" aria-label="' + esc(opts.label || '') + '" data-wheel-for="' + id + '"' +
+          ' data-start="' + esc(chosen ? opts.value : opts.start) + '">' +
+          '<div class="wheel-pad" aria-hidden="true"></div>' +
+          opts.values.map(function (v, i) {
+            var selected = chosen && Number(v.value) === Number(opts.value);
+            return '<div class="wheel-item" role="option" id="' + id + '-o' + i + '" data-value="' + esc(v.value) + '"' +
+              ' aria-selected="' + selected + '">' + esc(v.label) + '</div>';
+          }).join('') +
+          '<div class="wheel-pad" aria-hidden="true"></div>' +
+        '</div>' +
+        (opts.unit ? '<span class="wheel-unit" aria-hidden="true">' + esc(opts.unit) + '</span>' : '') +
+      '</div>' +
+      '<p class="wheel-readout' + (chosen ? '' : ' prompt') + '" id="' + id + 'Readout" aria-live="polite">' +
+        esc(chosen ? opts.readout(Number(opts.value)) : opts.prompt) + '</p>' +
+      '</div>';
+  }
+
+  function wireWheel(wheel) {
+    var items = Array.prototype.slice.call(wheel.querySelectorAll('.wheel-item'));
+    var indexOf = function (value) {
+      for (var i = 0; i < items.length; i++) if (Number(items[i].getAttribute('data-value')) === Number(value)) return i;
+      return 0;
+    };
+    var current = indexOf(wheel.getAttribute('data-start'));
+    wheel.scrollTop = current * WHEEL_ROW;
+    // Scrolling to the start is the app's doing, not an answer: only a
+    // scroll that follows the patient's own touch, wheel or key chooses.
+    var touched = false;
+    var timer = null;
+    ['pointerdown', 'touchstart', 'wheel'].forEach(function (type) {
+      wheel.addEventListener(type, function () { touched = true; }, { passive: true });
+    });
+    function choose(i, scroll) {
+      i = Math.max(0, Math.min(items.length - 1, i));
+      current = i;
+      var input = document.getElementById(wheel.getAttribute('data-wheel-for'));
+      var value = items[i].getAttribute('data-value');
+      items.forEach(function (item, j) { item.setAttribute('aria-selected', String(j === i)); });
+      wheel.setAttribute('aria-activedescendant', items[i].id);
+      if (input && input.value !== value) {
+        input.value = value;
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      var out = document.getElementById(wheel.getAttribute('data-wheel-for') + 'Readout');
+      var texts = wheelReadouts[wheel.getAttribute('data-wheel-for')];
+      if (out && texts) {
+        out.textContent = texts.readout(Number(value));
+        out.classList.remove('prompt');
+      }
+      if (scroll) wheel.scrollTo({ top: i * WHEEL_ROW, behavior: 'smooth' });
+    }
+    wheel.addEventListener('scroll', function () {
+      if (!touched) return;
+      clearTimeout(timer);
+      timer = setTimeout(function () { choose(Math.round(wheel.scrollTop / WHEEL_ROW), false); }, 90);
+    }, { passive: true });
+    wheel.addEventListener('click', function (e) {
+      var item = e.target.closest('.wheel-item');
+      if (item) { touched = true; choose(items.indexOf(item), true); }
+    });
+    wheel.addEventListener('keydown', function (e) {
+      var moves = { ArrowDown: 1, ArrowUp: -1, PageDown: 5, PageUp: -5 };
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); touched = true; choose(current, true); return; }
+      if (!moves[e.key]) return;
+      e.preventDefault();
+      touched = true;
+      choose(current + moves[e.key], true);
+    });
   }
 
   /**
@@ -1261,12 +1535,11 @@
     var worksheet = C.buildFraxWorksheet(state.profile, state.frax, state.tracking.bmdLogs);
 
     var html = '<div class="card-head"><span class="ico">📊</span><h2 style="margin:0;">' + esc(tr('fraxFillData')) + '</h2></div>';
-    html += '<div class="field-row">' +
-      '<div><label for="fraxWeight">' + esc(tr('fraxWeight')) + '</label>' +
-        numberField({ id: 'fraxWeight', step: 0.5, min: 25, max: 200, value: state.frax.weightKg === undefined ? '' : state.frax.weightKg }) + '</div>' +
-      '<div><label for="fraxHeight">' + esc(tr('fraxHeight')) + '</label>' +
-        numberField({ id: 'fraxHeight', step: 0.5, min: 100, max: 210, value: state.frax.heightCm === undefined ? '' : state.frax.heightCm }) + '</div>' +
-      '</div>';
+    // One above the other: side by side, each box was too narrow to show its number.
+    html += '<label for="fraxWeight">' + esc(tr('fraxWeight')) + '</label>' +
+        numberField({ id: 'fraxWeight', step: 0.5, min: 25, max: 200, value: state.frax.weightKg === undefined ? '' : state.frax.weightKg }) +
+      '<label for="fraxHeight">' + esc(tr('fraxHeight')) + '</label>' +
+        numberField({ id: 'fraxHeight', step: 0.5, min: 100, max: 210, value: state.frax.heightCm === undefined ? '' : state.frax.heightCm });
 
     html += '<h3 style="margin-top:16px;">' + esc(tr('fraxTapWhatApplies')) + '</h3>';
     html += worksheet.factors.map(function (factor) {
@@ -1707,30 +1980,27 @@
     html += '<p class="muted">' + esc(tr('step')) + ' ' + (nutrition.step + 1) + ' ' + esc(tr('of')) + ' ' + steps.length + '</p>';
 
     if (stepId === 'calcium') {
-      html += '<h2>' + esc(tr('nutritionSectionCalcium')) + '</h2><p class="muted">' + esc(tr('nutritionFoodFrequencyIntro')) + '</p>';
+      html += '<h2>' + esc(tr('nutritionSectionCalcium')) + '</h2><p>' + esc(tr('nutritionFoodFrequencyIntro')) + '</p>';
       html += C.CALCIUM_FOODS.map(function (f) {
         return freqRow('ca_' + f.id, loc(f.name), nutrition.draft.calcium[f.id], f.id, loc(f.serving));
       }).join('');
-      html += '<p class="muted">' + esc(tr('nutritionServingsPerWeek')) + '</p>';
     } else if (stepId === 'vitaminD') {
       html += '<h2>' + esc(tr('nutritionSectionVitD')) + '</h2>';
       html += '<label for="sunMinutes">' + esc(tr('nutritionSunQuestion')) + '</label>' +
-        numberField({ id: 'sunMinutes', step: 5, min: 0, max: 600,
-          value: nutrition.draft.sunMinutesPerWeek === null ? '' : nutrition.draft.sunMinutesPerWeek,
-          quick: [{ value: 0, label: '0' }, { value: 15, label: '15' }, { value: 30, label: '30' }, { value: 60, label: '60' }, { value: 120, label: '120' }] });
-      html += '<p class="muted" style="margin-top:14px;">' + esc(tr('nutritionFoodFrequencyIntro')) + '</p>';
+        sliderField({ id: 'sunMinutes', step: 5, min: 0, max: 600, sliderMax: 300, unit: tr('minutesPerWeekUnit'),
+          label: tr('nutritionSunQuestion'), value: nutrition.draft.sunMinutesPerWeek });
+      html += '<p style="margin-top:18px;">' + esc(tr('nutritionFoodFrequencyIntro')) + '</p>';
       html += C.VITAMIN_D_FOODS.map(function (f) {
         return freqRow('vd_' + f.id, loc(f.name), nutrition.draft.vitaminD[f.id], f.id, loc(f.serving));
       }).join('');
-      html += '<p class="muted">' + esc(tr('nutritionServingsPerWeek')) + '</p>';
     } else if (stepId === 'protein') {
       html += '<h2>' + esc(tr('nutritionSectionProtein')) + '</h2>';
       html += '<label for="weightKg">' + esc(tr('nutritionWeightQuestion')) + '</label>' +
-        numberField({ id: 'weightKg', step: 0.5, min: 25, max: 200,
-          value: nutrition.draft.weightKg === null ? '' : nutrition.draft.weightKg });
-      html += '<p class="muted" style="margin-top:14px;">' + esc(tr('nutritionServingsPerDay')) + '</p>';
+        sliderField({ id: 'weightKg', step: 0.5, min: 25, max: 200, sliderMin: 30, sliderMax: 120, start: 55,
+          unit: tr('kgUnit'), label: tr('nutritionWeightQuestion'), value: nutrition.draft.weightKg });
+      html += '<p style="margin-top:18px;">' + esc(tr('nutritionFoodFrequencyIntroDay')) + '</p>';
       html += C.PROTEIN_FOODS.map(function (f) {
-        return freqRow('pr_' + f.id, loc(f.name), nutrition.draft.protein[f.id], f.id, loc(f.serving));
+        return freqRow('pr_' + f.id, loc(f.name), nutrition.draft.protein[f.id], f.id, loc(f.serving), true);
       }).join('');
     } else {
       html += '<h2>' + esc(tr('nutritionResultTitle')) + '</h2>';
@@ -1751,15 +2021,20 @@
     return html;
   }
 
-  function freqRow(id, label, value, foodId, serving) {
+  /**
+   * One food: its name and serving read as one line of text across the
+   * whole width, then a slider and a box for how often. Per week tops out
+   * at 3 a day; per day at 10.
+   */
+  function freqRow(id, label, value, foodId, serving, perDay) {
     var icon = FOOD_ICONS[foodId] || '🍽️';
-    return '<div class="freq-row"><span class="name">' +
+    return '<div class="freq-row"><div class="freq-head">' +
       '<span class="freq-ico" aria-hidden="true">' + icon + '</span>' +
       '<span class="freq-text"><span class="freq-food">' + esc(label) + '</span>' +
-      (serving ? '<span class="freq-serving">' + esc(serving) + '</span>' : '') + '</span></span>' +
-      numberField({ id: id, step: 1, min: 0, max: 21, placeholder: '0',
-        value: (value === undefined || value === null) ? '' : value,
-        quick: [{ value: 0, label: '0' }, { value: 1, label: '1' }, { value: 3, label: '3' }, { value: 7, label: '7' }] }) + '</div>';
+      (serving ? ' <span class="freq-serving">' + esc(serving) + '</span>' : '') + '</span></div>' +
+      sliderField({ id: id, compact: true, step: 1, min: 0, max: perDay ? 10 : 21, placeholder: '0', value: value,
+        unit: tr(perDay ? 'nutritionServingsPerDay' : 'nutritionServingsPerWeek'),
+        label: label + (serving ? ' ' + serving : '') }) + '</div>';
   }
 
   function collectNutritionStep() {
@@ -1958,12 +2233,10 @@
       '<p class="muted">' + esc(tr('bmdEnterTScores')) + '</p>' +
       '<label for="bmdDate">' + esc(tr('bmdScanDate')) + '</label>' +
       dateField({ id: 'bmdDate', choices: [{ days: 0, key: 'dateToday' }, { days: -30, key: 'dateThisMonth' }] }) +
-      '<div class="field-row">' +
-        '<div><label for="bmdSpineT">' + esc(tr('bmdSpine')) + '</label>' +
-          numberField({ id: 'bmdSpineT', step: 0.1, min: -6, max: 6, placeholder: tr('bmdTScoreLabel') }) + '</div>' +
-        '<div><label for="bmdHipT">' + esc(tr('bmdHip')) + '</label>' +
-          numberField({ id: 'bmdHipT', step: 0.1, min: -6, max: 6, placeholder: tr('bmdTScoreLabel') }) + '</div>' +
-      '</div>' +
+      '<label for="bmdSpineT">' + esc(tr('bmdSpine')) + '</label>' +
+      tScoreSlider('bmdSpineT', '', tr('bmdSpine')) +
+      '<label for="bmdHipT">' + esc(tr('bmdHip')) + '</label>' +
+      tScoreSlider('bmdHipT', '', tr('bmdHip')) +
       '<button type="button" class="btn secondary" style="margin-top:12px;" data-action="save-bmd">' + esc(tr('bmdAdd')) + '</button>' +
       '</form></div>';
     return html;
@@ -2007,11 +2280,38 @@
     }) + '</div>';
     if (flagged) html += '<p class="status-line bad">⚠ ' + esc(tr('heightLossWarning')) + '</p>';
     else if (latest) html += '<p class="status-line good">✓ ' + esc(tr('heightLossOk')) + '</p>';
-    html += '<label for="heightInput">' + esc(tr('heightCurrent')) + '</label>' +
-      numberField({ id: 'heightInput', step: 0.5, min: 100, max: 210, placeholder: 'cm' }) +
+    html += '<label>' + esc(tr('heightCurrent')) + '</label>' + heightWheel('heightInput') +
       '<button type="button" class="btn secondary" style="margin-top:10px;" data-action="save-height">' + esc(tr('save')) + '</button>' +
       '<p class="muted">' + esc(tr('heightEvery6Months')) + '</p></div>';
     return html;
+  }
+
+  /** Heights in half centimetres, starting at the last one measured. */
+  function heightWheel(id) {
+    var latest = latestEntry(state.tracking.heightLogs);
+    var baseline = state.tracking.heightBaseline;
+    // Every height the rules accept, and no other.
+    var rule = C.RECORD_SCHEMAS.checkin.fields.heightCm;
+    var values = [];
+    for (var cm = rule.min; cm <= rule.max; cm += 0.5) values.push({ value: cm, label: cm.toFixed(1) });
+    return wheelField({
+      id: id, values: values, start: latest ? latest.cm : (state.profile.sex === 'male' ? 165 : 155),
+      label: tr('heightCurrent'), unit: tr('cmUnit'), prompt: tr('heightDialPrompt'),
+      readout: function (value) {
+        if (typeof baseline !== 'number') return tr('heightReadout').replace('{cm}', value.toFixed(1));
+        var change = Math.round((value - baseline) * 10) / 10;
+        return tr('heightReadoutChange').replace('{cm}', value.toFixed(1))
+          .replace('{change}', (change > 0 ? '+' : '') + change.toFixed(1) + ' ' + tr('cmUnit'));
+      }
+    });
+  }
+
+  /** Saving a dial nobody has turned: point at it instead of doing nothing. */
+  function nudgeWheel(id) {
+    var hint = document.getElementById(id + 'Readout');
+    if (hint) hint.classList.add('nudge');
+    var dial = document.querySelector('.wheel[data-wheel-for="' + id + '"]');
+    if (dial) dial.focus();
   }
 
   function renderChairStandCard() {
@@ -2076,13 +2376,25 @@
     if (!falls.length) {
       html += '<p class="status-line good">✓ ' + esc(tr('fallsNone')) + '</p>';
     } else {
+      // The graph and a one-line summary; the dates themselves are for the
+      // doctor, who sees them in the sheet.
+      var months = C.buildMonthlyCounts(falls.map(function (f) { return f.date; }), 6, todayStr());
+      var since = months[0].label + '-01';
+      var recent = falls.filter(function (f) { return f.date >= since; });
       html += '<div class="chart-wrap">' + barChart({
-        points: C.buildMonthlyCounts(falls.map(function (f) { return f.date; }), 6, todayStr()),
-        title: tr('fallsChartTitle'), unit: tr('reps'), valueHeader: tr('fallsLogTitle')
+        points: months, title: tr('fallsChartTitle'), unit: tr('reps'), valueHeader: tr('fallsLogTitle')
       }) + '</div>';
-      html += '<ul class="plain">' + falls.slice(-4).reverse().map(function (f) {
-        return '<li>' + esc(formatDate(f.date)) + ' — ' + esc(tr(f.injured ? 'fallsInjured' : 'fallsNotInjured')) + (f.cause ? ' — ' + esc(f.cause) : '') + '</li>';
-      }).join('') + '</ul>';
+      if (!recent.length) {
+        html += '<p class="status-line good">✓ ' + esc(tr('fallsNoneRecent')) + '</p>';
+      } else {
+        var injuredCount = recent.filter(function (f) { return f.injured; }).length;
+        var lastFall = recent.reduce(function (a, b) { return b.date > a.date ? b : a; });
+        html += '<p class="status-line warn">● ' + esc([
+          recent.length === 1 ? tr('fallsSummaryCountOne') : tr('fallsSummaryCount').replace('{n}', recent.length),
+          injuredCount ? tr('fallsSummaryInjured').replace('{n}', injuredCount) : tr('fallsSummaryNotInjured'),
+          tr('fallsSummaryLast').replace('{date}', formatDate(lastFall.date))
+        ].join(' · ')) + '</p>';
+      }
     }
     html += '<form id="fallForm">' +
       dateField({ id: 'fallDate', name: 'date', labelKey: 'fallsLogDate' }) +
@@ -2228,11 +2540,10 @@
       if (checkin.missedDoses) html += '<p class="status-line warn" style="margin-top:12px;">⚠ ' + esc(tr('checkinMissedAdvice')) + '</p>';
     } else if (stepId === 'height') {
       html += '<h2>' + esc(tr('checkinStepHeight')) + '</h2>';
-      html += '<label for="checkinHeight">' + esc(tr('heightCurrent')) + '</label>' +
-        numberField({ id: 'checkinHeight', step: 0.5, min: 100, max: 210, placeholder: 'cm' }) +
-        '<div class="btn-row" style="margin-top:12px;">' +
-          '<button type="button" class="btn secondary" data-action="checkin-next">' + esc(tr('checkinStepHeightSkip')) + '</button>' +
+      html += '<label>' + esc(tr('heightCurrent')) + '</label>' + heightWheel('checkinHeight') +
+        '<div class="stack" style="margin-top:12px;">' +
           '<button type="button" class="btn" data-action="checkin-save-height">' + esc(tr('save')) + '</button>' +
+          '<button type="button" class="btn secondary" data-action="checkin-next">' + esc(tr('checkinStepHeightSkip')) + '</button>' +
         '</div>';
     } else if (stepId === 'selftest') {
       html += '<h2>' + esc(tr('checkinStepSelfTest')) + '</h2><p class="muted">' + esc(tr('selfTestSafety')) + '</p>';
@@ -2467,6 +2778,7 @@
         handleRegisterSubmit(form);
       });
     }
+    $all('.wheel').forEach(wireWheel);
     var numberInput = $('#onboardingNumberInput');
     if (numberInput) {
       numberInput.addEventListener('input', function () {
@@ -2485,6 +2797,10 @@
     var action = el.getAttribute('data-action');
 
     if (action === 'toggle-lang') {
+      var hnDraft = $('#hnInput');
+      var yearDraft = $('#yobInput');
+      if (hnDraft) registrationDraft.hn = hnDraft.value;
+      if (yearDraft) registrationDraft.year = yearDraft.value ? parseInt(yearDraft.value, 10) : null;
       state.lang = state.lang === 'th' ? 'en' : 'th';
       saveState(); render();
 
@@ -2504,7 +2820,8 @@
     } else if (action === 'answer') {
       var field = el.getAttribute('data-field');
       var raw = el.getAttribute('data-value');
-      state.profile[field] = el.getAttribute('data-type') === 'boolean' ? raw === 'true' : raw;
+      var answerType = el.getAttribute('data-type');
+      state.profile[field] = answerType === 'boolean' ? raw === 'true' : answerType === 'number' ? Number(raw) : raw;
       if (field === 'priorFragilityFracture' && raw === 'false') delete state.profile.fractureSite;
       if (field === 'tScoreKnown' && raw === 'false') delete state.profile.tScore;
       if (field === 'fallsLast12mo' && !state.profile.fallsLast12mo) delete state.profile.fallWithInjury;
@@ -2629,6 +2946,7 @@
 
     } else if (action === 'save-height') {
       var cm = parseFloat($('#heightInput').value);
+      if (isNaN(cm)) nudgeWheel('heightInput');
       if (!isNaN(cm) && recordProblem({ patientId: 'X', date: todayStr(), type: 'checkin', heightCm: cm })) {
         flagOutOfRange('heightInput');
       } else if (!isNaN(cm) && cm > 0) {
@@ -2746,11 +3064,15 @@
         if (lo !== null && lo !== '' && stepped < parseFloat(lo)) stepped = parseFloat(lo);
         if (hi !== null && hi !== '' && stepped > parseFloat(hi)) stepped = parseFloat(hi);
         stepField.value = stepped;
+        stepField.dispatchEvent(new Event('input', { bubbles: true }));
       }
 
     } else if (action === 'num-set') {
       var setField = document.getElementById(el.getAttribute('data-target'));
-      if (setField) setField.value = el.getAttribute('data-value');
+      if (setField) {
+        setField.value = el.getAttribute('data-value');
+        setField.dispatchEvent(new Event('input', { bubbles: true }));
+      }
 
     } else if (action === 'date-quick') {
       var dateInput = document.getElementById(el.getAttribute('data-target'));
@@ -2814,6 +3136,7 @@
       state = defaultState();
       pendingMedClassId = null;
       registrationSex = null;
+      registrationDraft = { hn: '', year: null };
       fraxFormOpen = false;
       resetConfirmOpen = false;
       reminderOpen = false;
@@ -2864,6 +3187,11 @@
 
     } else if (action === 'checkin-save-height') {
       var checkinCm = parseFloat($('#checkinHeight').value);
+      if (isNaN(checkinCm)) {
+        // Nothing chosen yet; "skip" is the other button.
+        nudgeWheel('checkinHeight');
+        return;
+      }
       if (!isNaN(checkinCm) && recordProblem({ patientId: 'X', date: todayStr(), type: 'checkin', heightCm: checkinCm })) {
         flagOutOfRange('checkinHeight');
         return;
