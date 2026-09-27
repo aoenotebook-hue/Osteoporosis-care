@@ -129,7 +129,22 @@ async function probe(transport, options) {
       if (!r.ok || r.result.version !== 1) throw new Error('expected version 1 of its own chain: ' + JSON.stringify(r));
       return 'accepted without staff; its record is version 1 of its own chain';
     });
-    results.cleanup = 'Delete the rows for ' + hnA + ' and ' + hnB + ' from Devices (including the pending one), ' +
+    var hnC = 'ZZTEST-C' + suffix;
+    await expect("a phone that typed the wrong HN can let it go, and only its own", async function () {
+      var release = function (hn, k) {
+        return transport.post(JSON.stringify({ token: TOKEN, schemaVersion: PROTOCOL, patientId: hn, deviceKey: k, request: 'release' }));
+      };
+      var other = await release(hnA, keyB);
+      if (!other.ok || other.result.action !== 'nothing to release') throw new Error("B's phone released A's HN: " + JSON.stringify(other));
+      var mine = await release(hnA, keyA);
+      if (!mine.ok || mine.result.action !== 'released') throw new Error('expected released: ' + JSON.stringify(mine));
+      var after = await transport.post(JSON.stringify(record(hnA, keyA, { type: 'checkin', heightCm: 158 })));
+      if (after.error !== 'hn marked wrong') throw new Error('expected "hn marked wrong": ' + JSON.stringify(after));
+      var right = await transport.post(JSON.stringify(registration(hnC, keyA)));
+      if (!right.ok) throw new Error('the right HN: ' + JSON.stringify(right));
+      return 'released, then refused under the old HN, accepted under ' + hnC;
+    });
+    results.cleanup = 'Delete the rows for ' + hnA + ', ' + hnB + ' and ' + hnC + ' from Devices (including the pending and wrong-hn ones), ' +
       'Registrations, CheckIns and Audit.';
   }
   return results;

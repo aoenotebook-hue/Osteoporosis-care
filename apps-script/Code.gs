@@ -9,7 +9,7 @@
  *      > Deploy.  Saving alone does NOT update the live /exec URL, which is
  *      why an older copy of this script can keep answering requests.
  *   5. Check it worked: open the /exec URL in a browser. You should see
- *      {"ok":true,"service":"osteoporosis-care","protocol":3,"version":"2026-09-26", ...}
+ *      {"ok":true,"service":"osteoporosis-care","protocol":3,"version":"2026-09-28", ...}
  *      then run `node tools/verify-backend.js <the /exec URL>` from the repo
  *      (README, "Check the deployed backend"). Until both pass, the fixes in
  *      this file are not live.
@@ -20,7 +20,7 @@
  * When a version changes a tab's columns, the first request after deploying
  * moves the old tab aside as "<Name> (before <that version>)" and starts a
  * fresh one. Nothing is deleted; patients' phones register again on their
- * own. 2026-09-25.2 did this; 2026-09-26 changes no columns.
+ * own. 2026-09-25.2 did this; 2026-09-26 and 2026-09-28 change no columns.
  *
  * READING RESULTS: after saving, reload the spreadsheet. A menu
  * "ดูแลกระดูกพรุน" appears, and two tabs for reading are built and kept up
@@ -63,7 +63,7 @@
  * patient's): set it to "revoked"; it then cannot write or register again.
  */
 
-var SCRIPT_VERSION = '2026-09-26';
+var SCRIPT_VERSION = '2026-09-28';
 var SHARED_TOKEN = 'mQ6tfi1HQa0fBNbhzt2AoVk_YKMfmX5v';
 var MAX_TEXT = 200;
 var MAX_BODY = 20000;
@@ -349,6 +349,12 @@ var SHEET_ROUTING = {
   adherence: { sheet: 'Adherence', mode: 'oncePerDay' }
 };
 
+// A phone that entered this HN by mistake: set by the phone itself ("change
+// HN" in the app) or by staff in the Devices tab. It can no longer write under
+// the HN, and its rows are left out of the readable summary.
+var WRONG_HN = 'wrong-hn';
+var RELEASE_FIELDS = ['token', 'schemaVersion', 'patientId', 'deviceKey', 'request'];
+
 function jsonReply(payload) {
   payload.version = SCRIPT_VERSION;
   return ContentService.createTextOutput(JSON.stringify(payload))
@@ -390,6 +396,7 @@ function doPost(e) {
     if (payload.token !== SHARED_TOKEN) {
       return refuse('invalid token — the app and this script are using different SHARED_TOKEN values');
     }
+    if (payload.request === 'release') return handleRelease(payload);
     return payload.type === undefined ? handleRegistration(payload) : handleRecord(payload);
   } catch (err) {
     return refuse(String(err).slice(0, MAX_TEXT));
@@ -451,6 +458,12 @@ function overLimit(name, limit, seconds) {
 
 /* ---------- registration ---------- */
 
+// What staff read beside a pending phone. Either this phone or the first one
+// may have typed the HN wrong; asking the patient settles it.
+// Kept under the 200 characters a cell holds.
+var MISMATCH_NOTE = 'Birth year or sex differs from the first phone on this HN. One of the two may have typed it wrong: ' +
+  'check with the patient; set the wrong one to wrong-hn, this one to active.';
+
 function handleRegistration(payload) {
   var errors = checkRegistration(payload, Date.now());
   if (errors.length) return refuse(errors[0]);
@@ -463,6 +476,12 @@ function handleRegistration(payload) {
   if (devices.some(function (d) { return d.status === 'revoked' && d.hash === credential.hash; })) {
     return refuse('device revoked for this patient');
   }
+  // This phone, or staff, said the HN is not this patient's: it does not come
+  // back on its own. Staff set the row to active if that was a mistake.
+  if (devices.some(function (d) { return d.status === WRONG_HN && d.hash === credential.hash; }) &&
+      !devices.some(function (d) { return d.status === 'active' && d.hash === credential.hash; })) {
+    return refuse('hn marked wrong');
+  }
   var mine = devices.some(function (d) { return d.status === 'active' && d.hash === credential.hash; });
   var others = devices.filter(function (d) { return d.status === 'active' && d.hash !== credential.hash; });
 
@@ -473,12 +492,17 @@ function handleRegistration(payload) {
     var pending = devices.some(function (d) { return d.status === 'pending' && d.hash === credential.hash; });
     if (!pending) {
       appendRow('Devices', { patientId: payload.patientId, credentialId: credential.id, credentialHash: credential.hash,
-        status: 'pending', createdAt: new Date(), note: 'year of birth or sex did not match the registration' });
+        status: 'pending', createdAt: new Date(), note: MISMATCH_NOTE });
     }
-    audit(payload.patientId, credential.id, 'registration', '', 'mismatch', 'year of birth or sex did not match the registration', '');
+    audit(payload.patientId, credential.id, 'registration', '', 'mismatch', MISMATCH_NOTE, '');
     return refuse('details do not match this hn');
   }
-  if (!mine) {
+  if (!mine && !others.length && devices.some(function (d) { return d.status === 'pending' && d.hash === credential.hash; })) {
+    // Waiting since its details did not match; the phone that held the HN has
+    // since been released or marked wrong-hn, so this one now holds it.
+    setDeviceStatus(payload.patientId, credential.hash, ['pending'], 'active', 'accepted: no other phone holds this HN now');
+    audit(payload.patientId, credential.id, 'registration', '', 'accepted', 'no other phone holds this HN now', '');
+  } else if (!mine) {
     if (overLimit('newdevice', LIMITS.newDevicesPerHour, 3600)) return refuse('busy, try again');
     appendRow('Devices', { patientId: payload.patientId, credentialId: credential.id, credentialHash: credential.hash,
       status: 'active', createdAt: new Date(), note: others.length ? 'additional phone: year of birth and sex matched' : '' });
@@ -511,6 +535,52 @@ function detailsMatch(payload, activeDevices) {
   });
 }
 
+/* ---------- a wrong HN ---------- */
+
+/**
+ * The phone says it registered this HN by mistake. Its own key is the proof:
+ * only its own rows in Devices change, active or pending to wrong-hn. The
+ * rows it sent stay (the record is append-only) and the readable tabs leave
+ * them out of the summary. The reply is the same whether or not the HN or the
+ * phone was known, so it tells nobody who is enrolled.
+ */
+function handleRelease(payload) {
+  var extra = Object.keys(payload).filter(function (k) { return RELEASE_FIELDS.indexOf(k) === -1; });
+  if (extra.length) return refuse('unexpected field ' + extra[0]);
+  if (payload.schemaVersion !== PROTOCOL_VERSION || typeof payload.deviceKey !== 'string' ||
+      !DEVICE_KEY_PATTERN.test(payload.deviceKey)) return refuse('app update required');
+  if (typeof payload.patientId !== 'string' || !HN_PATTERN.test(payload.patientId)) return refuse('invalid patientId');
+  var credential = credentialFor(payload.deviceKey);
+  if (overLimit('hour:' + credential.id, LIMITS.perDevicePerHour, 3600)) return refuse('rate limited, try later');
+  if (!SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Devices')) return jsonReply({ ok: true, result: { action: 'nothing to release' } });
+
+  var released = setDeviceStatus(payload.patientId, credential.hash, ['active', 'pending'], WRONG_HN,
+    'the patient said this HN was entered by mistake');
+  if (!released) return jsonReply({ ok: true, result: { action: 'nothing to release' } });
+  audit(payload.patientId, credential.id, 'release', '', WRONG_HN, 'the patient said this HN was entered by mistake', '');
+  return jsonReply({ ok: true, result: { action: 'released' } });
+}
+
+/**
+ * Devices is the staff's own list of phones; its status is the one cell the
+ * script changes, the same one staff change. Returns how many rows changed.
+ */
+function setDeviceStatus(patientId, hash, fromStatuses, toStatus, note) {
+  var table = openSheet('Devices');
+  var cols = SHEET_COLUMNS.Devices;
+  var changed = 0;
+  for (var r = 1; r < table.data.length; r++) {
+    var row = table.data[r];
+    var status = cellToString(row[cols.indexOf('status')]).trim().toLowerCase();
+    if (cellToString(row[cols.indexOf('patientId')]) !== patientId ||
+        cellToString(row[cols.indexOf('credentialHash')]) !== hash || fromStatuses.indexOf(status) === -1) continue;
+    table.sheet.getRange(r + 1, cols.indexOf('status') + 1).setValue(safeCell(toStatus));
+    table.sheet.getRange(r + 1, cols.indexOf('note') + 1).setValue(safeCell(note));
+    changed += 1;
+  }
+  return changed;
+}
+
 /* ---------- records ---------- */
 
 function handleRecord(payload) {
@@ -526,9 +596,15 @@ function handleRecord(payload) {
     if (authorised) audit(patientId, credential.id, payload.type, payload.date, 'refused', errors[0], '');
     return refuse(errors[0]);
   }
-  // The same answer whether or not the HN exists, so it cannot be used to
-  // find out who is enrolled.
-  if (!authorised) return refuse('device not registered for this patient');
+  if (!authorised) {
+    // Only the holder of this phone's key can learn this.
+    if (credential && patientId && devicesFor(patientId).some(function (d) { return d.status === WRONG_HN && d.hash === credential.hash; })) {
+      return refuse('hn marked wrong');
+    }
+    // The same answer whether or not the HN exists, so it cannot be used to
+    // find out who is enrolled.
+    return refuse('device not registered for this patient');
+  }
   if (overLimit('hour:' + credential.id, LIMITS.perDevicePerHour, 3600) ||
       overLimit('six:' + credential.id, LIMITS.perDevicePerSixHours, 21600)) {
     return refuse('rate limited, try later');
@@ -966,10 +1042,12 @@ function doseText(row) {
 function patientResults(todayYmd) {
   var devices = recordRows('Devices');
   var revoked = {};
+  var wrongHn = {};
   var phones = {};
   devices.forEach(function (d) {
     var status = cellToString(d.status).trim().toLowerCase();
     if (status === 'revoked') revoked[d.patientId + '|' + d.credentialId] = true;
+    if (status === WRONG_HN) wrongHn[d.patientId + '|' + d.credentialId] = true;
     if (!phones[d.patientId]) phones[d.patientId] = { active: [], pending: 0 };
     if (status === 'active') phones[d.patientId].active.push(d.credentialId);
     if (status === 'pending') phones[d.patientId].pending += 1;
@@ -1002,7 +1080,25 @@ function patientResults(todayYmd) {
 
   ids.forEach(function (id) {
     var mine = rowsOf[id];
-    function list(name) { return mine[name] || []; }
+    var phone = phones[id] || { active: [], pending: 0 };
+    // The first phone bound to the HN (Devices keeps them in order) is the
+    // patient's own; rows from any other are marked, since a further phone
+    // joins on HN, year of birth and sex alone.
+    var firstPhone = phone.active.length ? phone.active[0] : '';
+    // Rows the summary must not count: from a phone that entered this HN by
+    // mistake, or from a phone whose year of birth or sex differs from the
+    // first phone's (staff let it in, so it may be someone else).
+    var reference = (mine.Registrations || []).filter(function (r) { return r.credentialId === firstPhone; })[0];
+    var mismatched = {};
+    (mine.Registrations || []).forEach(function (r) {
+      if (reference && r.credentialId !== firstPhone &&
+          (cellToString(r.yearOfBirth) !== cellToString(reference.yearOfBirth) || cellToString(r.sex) !== cellToString(reference.sex))) {
+        mismatched[r.credentialId] = true;
+      }
+    });
+    function setAside(row) { return wrongHn[id + '|' + row.credentialId] ? 'wrong' : mismatched[row.credentialId] ? 'mismatch' : ''; }
+    function listAll(name) { return mine[name] || []; }
+    function list(name) { return listAll(name).filter(function (row) { return !setAside(row); }); }
     var registration = list('Registrations').slice().sort(function (a, b) { return receivedMs(a) - receivedMs(b); });
     var reg = registration.length ? registration[registration.length - 1] : {};
     var yob = numberIn(reg.yearOfBirth);
@@ -1012,11 +1108,6 @@ function patientResults(todayYmd) {
       sex: cellToString(reg.sex),
       weightKg: weight ? numberIn(weight.value) : null
     };
-    var phone = phones[id] || { active: [], pending: 0 };
-    // The first phone bound to the HN (Devices keeps them in order) is the
-    // patient's own; rows from any other are marked, since a further phone
-    // joins on HN, year of birth and sex alone.
-    var firstPhone = phone.active.length ? phone.active[0] : '';
     var attention = [];
     var lastMs = 0;
 
@@ -1024,11 +1115,14 @@ function patientResults(todayYmd) {
       if (!text) return;
       var notes = [];
       if (Number(row.version) > 1) notes.push('แก้ไขแล้ว ' + (Number(row.version) - 1) + ' ครั้ง (ประวัติอยู่ในแท็บ ' + name + ')');
-      if (firstPhone && row.credentialId && row.credentialId !== firstPhone) notes.push('จากโทรศัพท์เครื่องอื่นของผู้ป่วย');
+      var aside = setAside(row);
+      if (aside === 'wrong') notes.push('ส่งจากโทรศัพท์ที่แจ้งว่ากรอก HN นี้ผิด ไม่นับในสรุป');
+      else if (aside === 'mismatch') notes.push('จากโทรศัพท์ที่ปีเกิดหรือเพศไม่ตรงกับผู้ป่วย ไม่นับในสรุป');
+      else if (firstPhone && row.credentialId && row.credentialId !== firstPhone) notes.push('จากโทรศัพท์เครื่องอื่นของผู้ป่วย');
       results.push({ date: row.date, ms: receivedMs(row), cells: [thaiDate(row.date), id, type, text, notes.join(' · '), thaiDateTime(row.receivedAt)] });
       lastMs = Math.max(lastMs, receivedMs(row));
     }
-    registration.forEach(function (row) {
+    listAll('Registrations').forEach(function (row) {
       var n = numberIn(row.yearOfBirth);
       addResult('Registrations', 'ลงทะเบียน', row, [
         n === null ? '' : 'เกิดปี พ.ศ. ' + (n + 543),
@@ -1036,12 +1130,12 @@ function patientResults(todayYmd) {
         isPresent(row.consentAt) ? 'ยินยอมตามประกาศ PDPA เมื่อ ' + thaiDate(cellToString(row.consentAt).slice(0, 10)) : ''
       ].filter(Boolean).join(' · '));
     });
-    list('CheckIns').forEach(function (row) { addResult('CheckIns', 'ติดตามผล', row, checkinText(row, patient)); });
-    list('Falls').forEach(function (row) { addResult('Falls', 'การล้ม', row, fallText(row)); });
-    list('Adherence').forEach(function (row) { addResult('Adherence', 'ใช้ยา', row, doseText(row)); });
-    list('Nutrition').forEach(function (row) { addResult('Nutrition', 'อาหาร', row, nutritionText(row, patient)); });
-    list('Bmd').forEach(function (row) { addResult('Bmd', 'ความหนาแน่นกระดูก (BMD)', row, bmdText(row)); });
-    list('FractureRisk').forEach(function (row) { addResult('FractureRisk', 'ความเสี่ยงกระดูกหัก (FRAX)', row, fraxDetailText(row)); });
+    listAll('CheckIns').forEach(function (row) { addResult('CheckIns', 'ติดตามผล', row, checkinText(row, patient)); });
+    listAll('Falls').forEach(function (row) { addResult('Falls', 'การล้ม', row, fallText(row)); });
+    listAll('Adherence').forEach(function (row) { addResult('Adherence', 'ใช้ยา', row, doseText(row)); });
+    listAll('Nutrition').forEach(function (row) { addResult('Nutrition', 'อาหาร', row, nutritionText(row, patient)); });
+    listAll('Bmd').forEach(function (row) { addResult('Bmd', 'ความหนาแน่นกระดูก (BMD)', row, bmdText(row)); });
+    listAll('FractureRisk').forEach(function (row) { addResult('FractureRisk', 'ความเสี่ยงกระดูกหัก (FRAX)', row, fraxDetailText(row)); });
 
     var checkins = list('CheckIns');
     var when = function (found) { return found ? ' · ' + thaiDate(found.row.date) : ''; };
@@ -1091,6 +1185,7 @@ function patientResults(todayYmd) {
     var missed = latestOf(checkins, 'missedDoses');
     if (missed && numberIn(missed.value)) attention.push('ลืมยา');
     if (phone.pending) attention.push('มีโทรศัพท์รอยืนยันในแท็บ Devices');
+    if (Object.keys(mismatched).length) attention.push('HN นี้มีโทรศัพท์ที่ปีเกิดหรือเพศไม่ตรงกัน ตรวจสอบก่อนใช้ผล');
 
     var balance = latestOf(checkins, 'balanceLevel');
     var safety = latestOf(checkins, 'safetyScore');
@@ -1100,6 +1195,10 @@ function patientResults(todayYmd) {
     var nutritionRows = list('Nutrition');
     var nutrition = nutritionRows.length ? nutritionRows[nutritionRows.length - 1] : null;
 
+    // Only rows from a phone that entered this HN by mistake: nothing to summarise.
+    var counted = ['Registrations', 'CheckIns', 'Falls', 'Adherence', 'Nutrition', 'Bmd', 'FractureRisk']
+      .some(function (name) { return list(name).length; });
+    if (!counted) return;
     summary.push({ ms: lastMs, cells: [
       id,
       [patient.age === null ? '' : patient.age + ' ปี', label('sex', patient.sex)].filter(Boolean).join(' · '),

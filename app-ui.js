@@ -50,6 +50,11 @@
   // What the patient has put in the registration form so far, so that
   // switching language (which redraws it) does not clear it.
   var registrationDraft = { hn: '', year: null };
+  // Details checked and waiting for the patient to confirm the HN once more.
+  var registrationPending = null;
+  // The "change HN" dialog: closed, typing ('form'), or checking ('confirm').
+  var hnChange = { step: null, hn: '', error: '' };
+  var hnChangedNotice = false;
   var bmdJustSaved = false;
   var chairStandTimer = { running: false, remaining: 30, awaitingReps: false, intervalId: null };
   var tugTimer = { running: false, elapsed: 0, intervalId: null };
@@ -327,6 +332,9 @@
 
   /** What is sent for a queued item, built at send time so the key and consent are current. */
   function requestBody(item) {
+    if (item.kind === 'release') {
+      return { token: SHARED_TOKEN, schemaVersion: C.PROTOCOL_VERSION, patientId: item.hn, deviceKey: state.deviceKey, request: 'release' };
+    }
     if (item.kind === 'registration') {
       var p = state.patient || {};
       return C.buildRegistrationPayload({ hn: p.hn, yearOfBirth: p.yearOfBirth, sex: p.sex, consent: state.consent },
@@ -378,6 +386,9 @@
           // The script no longer knows this phone (a fresh sheet, or staff
           // revoked it): register again, first, and the queue follows.
           if (parsed.error === 'device not registered for this patient') queueRegistration();
+          // Staff (or this phone earlier) said the HN is not this patient's:
+          // the records wait here until the patient changes it.
+          if (parsed.error === 'hn marked wrong' && !state.hnMarkedWrong) { state.hnMarkedWrong = true; saveState(); }
           throw new Error(parsed.error || 'rejected by the server');
         }
         // Only an explicit acknowledgement takes a record off the queue.
@@ -602,10 +613,11 @@
     } else {
       $('#tabBar').hidden = false;
       renderTabBar();
-      screen.innerHTML = (inLineApp() ? lineNotice() : '') + renderActiveScreen() + renderFooter();
+      screen.innerHTML = (inLineApp() ? lineNotice() : '') + hnProblemBanner() + renderActiveScreen() + renderFooter();
       if (checkin.open) overlay.innerHTML = '<div class="overlay"><div class="modal">' + renderCheckin() + '</div></div>';
       else if (nutrition.open) overlay.innerHTML = '<div class="overlay"><div class="modal">' + renderNutritionWizard() + '</div></div>';
       else if (fraxFormOpen) overlay.innerHTML = '<div class="overlay"><div class="modal">' + renderFraxForm() + '</div></div>';
+      else if (hnChange.step) overlay.innerHTML = '<div class="overlay"><div class="modal">' + renderHnChange() + '</div></div>';
       else if (resetConfirmOpen) overlay.innerHTML = '<div class="overlay"><div class="modal">' + renderResetConfirm() + '</div></div>';
       else if (reminderOpen) overlay.innerHTML = '<div class="overlay"><div class="modal">' + renderDoseReminder() + '</div></div>';
     }
@@ -628,8 +640,11 @@
       if (reason === 'hn registered on another device') reason = tr('syncFooterOtherDevice');
       else if (reason === 'device revoked for this patient') reason = tr('syncFooterRevoked');
       else if (reason === 'details do not match this hn') reason = tr('syncFooterDetailsMismatch');
+      else if (reason === 'hn marked wrong') reason = tr('syncFooterWrongHn');
+      var hnProblem = reason === tr('syncFooterDetailsMismatch') || reason === tr('syncFooterWrongHn');
       html += '<div class="footer-sync">' + esc(tr('syncFooterPending').replace('{n}', pending)) +
         (reason ? '<br><span class="sync-reason">' + esc(reason) + '</span>' : '') +
+        (hnProblem ? ' <button type="button" class="btn small" data-action="open-hn-change">' + esc(tr('hnChangeButton')) + '</button>' : '') +
         ' <button type="button" class="reset-link" data-action="sync-now">' + esc(tr('syncFooterRetry')) + '</button></div>';
     }
     var rejected = state.syncRejected || [];
@@ -637,8 +652,13 @@
       html += '<div class="footer-sync">' + esc(tr('syncFooterRejected').replace('{n}', rejected.length)) +
         '<br><span class="sync-reason">' + esc(rejected[rejected.length - 1].reason) + '</span></div>';
     }
+    if (hnChangedNotice) {
+      html += '<p class="status-line good" style="justify-content:center;">✓ ' + esc(tr('hnChangeDone')) + '</p>';
+      hnChangedNotice = false;
+    }
     html += '<div>' + esc(tr('footerDoctorLabel')) + '</div>' +
       '<div class="doctor">' + esc(loc(C.DOCTOR.name)) + '</div>' +
+      (state.registered ? '<button type="button" class="reset-link" data-action="open-hn-change">' + esc(tr('hnChangeLink')) + '</button><br>' : '') +
       '<button type="button" class="reset-link" data-action="open-reset">' + esc(tr('resetButton')) + '</button>' +
       '</footer>';
     return html;
@@ -703,6 +723,7 @@
   /* ---------- registration ---------- */
 
   function renderRegistration() {
+    if (registrationPending) return renderRegistrationConfirm();
     return '' +
       '<div class="modal-lang"><button type="button" class="btn small secondary" data-action="toggle-lang">' +
         (state.lang === 'th' ? 'English' : 'ไทย') + '</button></div>' +
@@ -731,6 +752,24 @@
         '<div id="registerError" class="error-text" hidden></div>' +
         '<button type="submit" class="btn">' + esc(tr('registerSubmit')) + '</button>' +
       '</form>';
+  }
+
+  /** The HN large, to be compared with the hospital card before anything is sent. */
+  function bigHn(hn) {
+    return '<p class="big-hn">' + esc(hn) + '</p>';
+  }
+
+  function renderRegistrationConfirm() {
+    var p = registrationPending;
+    return '<h2 class="center">' + esc(tr('registerConfirmTitle')) + '</h2>' +
+      '<p class="muted center">' + esc(tr('registerHN')) + '</p>' + bigHn(p.hn) +
+      '<p class="center">' + esc(tr('registerYearReadout').replace('{be}', p.year).replace('{ce}', p.year - 543).replace('{age}', C.deriveAge(p.year))) +
+        ' · ' + esc(tr(p.sex === 'male' ? 'registerSexMale' : 'registerSexFemale')) + '</p>' +
+      '<div class="card warn"><p style="margin:0;">' + esc(tr('registerConfirmHint')) + '</p></div>' +
+      '<div class="stack" style="margin-top:14px;">' +
+        '<button type="button" class="btn" data-action="confirm-registration">' + esc(tr('registerConfirmYes')) + '</button>' +
+        '<button type="button" class="btn secondary" data-action="edit-registration">' + esc(tr('registerConfirmEdit')) + '</button>' +
+      '</div>';
   }
 
   /** Buddhist-era years for everyone the app is for (18 to 120), oldest first. */
@@ -791,6 +830,16 @@
     }
 
     errorBox.hidden = true;
+    // Nothing is sent until the patient has looked at the HN once more.
+    registrationPending = { hn: hn, year: yearRaw, sex: sex, payload: payload, deviceKey: deviceKey, consent: consent };
+    render();
+  }
+
+  function commitRegistration() {
+    var payload = registrationPending.payload;
+    var deviceKey = registrationPending.deviceKey;
+    var consent = registrationPending.consent;
+    registrationPending = null;
     // The profile keeps who the patient is; the token and key are not part of it.
     state.patient = { patientId: payload.patientId, hn: payload.hn, yearOfBirth: payload.yearOfBirth, age: payload.age, sex: payload.sex };
     state.profile.age = payload.age;
@@ -803,6 +852,121 @@
     saveState();
     flushSyncQueue();
     render();
+  }
+
+  /* ---------- a wrong HN ---------- */
+
+  function fraxRecordNow() {
+    var shown = C.fractureRiskToShow(C.buildFraxWorksheet(state.profile, state.frax, state.tracking.bmdLogs));
+    return {
+      weightKg: state.frax.weightKg === undefined ? '' : state.frax.weightKg,
+      heightCm: state.frax.heightCm === undefined ? '' : state.frax.heightCm,
+      bmi: C.computeBmi(state.frax.weightKg, state.frax.heightCm) || '',
+      tool: !shown ? 'incomplete' : (shown.isOfficial ? 'FRAX-official' : 'app-estimate'),
+      majorFractureRisk: shown && shown.major !== null ? shown.major : '',
+      hipFractureRisk: shown && shown.hip !== null ? shown.hip : ''
+    };
+  }
+
+  /**
+   * The hospital refuses this phone's HN: said at the top of every screen, not
+   * only in the footer, since nothing the patient records reaches the doctor
+   * until it is settled.
+   */
+  function hnProblemBanner() {
+    var error = state.sync && state.sync.lastError;
+    if (!state.syncQueue.length || (error !== 'hn marked wrong' && error !== 'details do not match this hn')) return '';
+    return '<div class="card warn" role="alert"><p style="margin:0 0 10px;"><strong>⚠ ' +
+      esc(tr(error === 'hn marked wrong' ? 'syncFooterWrongHn' : 'syncFooterDetailsMismatch')) + '</strong></p>' +
+      '<button type="button" class="btn" data-action="open-hn-change">' + esc(tr('hnChangeButton')) + '</button></div>';
+  }
+
+  function renderHnChange() {
+    var current = state.patient ? state.patient.hn : '';
+    var html = '<div class="card-head"><span class="ico">🔢</span><h2 style="margin:0;">' + esc(tr('hnChangeTitle')) + '</h2></div>';
+    if (hnChange.step === 'confirm') {
+      return html + '<p class="muted">' + esc(tr('hnChangeNew')) + '</p>' + bigHn(hnChange.hn) +
+        '<div class="card warn"><p style="margin:0;">' + esc(tr('registerConfirmHint')) + '</p></div>' +
+        '<div class="stack" style="margin-top:14px;">' +
+          '<button type="button" class="btn" data-action="hn-change-apply">' + esc(tr('hnChangeConfirmYes')) + '</button>' +
+          '<button type="button" class="btn secondary" data-action="hn-change-edit">' + esc(tr('registerConfirmEdit')) + '</button>' +
+        '</div>';
+    }
+    return html + '<p>' + esc(tr('hnChangeBody')) + '</p>' +
+      '<p class="muted">' + esc(tr('hnChangeCurrent')) + ': <strong>' + esc(current) + '</strong></p>' +
+      '<label for="hnChangeInput">' + esc(tr('hnChangeNew')) + '</label>' +
+      '<input type="text" id="hnChangeInput" inputmode="numeric" autocomplete="off" maxlength="40" value="' + esc(hnChange.hn) + '">' +
+      '<div id="hnChangeError" class="error-text"' + (hnChange.error ? '' : ' hidden') + '>' + esc(hnChange.error) + '</div>' +
+      '<div class="stack" style="margin-top:14px;">' +
+        '<button type="button" class="btn" data-action="hn-change-check">' + esc(tr('hnChangeCheck')) + '</button>' +
+        '<button type="button" class="btn secondary" data-action="hn-change-close">' + esc(tr('cancel')) + '</button>' +
+      '</div>';
+  }
+
+  /**
+   * Everything this phone holds, as records under the given HN. After a
+   * change of HN the hospital gets the whole history again, not only what
+   * had not been sent yet; the script skips anything it already has.
+   */
+  function historyRecords(hn) {
+    var out = [];
+    var today = todayStr();
+    function add(type, date, data) {
+      if (!date) return;
+      var record = Object.assign({ patientId: hn, date: date < '2020-01-01' ? today : date, type: type }, data);
+      if (!recordProblem(record)) out.push(record);
+    }
+    var t = state.tracking;
+    (t.heightLogs || []).forEach(function (h) { add('checkin', h.date, { heightCm: h.cm }); });
+    (t.chairStandTests || []).forEach(function (x) { add('checkin', x.date, { chairStandReps: x.reps }); });
+    (t.tugTests || []).forEach(function (x) { add('checkin', x.date, { tugSeconds: x.seconds }); });
+    (t.falls || []).forEach(function (f) { add('falls', f.date, { injured: f.injured ? 1 : 0, cause: f.cause || '' }); });
+    (t.bmdLogs || []).forEach(function (e) {
+      if (C.lowestTScore(e) === null) return;
+      add('bmd', e.date, { scanDate: e.date, spineT: e.spineT === undefined ? '' : e.spineT,
+        hipT: e.hipT === undefined ? '' : e.hipT, lowestT: C.lowestTScore(e), boneStatus: state.boneStatus });
+    });
+    if (state.medication.classId) {
+      (state.medication.adherenceLog || []).forEach(function (d, i) {
+        add('adherence', d.date, { medication: state.medication.classId, doseNumber: i + 1 });
+      });
+    }
+    var n = state.nutrition;
+    if (n.result && n.lastAssessedDate) {
+      add('nutrition', n.lastAssessedDate, {
+        calciumIntakeMg: n.result.calcium.intakeMg,
+        calciumSupplementMg: n.result.calcium.suggestedSupplementMg,
+        vitaminDSupplementIu: n.result.vitaminD.suggestedSupplementIu,
+        proteinIntakeG: n.result.protein ? n.result.protein.intakeG : ''
+      });
+    }
+    if (state.safety.lastAuditDate) add('checkin', state.safety.lastAuditDate, { safetyScore: C.computeSafetyScore(state.safety.checkedIds).score });
+    if (state.frax.weightKg !== undefined || state.frax.heightCm !== undefined) add('frax', today, fraxRecordNow());
+    if (state.boneStatus) {
+      add('checkin', today, { balanceLevel: state.balance.currentLevel, boneStatus: state.boneStatus, fallRisk: state.fallRisk });
+    }
+    return out;
+  }
+
+  /**
+   * The phone says its old HN was a mistake, registers the right one and
+   * sends everything again, in that order: the release has to reach the
+   * script while this phone still holds the old HN.
+   */
+  function applyHnChange(newHn) {
+    var oldHn = state.patient.hn;
+    var records = state.syncQueue.filter(function (item) { return item.kind === 'record'; }).map(function (item) {
+      return Object.assign({}, item.payload, { patientId: newHn });
+    });
+    var releases = state.syncQueue.filter(function (item) { return item.kind === 'release'; });
+    state.patient.hn = newHn;
+    state.patient.patientId = newHn;
+    state.hnMarkedWrong = false;
+    state.syncQueue = releases.concat([{ kind: 'release', hn: oldHn }, { kind: 'registration' }]);
+    records.concat(historyRecords(newHn)).forEach(function (record) { C.queueRecord(state.syncQueue, record); });
+    noteSync({ lastError: null });
+    saveState();
+    flushSyncQueue();
   }
 
   /* ---------- onboarding ---------- */
@@ -3031,15 +3195,7 @@
       collectFraxInputs();
       // The tool column says which of the two the figures are, so an estimate
       // is never read back off the sheet as though a clinician had run FRAX.
-      var shown = C.fractureRiskToShow(C.buildFraxWorksheet(state.profile, state.frax, state.tracking.bmdLogs));
-      var fraxRecord = {
-        weightKg: state.frax.weightKg === undefined ? '' : state.frax.weightKg,
-        heightCm: state.frax.heightCm === undefined ? '' : state.frax.heightCm,
-        bmi: C.computeBmi(state.frax.weightKg, state.frax.heightCm) || '',
-        tool: !shown ? 'incomplete' : (shown.isOfficial ? 'FRAX-official' : 'app-estimate'),
-        majorFractureRisk: shown && shown.major !== null ? shown.major : '',
-        hipFractureRisk: shown && shown.hip !== null ? shown.hip : ''
-      };
+      var fraxRecord = fraxRecordNow();
       var fraxProblem = recordProblem(Object.assign({ patientId: 'X', date: todayStr(), type: 'frax' }, fraxRecord));
       if (fraxProblem) {
         flagOutOfRange({
@@ -3100,6 +3256,42 @@
       reminderOpen = false;
       state.reminderShownDate = todayStr();
       saveState(); render();
+
+    } else if (action === 'confirm-registration') {
+      if (registrationPending) commitRegistration();
+
+    } else if (action === 'edit-registration') {
+      registrationPending = null;
+      render();
+
+    } else if (action === 'open-hn-change') {
+      hnChange = { step: 'form', hn: '', error: '' };
+      render();
+
+    } else if (action === 'hn-change-close') {
+      hnChange = { step: null, hn: '', error: '' };
+      render();
+
+    } else if (action === 'hn-change-check') {
+      var typed = $('#hnChangeInput') ? $('#hnChangeInput').value : '';
+      var newHn = C.normalizeHn(typed);
+      hnChange.hn = typed;
+      hnChange.error = !newHn ? tr('registerHNRequiredOnly')
+        : !C.isValidHn(newHn) ? tr('registerHNInvalid')
+        : newHn === state.patient.hn ? tr('hnChangeSame') : '';
+      if (!hnChange.error) { hnChange.hn = newHn; hnChange.step = 'confirm'; }
+      render();
+
+    } else if (action === 'hn-change-edit') {
+      hnChange.step = 'form';
+      render();
+
+    } else if (action === 'hn-change-apply') {
+      var chosenHn = hnChange.hn;
+      hnChange = { step: null, hn: '', error: '' };
+      hnChangedNotice = true;
+      applyHnChange(chosenHn);
+      render();
 
     } else if (action === 'open-reset') {
       resetConfirmOpen = true;

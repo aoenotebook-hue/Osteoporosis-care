@@ -1,6 +1,6 @@
 # Security: identity, audit trail, hosting and local data
 
-Script version **2026-09-26**, upload protocol **3**. This file says what the
+Script version **2026-09-28**, upload protocol **3**. This file says what the
 app and the Apps Script now enforce, what they cannot, and what is left for
 the clinic to decide. Everything here is covered by `tests/t19`–`t22` against
 synthetic records only.
@@ -94,6 +94,23 @@ Stronger options remain available if the clinic wants them later:
   confirming it is the patient, change its `status` to `active`, and its
   queued records go through at its next send. `additional phone` rows in Audit
   list every phone added this way, for an occasional look.
+- **A wrong HN (2026-09-28).** Typing someone else's HN puts the patient's
+  results under that HN and holds the real owner back as `pending`. Three
+  things now deal with it:
+  - *Before:* registration shows the HN large and asks the patient to check
+    it against their hospital card.
+  - *The patient:* "change HN" in the app sends a `release` request, signed
+    by the phone's own key, so it can only affect that phone's rows. The
+    phone's Devices row becomes `wrong-hn` and the Audit tab records it. The
+    phone then registers the right HN and sends its whole history again.
+    The reply is the same whether or not the HN or phone was known.
+  - *Staff:* set a phone's `status` to `wrong-hn`. It can no longer write or
+    register under that HN, and its app asks the patient to change HN.
+  A `pending` phone becomes `active` by itself once no other phone holds the
+  HN. The note beside a `pending` phone says what to check. Rows from a
+  `wrong-hn` phone, or from an active phone whose year of birth or sex
+  differs from the first phone's, stay in the data tabs but are left out of
+  the summary, and the summary flags the second case.
 - **A lost phone, or a patient who withdraws.** Set the phone's `status` to
   `revoked`. A revoked phone cannot write, and cannot register its way back,
   even when no other phone holds the HN. To let the same phone back in,
@@ -194,7 +211,7 @@ The backend is fixed only when the deployed script passes the probes:
    everything. Set the project time zone to Bangkok.
 2. **Deploy → Manage deployments → pencil icon → Version: New version →
    Deploy.**
-3. Open the `/exec` URL. It must say `"version":"2026-09-26"` and
+3. Open the `/exec` URL. It must say `"version":"2026-09-28"` and
    `"protocol":3`.
 4. From a computer with Node 18 or later, run
    `node tools/verify-backend.js <the /exec URL>`. The read-only probes send

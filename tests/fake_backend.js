@@ -75,6 +75,12 @@ function fakeSheets() {
               v.forEach(function (cell, j) { target[col - 1 + j] = store(cell); });
             });
           },
+          setValue: function (v) {
+            overwrites.push(name + ' row ' + row);
+            var target = rows[row - 1] = rows[row - 1] || [];
+            target[col - 1] = store(v);
+            return this;
+          },
           setFontWeight: function () { return this; },
           setBackground: function () { return this; },
           setBackgrounds: function (colors) {

@@ -216,7 +216,7 @@ replacing anything already there.
 4. Confirm it took: open the `/exec` URL in a browser. It answers
 
    ```json
-   {"ok":true,"service":"osteoporosis-care","protocol":3,"tokenConfigured":true,"sheets":[...],"version":"2026-09-26"}
+   {"ok":true,"service":"osteoporosis-care","protocol":3,"tokenConfigured":true,"sheets":[...],"version":"2026-09-28"}
    ```
 
 5. **Check the deployed backend**, from any computer with Node 18 or later:
@@ -240,7 +240,7 @@ When a version changes a tab's columns, the first request after deploying
 moves the old tab aside as "<Name> (before <that version>)" — intact — and
 starts a fresh one. 2026-09-25.2 did this for the tabs from before it (phones
 register again on their own, and one registered before it first asks its
-patient to confirm consent once); 2026-09-26 changes no columns.
+patient to confirm consent once); 2026-09-26 and 2026-09-28 change no columns.
 
 The tabs are append-only. A change to a day's check-in, nutrition, BMD or
 FRAX record is a new row with the next `version`, naming the row it
@@ -299,6 +299,16 @@ The short version; `docs/SECURITY.md` has the detail.
   consent evidence. Every piece of text is stored as text: a formula never
   runs, and an HN such as `0012345` is not turned into a number.
   Submissions are rate-limited per phone and per HN.
+- **A wrong HN.** Registration shows the HN large and asks the patient to
+  check it against their hospital card before anything is sent. A patient
+  who still typed it wrong taps "กรอกเลข HN ผิด? เปลี่ยนเลข HN" in the footer:
+  the phone tells the script the old HN was a mistake (its Devices row
+  becomes `wrong-hn`), registers the right one and sends its whole history
+  again. The rows already sent under the wrong HN stay in the data tabs but
+  are left out of that HN's summary. Staff can do the same by setting a
+  phone's status to `wrong-hn`; its app then asks the patient to change HN.
+  The HN's real owner, held back as `pending`, is let in as soon as no other
+  phone holds the HN.
 - **A lost phone, or one that is not the patient's:** in Devices, set its
   status to `revoked`. A `pending` phone (details did not match) can be let
   in by setting it to `active`.
