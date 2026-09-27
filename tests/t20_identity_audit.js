@@ -517,17 +517,28 @@ function run() {
         vitaminDSupplementIu: most.vitaminD.suggestedSupplementIu, proteinIntakeG: most.protein ? most.protein.intakeG : '' };
       helpers.assertEqual(core.validateRecord(nutritionRecord, '2026-09-02').errors.join(), '', 'the largest nutrition estimate is refused');
       var ui0 = fs.readFileSync(path.join(root, 'app-ui.js'), 'utf8');
-      helpers.assert(/numberField\(\{ id: id, step: 1, min: 0, max: 21,/.test(ui0), 'food-frequency limit changed: re-check the nutrition ranges');
+      // Per day tops out lower than per week, so 21 of everything covers both.
+      var limits = (ui0.match(/sliderField\(\{ id: id, compact: true, step: 1, min: 0, max: perDay \? (\d+) : (\d+),/) || []).slice(1).map(Number);
+      helpers.assert(limits.length === 2 && limits.every(function (n) { return n <= 21; }), 'food-frequency limit changed: re-check the nutrition ranges');
 
       // And the ranges are the app's input limits: nothing it lets a patient enter is refused.
       var ui = fs.readFileSync(path.join(root, 'app-ui.js'), 'utf8');
-      [['heightInput', 'checkin', 'heightCm'], ['checkinHeight', 'checkin', 'heightCm'], ['chairStandRepsField', 'checkin', 'chairStandReps'],
-        ['bmdSpineT', 'bmd', 'spineT'], ['bmdHipT', 'bmd', 'hipT'], ['fraxWeight', 'frax', 'weightKg'], ['fraxHeight', 'frax', 'heightCm']
+      [['chairStandRepsField', 'checkin', 'chairStandReps'], ['fraxWeight', 'frax', 'weightKg'], ['fraxHeight', 'frax', 'heightCm']
       ].forEach(function (f) {
         var m = ui.match(new RegExp("id: '" + f[0] + "'[^}]*min: (-?[\\d.]+), max: (-?[\\d.]+)"));
         helpers.assert(m, f[0] + ' has no min/max');
         var rule = core.RECORD_SCHEMAS[f[1]].fields[f[2]];
         helpers.assertEqual(Number(m[1]) + '..' + Number(m[2]), rule.min + '..' + rule.max, f[0] + ' input range vs rule');
+      });
+      // The height dials and T-score sliders take their range from the rules themselves.
+      helpers.assert(/function heightWheel\(id\) \{[\s\S]*?var rule = C\.RECORD_SCHEMAS\.checkin\.fields\.heightCm;[\s\S]*?for \(var cm = rule\.min; cm <= rule\.max;/.test(ui),
+        'the height dial does not use the rules\' range');
+      helpers.assert(/function tScoreSlider\(id, value, label\) \{\s*\/\/[^\n]*\n\s*var rule = C\.RECORD_SCHEMAS\.bmd\.fields\.spineT;[\s\S]*?min: rule\.min, max: rule\.max,/.test(ui),
+        'the T-score slider does not use the rules\' range');
+      var bmdRule = core.RECORD_SCHEMAS.bmd.fields;
+      helpers.assertEqual(bmdRule.hipT.min + '..' + bmdRule.hipT.max, bmdRule.spineT.min + '..' + bmdRule.spineT.max, 'hip and spine share a slider range');
+      ["heightWheel('heightInput')", "heightWheel('checkinHeight')", "tScoreSlider('bmdSpineT'", "tScoreSlider('bmdHipT'"].forEach(function (use) {
+        helpers.assert(ui.indexOf(use) !== -1, use + ' is not used');
       });
     }
   });

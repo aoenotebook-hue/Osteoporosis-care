@@ -46,6 +46,9 @@
     --critical: #d03b3b;
     --critical-bg: #fdecec;
     --radius: 16px;
+    --zone-bad: #d9534f;
+    --zone-mid: #d98e04;
+    --zone-good: #2f9e5b;
     --tap: 48px;
   }
   * { box-sizing: border-box; }
@@ -231,11 +234,11 @@
   .a2hs-actions .install { background: #fff; color: var(--primary-dark); }
   .a2hs-actions .dismiss { background: transparent; color: #fff; text-decoration: underline; }
 
-  .freq-row .name { display: flex; align-items: flex-start; gap: 10px; }
+  .freq-head { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
   .freq-ico { font-size: 26px; line-height: 1.2; flex: 0 0 34px; text-align: center; }
-  .freq-text { min-width: 0; }
-  .freq-food { display: block; font-weight: 600; }
-  .freq-serving { display: block; font-size: 0.85rem; color: var(--muted); }
+  .freq-text { min-width: 0; line-height: 1.4; }
+  .freq-food { font-weight: 700; }
+  .freq-serving { font-size: 0.88rem; color: var(--muted); white-space: nowrap; }
   /* Desktop and large tablet: keep the header row and the tab bar aligned with
      the content column instead of letting them stretch across the window. */
   @media (min-width: 760px) {
@@ -338,9 +341,8 @@
   .step-dots { display: flex; gap: 6px; margin-bottom: 12px; }
   .step-dots span { height: 6px; flex: 1; border-radius: 3px; background: var(--border); }
   .step-dots span.on { background: var(--primary); }
-  .freq-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-  .freq-row .name { flex: 1; font-size: 0.95rem; }
-  .freq-row input { width: 84px; min-height: 44px; text-align: center; }
+  .freq-row { padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .freq-row:last-of-type { border-bottom: 0; }
   .med-card {
     display: flex; align-items: center; gap: 14px; width: 100%; text-align: left;
     padding: 14px; margin-bottom: 10px; border-radius: 14px; cursor: pointer;
@@ -386,6 +388,10 @@
     color: var(--primary); border-radius: 12px; cursor: pointer;
   }
   .stepper button:active { background: var(--primary-light); }
+  /* The − + buttons do this job; the browser's own tiny arrows only crowd the number. */
+  .stepper input[type="number"], .slider-row input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+  .stepper input[type="number"]::-webkit-inner-spin-button, .stepper input[type="number"]::-webkit-outer-spin-button,
+  .slider-row input[type="number"]::-webkit-inner-spin-button, .slider-row input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 
   .quick-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
   .quick-chip {
@@ -395,6 +401,83 @@
   }
   .quick-chip:active, .quick-chip.on { background: var(--primary-light); border-color: var(--primary); color: var(--primary-dark); }
   .field-hint { font-size: 0.85rem; color: var(--muted); margin: 6px 0 0; }
+
+  /* --- Slider with a number box ------------------------------------------
+     Drag for a quick answer; the box and − + for an exact one. Grey until
+     the patient has touched it. */
+  .slider-range {
+    -webkit-appearance: none; appearance: none; display: block; width: 100%; height: 44px;
+    margin: 8px 0 0; padding: 0; border: 0; background: transparent; cursor: pointer;
+  }
+  .slider-range::-webkit-slider-runnable-track { height: 12px; border-radius: 999px; background: var(--track, var(--primary-light)); }
+  .slider-range::-moz-range-track { height: 12px; border-radius: 999px; background: var(--track, var(--primary-light)); }
+  .slider-range::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; width: 34px; height: 34px; margin-top: -11px; border-radius: 50%;
+    background: var(--primary); border: 4px solid #fff; box-shadow: 0 1px 5px rgba(0, 0, 0, 0.35);
+  }
+  .slider-range::-moz-range-thumb {
+    width: 26px; height: 26px; border-radius: 50%; background: var(--primary);
+    border: 4px solid #fff; box-shadow: 0 1px 5px rgba(0, 0, 0, 0.35);
+  }
+  .slider-range.unset::-webkit-slider-thumb { background: #9aa8b8; }
+  .slider-range.unset::-moz-range-thumb { background: #9aa8b8; }
+  .slider-range:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; border-radius: 10px; }
+  .slider-scale { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--muted); }
+  .slider-scale.zoned { position: relative; display: block; height: 1.4em; }
+  .slider-scale.zoned span { position: absolute; top: 0; }
+  .slider-scale.zoned .lo { left: 0; }
+  .slider-scale.zoned .hi { right: 0; }
+  .slider-scale.zoned .tick { transform: translateX(-50%); font-weight: 700; color: var(--text); }
+  .slider-zone { margin: 8px 0 0; min-height: 1.5em; font-weight: 700; }
+  .slider-zone.bad { color: var(--status-high); }
+  .slider-zone.mid { color: var(--status-mid); }
+  .slider-zone.good { color: var(--status-good); }
+  .slider-row { display: flex; align-items: center; gap: 10px; }
+  .slider-row .slider-range { flex: 1; min-width: 0; margin: 0; }
+  .slider-row input[type="number"] { flex: 0 0 64px; width: 64px; min-height: 44px; margin: 0; padding: 6px; text-align: center; }
+  .slider-row .slider-unit { flex: 0 0 auto; font-size: 0.85rem; color: var(--muted); }
+
+  /* --- Dial: scroll or tap a row into the middle band -------------------- */
+  .wheel-wrap {
+    position: relative; height: 220px; margin-top: 6px; overflow: hidden;
+    border: 2px solid var(--border); border-radius: 14px; background: var(--surface);
+  }
+  .wheel-wrap::before {
+    content: ''; position: absolute; left: 8px; right: 8px; top: 86px; height: 44px; pointer-events: none;
+    border: 2px solid var(--primary); border-radius: 10px; background: var(--surface-alt);
+  }
+  .wheel {
+    position: relative; height: 100%; overflow-y: auto; overscroll-behavior: contain;
+    scroll-snap-type: y mandatory; scrollbar-width: none; outline: none;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 32%, #000 68%, transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0, #000 32%, #000 68%, transparent 100%);
+  }
+  .wheel::-webkit-scrollbar { display: none; }
+  .wheel:focus-visible { box-shadow: inset 0 0 0 3px var(--primary); border-radius: 12px; }
+  .wheel-pad { height: 86px; }
+  .wheel-item {
+    height: 44px; line-height: 44px; text-align: center; scroll-snap-align: center; cursor: pointer;
+    font-size: 1.35rem; font-variant-numeric: tabular-nums; color: var(--muted); user-select: none; -webkit-user-select: none;
+  }
+  .wheel-item[aria-selected="true"] { color: var(--primary-dark); font-weight: 800; font-size: 1.6rem; }
+  .wheel-unit {
+    position: absolute; right: 24px; top: 86px; line-height: 44px; pointer-events: none;
+    font-weight: 700; color: var(--primary-dark);
+  }
+  .wheel-readout { margin: 8px 0 0; font-weight: 700; color: var(--primary-dark); }
+  .wheel-readout.prompt { font-weight: 600; color: var(--muted); }
+  .wheel-readout.prompt.nudge { color: var(--critical); font-weight: 700; }
+
+  /* --- How many times: one big tap per answer ---------------------------- */
+  .count-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 12px; }
+  .count-btn {
+    min-height: 76px; padding: 8px 4px; border-radius: 14px; cursor: pointer; line-height: 1.15;
+    border: 2px solid var(--border); background: var(--surface); color: var(--text);
+    font-size: 1.9rem; font-weight: 800;
+  }
+  .count-btn small { display: block; margin-top: 4px; font-size: 0.8rem; font-weight: 600; color: var(--muted); }
+  .count-btn.selected { border-color: var(--primary); background: var(--surface-alt); color: var(--primary-dark); }
+  .question-help { margin: 6px 0 0; color: var(--muted); }
 
   /* --- Countdown meter for the text-only due dates ---------------------- */
   .due-meter { margin: 10px 0 4px; }
