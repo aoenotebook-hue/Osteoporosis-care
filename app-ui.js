@@ -54,7 +54,11 @@
   var registrationPending = null;
   // The "change HN" dialog: closed, typing ('form'), or checking ('confirm').
   var hnChange = { step: null, hn: '', error: '' };
-  var hnChangedNotice = false;
+  // "HN changed" / "details corrected": shown in the footer for a minute. It
+  // used to vanish with the first upload, often before it could be read.
+  var hnChangedNotice = null;
+  // The "correct year of birth or sex" dialog.
+  var detailsChange = { step: null, year: null, sex: null, error: '' };
   var bmdJustSaved = false;
   var chairStandTimer = { running: false, remaining: 30, awaitingReps: false, intervalId: null };
   var tugTimer = { running: false, elapsed: 0, intervalId: null };
@@ -618,6 +622,7 @@
       else if (nutrition.open) overlay.innerHTML = '<div class="overlay"><div class="modal">' + renderNutritionWizard() + '</div></div>';
       else if (fraxFormOpen) overlay.innerHTML = '<div class="overlay"><div class="modal">' + renderFraxForm() + '</div></div>';
       else if (hnChange.step) overlay.innerHTML = '<div class="overlay"><div class="modal">' + renderHnChange() + '</div></div>';
+      else if (detailsChange.step) overlay.innerHTML = '<div class="overlay"><div class="modal">' + renderDetailsChange() + '</div></div>';
       else if (resetConfirmOpen) overlay.innerHTML = '<div class="overlay"><div class="modal">' + renderResetConfirm() + '</div></div>';
       else if (reminderOpen) overlay.innerHTML = '<div class="overlay"><div class="modal">' + renderDoseReminder() + '</div></div>';
     }
@@ -652,13 +657,13 @@
       html += '<div class="footer-sync">' + esc(tr('syncFooterRejected').replace('{n}', rejected.length)) +
         '<br><span class="sync-reason">' + esc(rejected[rejected.length - 1].reason) + '</span></div>';
     }
-    if (hnChangedNotice) {
-      html += '<p class="status-line good" style="justify-content:center;">✓ ' + esc(tr('hnChangeDone')) + '</p>';
-      hnChangedNotice = false;
+    if (hnChangedNotice && Date.now() < hnChangedNotice.until) {
+      html += '<p class="status-line good" style="justify-content:center;">✓ ' + esc(tr(hnChangedNotice.kind === 'details' ? 'detailsChangeDone' : 'hnChangeDone')) + '</p>';
     }
     html += '<div>' + esc(tr('footerDoctorLabel')) + '</div>' +
       '<div class="doctor">' + esc(loc(C.DOCTOR.name)) + '</div>' +
-      (state.registered ? '<button type="button" class="reset-link" data-action="open-hn-change">' + esc(tr('hnChangeLink')) + '</button><br>' : '') +
+      (state.registered ? '<button type="button" class="reset-link" data-action="open-hn-change">' + esc(tr('hnChangeLink')) + '</button><br>' +
+        '<button type="button" class="reset-link" data-action="open-details-change">' + esc(tr('detailsChangeLink')) + '</button><br>' : '') +
       '<button type="button" class="reset-link" data-action="open-reset">' + esc(tr('resetButton')) + '</button>' +
       '</footer>';
     return html;
@@ -773,14 +778,14 @@
   }
 
   /** Buddhist-era years for everyone the app is for (18 to 120), oldest first. */
-  function birthYearWheel() {
+  function birthYearWheel(id, value) {
     var thisYearBE = new Date().getFullYear() + 543;
     var values = [];
     for (var year = thisYearBE - C.PATIENT_AGE.max; year <= thisYearBE - C.PATIENT_AGE.min; year++) {
       values.push({ value: year, label: String(year) });
     }
     return wheelField({
-      id: 'yobInput', name: 'yearOfBirth', values: values, value: registrationDraft.year,
+      id: id || 'yobInput', name: id ? undefined : 'yearOfBirth', values: values, value: id ? value : registrationDraft.year,
       start: thisYearBE - 70, label: tr('registerYearOfBirth'), prompt: tr('registerYearBEHint'),
       readout: function (yearBE) {
         return tr('registerYearReadout')
@@ -876,9 +881,58 @@
   function hnProblemBanner() {
     var error = state.sync && state.sync.lastError;
     if (!state.syncQueue.length || (error !== 'hn marked wrong' && error !== 'details do not match this hn')) return '';
+    // A mismatch is as likely a wrong year or sex as a wrong HN.
     return '<div class="card warn" role="alert"><p style="margin:0 0 10px;"><strong>⚠ ' +
       esc(tr(error === 'hn marked wrong' ? 'syncFooterWrongHn' : 'syncFooterDetailsMismatch')) + '</strong></p>' +
-      '<button type="button" class="btn" data-action="open-hn-change">' + esc(tr('hnChangeButton')) + '</button></div>';
+      '<div class="stack"><button type="button" class="btn" data-action="open-hn-change">' + esc(tr('hnChangeButton')) + '</button>' +
+      (error === 'details do not match this hn'
+        ? '<button type="button" class="btn secondary" data-action="open-details-change">' + esc(tr('detailsChangeButton')) + '</button>' : '') +
+      '</div></div>';
+  }
+
+  function renderDetailsChange() {
+    var d = detailsChange;
+    var html = '<div class="card-head"><span class="ico">🎂</span><h2 style="margin:0;">' + esc(tr('detailsChangeTitle')) + '</h2></div>';
+    if (d.step === 'confirm') {
+      return html + '<p class="big-hn" style="font-size:1.5rem;letter-spacing:0;">' +
+          esc(tr('registerYearReadout').replace('{be}', d.year).replace('{ce}', d.year - 543).replace('{age}', C.deriveAge(d.year))) +
+          ' · ' + esc(tr(d.sex === 'male' ? 'registerSexMale' : 'registerSexFemale')) + '</p>' +
+        '<div class="stack" style="margin-top:14px;">' +
+          '<button type="button" class="btn" data-action="details-change-apply">' + esc(tr('detailsChangeConfirmYes')) + '</button>' +
+          '<button type="button" class="btn secondary" data-action="details-change-edit">' + esc(tr('registerConfirmEdit')) + '</button>' +
+        '</div>';
+    }
+    return html + '<p>' + esc(tr('detailsChangeBody')) + '</p>' +
+      '<label>' + esc(tr('registerYearOfBirth')) + '</label>' + birthYearWheel('detailsYob', d.year) +
+      '<label>' + esc(tr('registerSex')) + '</label>' +
+      '<div class="choice-grid">' + ['female', 'male'].map(function (sex) {
+        return '<button type="button" class="choice-btn' + (d.sex === sex ? ' selected' : '') + '" data-action="details-sex" data-value="' + sex + '">' +
+          esc(tr(sex === 'male' ? 'registerSexMale' : 'registerSexFemale')) + '</button>';
+      }).join('') + '</div>' +
+      '<div id="detailsChangeError" class="error-text"' + (d.error ? '' : ' hidden') + '>' + esc(d.error) + '</div>' +
+      '<div class="stack" style="margin-top:14px;">' +
+        '<button type="button" class="btn" data-action="details-change-check">' + esc(tr('hnChangeCheck')) + '</button>' +
+        '<button type="button" class="btn secondary" data-action="details-change-close">' + esc(tr('cancel')) + '</button>' +
+      '</div>';
+  }
+
+  /**
+   * The same phone registers again with the corrected details: the script
+   * keeps the earlier registration as history and compares any new phone
+   * with the corrected one. Queued records wait behind the registration.
+   */
+  function applyDetailsChange(yearBE, sex) {
+    var age = C.deriveAge(yearBE);
+    state.patient.yearOfBirth = C.normalizeBirthYear(yearBE);
+    state.patient.age = age;
+    state.patient.sex = sex;
+    state.profile.age = age;
+    state.profile.sex = sex;
+    refreshClassification();
+    queueRegistration();
+    noteSync({ lastError: null });
+    saveState();
+    flushSyncQueue();
   }
 
   function renderHnChange() {
@@ -3264,6 +3318,47 @@
       registrationPending = null;
       render();
 
+    } else if (action === 'open-details-change') {
+      // Starts at what is registered now: a year off by one is one row away.
+      detailsChange = { step: 'form', year: state.patient && state.patient.yearOfBirth ? state.patient.yearOfBirth + 543 : null,
+        sex: state.patient ? state.patient.sex : null, error: '' };
+      render();
+
+    } else if (action === 'details-sex') {
+      detailsChange.sex = el.getAttribute('data-value');
+      var pickedYear = $('#detailsYob');
+      if (pickedYear && pickedYear.value) detailsChange.year = parseInt(pickedYear.value, 10);
+      render();
+
+    } else if (action === 'details-change-close') {
+      detailsChange = { step: null, year: null, sex: null, error: '' };
+      render();
+
+    } else if (action === 'details-change-edit') {
+      detailsChange.step = 'form';
+      render();
+
+    } else if (action === 'details-change-check') {
+      var yobField = $('#detailsYob');
+      var newYear = yobField && yobField.value ? parseInt(yobField.value, 10) : detailsChange.year;
+      detailsChange.year = newYear || null;
+      var newAge = newYear ? C.deriveAge(newYear) : null;
+      var p0 = state.patient || {};
+      detailsChange.error = !newYear ? tr('registerYearRequired')
+        : (newAge < C.PATIENT_AGE.min || newAge > C.PATIENT_AGE.max) ? tr('registerAgeRange')
+        : !detailsChange.sex ? tr('registerSexRequired')
+        : (C.normalizeBirthYear(newYear) === p0.yearOfBirth && detailsChange.sex === p0.sex) ? tr('detailsChangeSame') : '';
+      if (!detailsChange.error) detailsChange.step = 'confirm';
+      render();
+
+    } else if (action === 'details-change-apply') {
+      var fixYear = detailsChange.year;
+      var fixSex = detailsChange.sex;
+      detailsChange = { step: null, year: null, sex: null, error: '' };
+      hnChangedNotice = { kind: 'details', until: Date.now() + 60000 };
+      applyDetailsChange(fixYear, fixSex);
+      render();
+
     } else if (action === 'open-hn-change') {
       hnChange = { step: 'form', hn: '', error: '' };
       render();
@@ -3289,7 +3384,7 @@
     } else if (action === 'hn-change-apply') {
       var chosenHn = hnChange.hn;
       hnChange = { step: null, hn: '', error: '' };
-      hnChangedNotice = true;
+      hnChangedNotice = { kind: 'hn', until: Date.now() + 60000 };
       applyHnChange(chosenHn);
       render();
 

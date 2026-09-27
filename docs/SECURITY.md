@@ -1,6 +1,6 @@
 # Security: identity, audit trail, hosting and local data
 
-Script version **2026-09-28**, upload protocol **3**. This file says what the
+Script version **2026-09-28.2**, upload protocol **3**. This file says what the
 app and the Apps Script now enforce, what they cannot, and what is left for
 the clinic to decide. Everything here is covered by `tests/t19`–`t22` against
 synthetic records only.
@@ -111,6 +111,11 @@ Stronger options remain available if the clinic wants them later:
   `wrong-hn` phone, or from an active phone whose year of birth or sex
   differs from the first phone's, stay in the data tabs but are left out of
   the summary, and the summary flags the second case.
+- **A wrong year of birth or sex (2026-09-28.2).** The same phone registers
+  again with corrected details; the earlier registration stays as an older
+  version, and a new phone is then compared with the corrected details.
+  Staff may type a status loosely: `Active`, `wrong hn` and `Wrong_HN` are
+  read as `active` and `wrong-hn`.
 - **A lost phone, or a patient who withdraws.** Set the phone's `status` to
   `revoked`. A revoked phone cannot write, and cannot register its way back,
   even when no other phone holds the HN. To let the same phone back in,
@@ -211,7 +216,7 @@ The backend is fixed only when the deployed script passes the probes:
    everything. Set the project time zone to Bangkok.
 2. **Deploy → Manage deployments → pencil icon → Version: New version →
    Deploy.**
-3. Open the `/exec` URL. It must say `"version":"2026-09-28"` and
+3. Open the `/exec` URL. It must say `"version":"2026-09-28.2"` and
    `"protocol":3`.
 4. From a computer with Node 18 or later, run
    `node tools/verify-backend.js <the /exec URL>`. The read-only probes send

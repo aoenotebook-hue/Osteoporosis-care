@@ -9,7 +9,7 @@
  *      > Deploy.  Saving alone does NOT update the live /exec URL, which is
  *      why an older copy of this script can keep answering requests.
  *   5. Check it worked: open the /exec URL in a browser. You should see
- *      {"ok":true,"service":"osteoporosis-care","protocol":3,"version":"2026-09-28", ...}
+ *      {"ok":true,"service":"osteoporosis-care","protocol":3,"version":"2026-09-28.2", ...}
  *      then run `node tools/verify-backend.js <the /exec URL>` from the repo
  *      (README, "Check the deployed backend"). Until both pass, the fixes in
  *      this file are not live.
@@ -20,7 +20,7 @@
  * When a version changes a tab's columns, the first request after deploying
  * moves the old tab aside as "<Name> (before <that version>)" and starts a
  * fresh one. Nothing is deleted; patients' phones register again on their
- * own. 2026-09-25.2 did this; 2026-09-26 and 2026-09-28 change no columns.
+ * own. 2026-09-25.2 did this; later versions change no columns.
  *
  * READING RESULTS: after saving, reload the spreadsheet. A menu
  * "ดูแลกระดูกพรุน" appears, and two tabs for reading are built and kept up
@@ -63,7 +63,7 @@
  * patient's): set it to "revoked"; it then cannot write or register again.
  */
 
-var SCRIPT_VERSION = '2026-09-28';
+var SCRIPT_VERSION = '2026-09-28.2';
 var SHARED_TOKEN = 'mQ6tfi1HQa0fBNbhzt2AoVk_YKMfmX5v';
 var MAX_TEXT = 200;
 var MAX_BODY = 20000;
@@ -355,6 +355,14 @@ var SHEET_ROUTING = {
 var WRONG_HN = 'wrong-hn';
 var RELEASE_FIELDS = ['token', 'schemaVersion', 'patientId', 'deviceKey', 'request'];
 
+/**
+ * A status as staff may type it: "Active ", "Wrong HN" and "wrong_hn" mean
+ * active and wrong-hn. Anything else is no status the script acts on.
+ */
+function deviceStatus(value) {
+  return cellToString(value).trim().toLowerCase().replace(/[\s_]+/g, '-');
+}
+
 function jsonReply(payload) {
   payload.version = SCRIPT_VERSION;
   return ContentService.createTextOutput(JSON.stringify(payload))
@@ -431,7 +439,7 @@ function devicesFor(patientId) {
     out.push({
       id: cellToString(row[cols.indexOf('credentialId')]),
       hash: cellToString(row[cols.indexOf('credentialHash')]),
-      status: cellToString(row[cols.indexOf('status')]).trim().toLowerCase()
+      status: deviceStatus(row[cols.indexOf('status')])
     });
   }
   return out;
@@ -571,7 +579,7 @@ function setDeviceStatus(patientId, hash, fromStatuses, toStatus, note) {
   var changed = 0;
   for (var r = 1; r < table.data.length; r++) {
     var row = table.data[r];
-    var status = cellToString(row[cols.indexOf('status')]).trim().toLowerCase();
+    var status = deviceStatus(row[cols.indexOf('status')]);
     if (cellToString(row[cols.indexOf('patientId')]) !== patientId ||
         cellToString(row[cols.indexOf('credentialHash')]) !== hash || fromStatuses.indexOf(status) === -1) continue;
     table.sheet.getRange(r + 1, cols.indexOf('status') + 1).setValue(safeCell(toStatus));
@@ -1045,7 +1053,7 @@ function patientResults(todayYmd) {
   var wrongHn = {};
   var phones = {};
   devices.forEach(function (d) {
-    var status = cellToString(d.status).trim().toLowerCase();
+    var status = deviceStatus(d.status);
     if (status === 'revoked') revoked[d.patientId + '|' + d.credentialId] = true;
     if (status === WRONG_HN) wrongHn[d.patientId + '|' + d.credentialId] = true;
     if (!phones[d.patientId]) phones[d.patientId] = { active: [], pending: 0 };
