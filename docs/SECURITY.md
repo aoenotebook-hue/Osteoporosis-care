@@ -1,6 +1,6 @@
 # Security: identity, audit trail, hosting and local data
 
-Script version **2026-09-28.2**, upload protocol **3**. This file says what the
+Script version **2026-10-07**, upload protocol **3**. This file says what the
 app and the Apps Script now enforce, what they cannot, and what is left for
 the clinic to decide. Everything here is covered by `tests/t19`–`t22` against
 synthetic records only.
@@ -134,6 +134,8 @@ Stronger options remain available if the clinic wants them later:
 | Requests per phone | 120 an hour, 300 in six hours | "rate limited, try later"; stays queued |
 | Versions of one record per patient per day | check-in 30; nutrition, BMD, FRAX, falls 10; doses 1 | "too many changes for this date"; set aside on the phone |
 | Registration attempts per HN | 10 in six hours | "busy, try again"; stays queued |
+| Registration attempts per phone | 20 an hour | "busy, try again"; stays queued |
+| Refused registrations written down (pending phone + Audit row) | 30 an hour in all, once per phone | "busy, try again"; stays queued |
 | New phones bound | 60 an hour | "busy, try again"; stays queued |
 | Request size | 20,000 characters | "request too large" |
 
@@ -216,7 +218,7 @@ The backend is fixed only when the deployed script passes the probes:
    everything. Set the project time zone to Bangkok.
 2. **Deploy → Manage deployments → pencil icon → Version: New version →
    Deploy.**
-3. Open the `/exec` URL. It must say `"version":"2026-09-28.2"` and
+3. Open the `/exec` URL. It must say `"version":"2026-10-07"` and
    `"protocol":3`.
 4. From a computer with Node 18 or later, run
    `node tools/verify-backend.js <the /exec URL>`. The read-only probes send
