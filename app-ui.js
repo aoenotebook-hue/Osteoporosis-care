@@ -38,6 +38,7 @@
   var onboardingIndex = 0;
   var showingTierResult = false;
   var deferredInstallPrompt = null;
+  var installGuideOpen = false;
   var checkin = { open: false, steps: [], index: 0, fallLogged: false, missedDoses: false };
   var nutrition = { open: false, step: 0, draft: null, result: null };
   var pendingMedClassId = null;
@@ -623,6 +624,7 @@
       else if (fraxFormOpen) overlay.innerHTML = '<div class="overlay"><div class="modal">' + renderFraxForm() + '</div></div>';
       else if (hnChange.step) overlay.innerHTML = '<div class="overlay"><div class="modal">' + renderHnChange() + '</div></div>';
       else if (detailsChange.step) overlay.innerHTML = '<div class="overlay"><div class="modal">' + renderDetailsChange() + '</div></div>';
+      else if (installGuideOpen) overlay.innerHTML = '<div class="overlay"><div class="modal">' + renderInstallGuide() + '</div></div>';
       else if (resetConfirmOpen) overlay.innerHTML = '<div class="overlay"><div class="modal">' + renderResetConfirm() + '</div></div>';
       else if (reminderOpen) overlay.innerHTML = '<div class="overlay"><div class="modal">' + renderDoseReminder() + '</div></div>';
     }
@@ -662,6 +664,8 @@
     }
     html += '<div>' + esc(tr('footerDoctorLabel')) + '</div>' +
       '<div class="doctor">' + esc(loc(C.DOCTOR.name)) + '</div>' +
+      (state.registered && installPlatform() !== 'installed'
+        ? '<button type="button" class="reset-link install-link" data-action="open-install">' + esc(tr('installLink')) + '</button><br>' : '') +
       (state.registered ? '<button type="button" class="reset-link" data-action="open-hn-change">' + esc(tr('hnChangeLink')) + '</button><br>' +
         '<button type="button" class="reset-link" data-action="open-details-change">' + esc(tr('detailsChangeLink')) + '</button><br>' : '') +
       '<button type="button" class="reset-link" data-action="open-reset">' + esc(tr('resetButton')) + '</button>' +
@@ -2904,30 +2908,109 @@
       '<a class="btn secondary" href="' + esc(externalBrowserUrl()) + '">' + esc(tr('lineBrowserOpen')) + '</a></div>';
   }
 
-  /** iPhone Safari has no install prompt: the patient needs to be told where the button is. */
-  function isIosSafari() {
+  function isStandalone() {
+    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  }
+
+  /**
+   * Where the app is open, as far as adding it to the home screen goes. Each
+   * phone and browser puts the button somewhere else, so the guide shows only
+   * the steps for this one. iPadOS Safari calls itself a Mac; touch gives it away.
+   */
+  function installPlatform() {
     var ua = navigator.userAgent || '';
-    return /iPhone|iPad|iPod/.test(ua) && !/CriOS|FxiOS|EdgiOS|\bLine\//i.test(ua);
+    if (isStandalone()) return 'installed';
+    if (inLineApp() || /FBAN|FBAV|Instagram/i.test(ua)) return 'inapp';
+    var ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+    if (ios) return /CriOS|EdgiOS/.test(ua) ? 'ios-chrome' : /FxiOS|OPiOS/.test(ua) ? 'ios-other' : 'ios-safari';
+    if (/Android/i.test(ua)) return /SamsungBrowser/i.test(ua) ? 'android-samsung' : 'android';
+    return 'desktop';
+  }
+
+  /** iPhone Safari has no install prompt: the patient needs to be told where the button is. */
+  function isIosSafari() { return installPlatform() === 'ios-safari'; }
+
+  // The buttons as the phone draws them, so the patient knows what to look for.
+  var INSTALL_GLYPHS = {
+    share: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M7.5 7.5 12 3l4.5 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 10H5.5v10.5h13V10H16" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
+    add: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+    more: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="2" fill="currentColor"/><circle cx="12" cy="12" r="2" fill="currentColor"/><circle cx="12" cy="19" r="2" fill="currentColor"/></svg>',
+    menu: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+    tap: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V10m0-1.5a1.5 1.5 0 0 1 3 0V11m0-1a1.5 1.5 0 0 1 3 0v4.5c0 3.5-2.5 6-6 6s-4.5-1.5-6.5-4l-1.8-2.6a1.4 1.4 0 0 1 2.2-1.7L9 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+  };
+
+  function installSteps(where) {
+    var steps = {
+      'ios-safari': [['share', 'installIosSafari1'], ['add', 'installIosSafari2'], ['tap', 'installIosSafari3']],
+      'ios-chrome': [['share', 'installIosChrome1'], ['add', 'installIosSafari2'], ['tap', 'installIosSafari3']],
+      android: [['more', 'installAndroid1'], ['add', 'installAndroid2'], ['tap', 'installAndroid3']],
+      'android-samsung': [['menu', 'installSamsung1'], ['add', 'installSamsung2'], ['tap', 'installAndroid3']]
+    }[where] || [];
+    return '<ol class="install-steps">' + steps.map(function (step, i) {
+      return '<li><span class="step-n">' + (i + 1) + '</span><span class="step-ico">' + INSTALL_GLYPHS[step[0]] + '</span>' +
+        '<span class="step-text">' + esc(tr(step[1])) + '</span></li>';
+    }).join('') + '</ol>';
+  }
+
+  function renderInstallGuide() {
+    var where = installPlatform();
+    var html = '<div class="card-head"><img class="install-icon" src="apple-touch-icon.png" alt="" width="48" height="48">' +
+      '<h2 style="margin:0;">' + esc(tr('installTitle')) + '</h2></div>';
+    if (where === 'installed') {
+      html += '<p class="status-line good">✓ ' + esc(tr('installDone')) + '</p>';
+    } else if (where === 'inapp') {
+      html += lineNotice();
+    } else {
+      html += '<p>' + esc(tr('installWhy')) + '</p>';
+      if (deferredInstallPrompt) {
+        // Android Chrome (and desktop Chrome) can install in one tap.
+        html += '<p>' + esc(tr('installOneTap')) + '</p>' +
+          '<button type="button" class="btn" data-action="install-a2hs">' + esc(tr('installNow')) + '</button>';
+      } else if (where === 'desktop') {
+        html += '<p>' + esc(tr('installDesktop')) + '</p><img class="install-qr" src="app-qr.png" alt="QR" width="200" height="200">';
+      } else if (where === 'ios-other') {
+        html += '<p>' + esc(tr('installIosOther')) + '</p><p class="big-hn" style="font-size:1.1rem;letter-spacing:0;">' + esc(location.origin + '/') + '</p>' +
+          installSteps('ios-safari');
+      } else {
+        html += installSteps(where);
+      }
+      if (where !== 'desktop') {
+        html += '<div class="install-result"><img src="apple-touch-icon.png" alt="" width="56" height="56">' +
+          '<span><strong>' + esc(tr('appName')) + '</strong><br><span class="muted">' + esc(tr('installResult')) + '</span></span></div>';
+      }
+    }
+    return html + '<button type="button" class="btn secondary" style="margin-top:14px;" data-action="close-install">' + esc(tr('close')) + '</button>';
   }
 
   function renderA2hs() {
     var banner = $('#a2hsBanner');
-    var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    var where = installPlatform();
     // Not before onboarding is done: the banner is fixed to the bottom of the
     // screen and would sit over the questionnaire's Next button.
-    if (standalone || state.a2hsDismissed || !state.registered || !state.boneStatus || inLineApp() ||
-        (!deferredInstallPrompt && !isIosSafari())) {
+    if (where === 'installed' || where === 'inapp' || state.a2hsDismissed || !state.registered || !state.boneStatus ||
+        installGuideOpen || (where === 'desktop' && !deferredInstallPrompt)) {
       banner.hidden = true;
+      document.body.style.paddingBottom = '';
       return;
     }
     banner.hidden = false;
-    banner.innerHTML = deferredInstallPrompt
-      ? '<p>' + esc(tr('a2hsPrompt')) + '</p><div class="a2hs-actions">' +
-        '<button type="button" class="install" data-action="install-a2hs">' + esc(tr('a2hsInstall')) + '</button>' +
-        '<button type="button" class="dismiss" data-action="dismiss-a2hs">' + esc(tr('a2hsDismiss')) + '</button></div>'
-      : '<p>' + esc(tr('a2hsIos')) + '</p><div class="a2hs-actions">' +
-        '<button type="button" class="dismiss" data-action="dismiss-a2hs">' + esc(tr('a2hsDismiss')) + '</button></div>';
+    var bannerText = where.indexOf('ios') === 0 ? tr('a2hsIos') : tr('a2hsPrompt');
+    banner.innerHTML = '<p>' + esc(bannerText) + '</p><div class="a2hs-actions">' +
+      (deferredInstallPrompt
+        ? '<button type="button" class="install" data-action="install-a2hs">' + esc(tr('installNow')) + '</button>'
+        : '<button type="button" class="install" data-action="open-install">' + esc(tr('installHow')) + '</button>') +
+      '<button type="button" class="dismiss" data-action="dismiss-a2hs">' + esc(tr('a2hsDismiss')) + '</button></div>';
+    // The banner floats over the bottom of the page: make room for it, or it
+    // covers the footer's links (install, change HN, erase).
+    document.body.style.paddingBottom = (88 + banner.offsetHeight + 12) + 'px';
   }
+
+  window.addEventListener('appinstalled', function () {
+    deferredInstallPrompt = null;
+    state.a2hsDismissed = true;
+    saveState();
+    render();
+  });
 
   /* ---------- timers ---------- */
 
@@ -3500,10 +3583,22 @@
     } else if (action === 'checkin-finish') {
       completeCheckin();
 
+    } else if (action === 'open-install') {
+      installGuideOpen = true;
+      render();
+
+    } else if (action === 'close-install') {
+      installGuideOpen = false;
+      render();
+
     } else if (action === 'install-a2hs') {
       if (deferredInstallPrompt) {
         deferredInstallPrompt.prompt();
-        deferredInstallPrompt.userChoice.then(function () { deferredInstallPrompt = null; renderA2hs(); });
+        deferredInstallPrompt.userChoice.then(function (choice) {
+          deferredInstallPrompt = null;
+          if (choice && choice.outcome === 'accepted') installGuideOpen = false;
+          render();
+        });
       }
     } else if (action === 'dismiss-a2hs') {
       state.a2hsDismissed = true;

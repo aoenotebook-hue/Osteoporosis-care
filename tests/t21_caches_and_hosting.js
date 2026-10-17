@@ -142,6 +142,34 @@ function run() {
     }
   });
 
+  cases.push({
+    name: 'the app can be added to the home screen on iPhone and Android, with real icons',
+    fn: function () {
+      var manifest = JSON.parse(fs.readFileSync(path.join(root, 'manifest.webmanifest'), 'utf8'));
+      var png = function (size, purpose) {
+        return manifest.icons.filter(function (i) { return i.type === 'image/png' && i.sizes === size && i.purpose === purpose; })[0];
+      };
+      // Android Chrome installs only with PNG icons of 192 and 512.
+      helpers.assert(png('192x192', 'any') && png('512x512', 'any') && png('512x512', 'maskable'), 'manifest PNG icons');
+      helpers.assertEqual(manifest.display, 'standalone');
+      var page = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+      // iPhones ignore an SVG home-screen icon and show a screenshot instead.
+      helpers.assert(/<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">/.test(page), 'iPhone PNG icon');
+      ['icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'apple-touch-icon.png'].forEach(function (f) {
+        helpers.assert(fs.statSync(path.join(root, f)).size > 1000, f + ' missing');
+        var sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
+        helpers.assert(sw.indexOf("'./" + f + "'") !== -1, f + ' not kept for offline use');
+      });
+      var ui = fs.readFileSync(path.join(root, 'app-ui.js'), 'utf8');
+      var steps = (ui.match(/function installSteps\(where\) \{[\s\S]*?\n  \}/) || [''])[0];
+      ["'ios-safari'", "'ios-chrome'", 'android:', "'android-samsung'"].forEach(function (k) {
+        helpers.assert(steps.indexOf(k) !== -1, 'no steps for ' + k);
+      });
+      helpers.assert(/data-action="open-install"/.test(ui) && /installPlatform\(\) !== 'installed'/.test(ui), 'a way to the guide that stays until installed');
+      helpers.assert(/document\.body\.style\.paddingBottom = \(88 \+ banner\.offsetHeight/.test(ui), 'the banner must not cover the footer');
+    }
+  });
+
   return helpers.runSuite('t21_caches_and_hosting', cases);
 }
 

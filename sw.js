@@ -2,14 +2,18 @@
 // be shared with other apps (GitHub Pages serves all of an account's sites
 // from one origin), so a new version deletes only its own old caches.
 var CACHE_PREFIX = 'osteo-care-';
-var CACHE_NAME = CACHE_PREFIX + 'v13';
+var CACHE_NAME = CACHE_PREFIX + 'v14';
 var SHELL_FILES = [
   './',
   './index.html',
   './app-core.js',
   './app-ui.js',
   './manifest.webmanifest',
-  './icon.svg'
+  './icon.svg',
+  './icon-192.png',
+  './icon-512.png',
+  './icon-maskable-512.png',
+  './apple-touch-icon.png'
 ];
 
 self.addEventListener('install', function (event) {
