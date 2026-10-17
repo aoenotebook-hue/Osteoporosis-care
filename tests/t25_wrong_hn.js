@@ -168,6 +168,38 @@ function run() {
   });
 
   cases.push({
+    name: 'refused registrations cannot be used to grow the sheet',
+    fn: function () {
+      var b = fake.backend();
+      var owner = phone(b, 1950, 'female');
+      helpers.assert(owner.register('TEST-SPRAY0').ok);
+      // One phone retrying on its own: one pending row, one Audit row.
+      var held = phone(b, 1980, 'male');
+      for (var i = 0; i < 5; i++) helpers.assertEqual(held.register('TEST-SPRAY0').error, 'details do not match this hn');
+      var rows = function (tab) { return b.table(tab).filter(function (r) { return r.credentialId === held.id; }).length; };
+      helpers.assertEqual(rows('Devices'), 1, 'pending rows from one phone');
+      helpers.assertEqual(rows('Audit'), 1, 'Audit rows from one phone');
+      // Fresh keys sprayed across enrolled HNs stop at the hourly cap.
+      var hns = [];
+      for (var h = 1; h <= 40; h++) { var hn = 'TEST-SPRAY' + h; phone(b, 1950, 'female').register(hn); hns.push(hn); }
+      var before = b.table('Devices').length;
+      var busy = 0;
+      hns.forEach(function (hn) {
+        var r = phone(b, 1990, 'male').register(hn);
+        if (r.error === 'busy, try again') busy += 1;
+        else helpers.assertEqual(r.error, 'details do not match this hn');
+      });
+      helpers.assert(busy > 0, 'the cap was reached');
+      helpers.assert(b.table('Devices').length - before <= b.ctx.LIMITS.mismatchesPerHour, 'pending rows stop at the cap: ' + (b.table('Devices').length - before));
+      // One key cannot hammer registration either.
+      var spray = phone(b, 1950, 'female');
+      var last;
+      for (var k = 0; k < 25; k++) last = spray.register('TEST-ONEKEY' + k);
+      helpers.assertEqual(last.error, 'busy, try again', 'one phone, many registrations');
+    }
+  });
+
+  cases.push({
     name: 'a status staff type loosely still counts ("Wrong HN", "wrong_hn", " Active ")',
     fn: function () {
       ['Wrong HN', 'wrong_hn', ' WRONG-HN '].forEach(function (typed, i) {

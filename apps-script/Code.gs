@@ -9,7 +9,7 @@
  *      > Deploy.  Saving alone does NOT update the live /exec URL, which is
  *      why an older copy of this script can keep answering requests.
  *   5. Check it worked: open the /exec URL in a browser. You should see
- *      {"ok":true,"service":"osteoporosis-care","protocol":3,"version":"2026-09-28.2", ...}
+ *      {"ok":true,"service":"osteoporosis-care","protocol":3,"version":"2026-10-07", ...}
  *      then run `node tools/verify-backend.js <the /exec URL>` from the repo
  *      (README, "Check the deployed backend"). Until both pass, the fixes in
  *      this file are not live.
@@ -63,7 +63,7 @@
  * patient's): set it to "revoked"; it then cannot write or register again.
  */
 
-var SCRIPT_VERSION = '2026-09-28.2';
+var SCRIPT_VERSION = '2026-10-07';
 var SHARED_TOKEN = 'mQ6tfi1HQa0fBNbhzt2AoVk_YKMfmX5v';
 var MAX_TEXT = 200;
 var MAX_BODY = 20000;
@@ -307,7 +307,11 @@ var LIMITS = {
   perDevicePerHour: 120,
   perDevicePerSixHours: 300,
   registrationsPerHnPerSixHours: 10,
+  registrationsPerDevicePerHour: 20,
   newDevicesPerHour: 60,
+  // A refused phone writes a pending row and an Audit row. Without a cap of
+  // its own, fresh keys could spray every enrolled HN and grow the sheet.
+  mismatchesPerHour: 30,
   // Versions of one patient's record for one day, beyond which a record is
   // refused for good rather than queued forever.
   versionsPerDay: { checkin: 30, nutrition: 10, bmd: 10, frax: 10, falls: 10, adherence: 1 }
@@ -478,6 +482,7 @@ function handleRegistration(payload) {
   if (overLimit('reg:' + payload.patientId, LIMITS.registrationsPerHnPerSixHours, 21600)) return refuse('busy, try again');
 
   var credential = credentialFor(payload.deviceKey);
+  if (overLimit('regkey:' + credential.id, LIMITS.registrationsPerDevicePerHour, 3600)) return refuse('busy, try again');
   var devices = devicesFor(payload.patientId);
   // A phone staff have revoked stays revoked: it cannot register its way back,
   // even when no other phone holds the HN (a lost phone, a withdrawal).
@@ -497,12 +502,14 @@ function handleRegistration(payload) {
     // Another phone holds this HN and this one's year of birth or sex differs
     // from that registration. Nothing about the patient is returned (not even
     // which of the two differs); staff can see the attempt and decide.
+    // The phone retries on its own: only its first attempt is written down.
     var pending = devices.some(function (d) { return d.status === 'pending' && d.hash === credential.hash; });
     if (!pending) {
+      if (overLimit('mismatch', LIMITS.mismatchesPerHour, 3600)) return refuse('busy, try again');
       appendRow('Devices', { patientId: payload.patientId, credentialId: credential.id, credentialHash: credential.hash,
         status: 'pending', createdAt: new Date(), note: MISMATCH_NOTE });
+      audit(payload.patientId, credential.id, 'registration', '', 'mismatch', MISMATCH_NOTE, '');
     }
-    audit(payload.patientId, credential.id, 'registration', '', 'mismatch', MISMATCH_NOTE, '');
     return refuse('details do not match this hn');
   }
   if (!mine && !others.length && devices.some(function (d) { return d.status === 'pending' && d.hash === credential.hash; })) {
